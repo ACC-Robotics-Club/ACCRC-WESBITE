@@ -1,8 +1,8 @@
 'use client';
 
-import { useRef, useEffect, useMemo, Suspense } from 'react';
+import { useRef, useEffect, useMemo, useState, Suspense } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
-import { useGLTF, useAnimations } from '@react-three/drei';
+import { useGLTF, useAnimations, PerformanceMonitor } from '@react-three/drei';
 import * as THREE from 'three';
 
 // Warm ivory paper-matched light tone for the 3D hand
@@ -41,6 +41,12 @@ function cameraDistance(viewHeight: number, fov: number) {
 
 function MindRoboticsHand() {
   const groupRef = useRef<THREE.Group>(null);
+  const { gl, camera, invalidate } = useThree();
+  /* Compiling the toon shaders inside the first frame blocked the main thread
+     for ~80ms on a mid-range phone — a visible hitch right as the hand
+     appeared. compileAsync lets the GPU driver compile in parallel (where
+     KHR_parallel_shader_compile exists) and the hand is shown once done. */
+  const [compiled, setCompiled] = useState(false);
   const orientRef = useRef<THREE.Group>(null);
   const normalizedPointer = useRef({ x: 0, y: 0 });
   /* Read once rather than calling matchMedia every frame. */
@@ -140,6 +146,26 @@ function MindRoboticsHand() {
     return clone;
   }, [scene]);
 
+  useEffect(() => {
+    let cancelled = false;
+    const done = () => {
+      if (!cancelled) setCompiled(true);
+    };
+    if (typeof gl.compileAsync === 'function') {
+      gl.compileAsync(clonedScene, camera).then(done, done);
+    } else {
+      done();
+    }
+    return () => {
+      cancelled = true;
+    };
+  }, [gl, camera, clonedScene]);
+
+  /* On-demand canvases (the low-end still frame) need a frame once shown. */
+  useEffect(() => {
+    if (compiled) invalidate();
+  }, [compiled, invalidate]);
+
   useFrame((state, delta) => {
     const r = groupRef.current;
     const s = orientRef.current;
@@ -182,7 +208,7 @@ function MindRoboticsHand() {
   });
 
   return (
-    <group ref={groupRef}>
+    <group ref={groupRef} visible={compiled}>
       <group ref={orientRef}>
         <primitive object={clonedScene} />
       </group>
@@ -191,59 +217,6 @@ function MindRoboticsHand() {
 }
 
 useGLTF.preload(CONFIG.url);
-
-/**
- * Phones render the hand on demand at 30fps instead of every display frame,
- * and skip frames entirely while the page is scrolling. The hand only sways
- * slowly, so 30fps reads the same — but it halves the main-thread time the
- * scene takes. Frames also pause while a finger is down or the page is
- * moving, so touches and scrolls never wait behind a WebGL frame.
- */
-function MobileFrameGovernor() {
-  const invalidate = useThree((state) => state.invalidate);
-  useEffect(() => {
-    /* Hold frames from the moment a finger lands until shortly after the
-       page stops moving, so a tap or a drag never waits behind WebGL work. */
-    let busy = false;
-    let touching = false;
-    let settle: ReturnType<typeof setTimeout> | undefined;
-    const release = (ms: number) => {
-      clearTimeout(settle);
-      settle = setTimeout(() => {
-        if (!touching) busy = false;
-      }, ms);
-    };
-    const onTouchStart = () => {
-      touching = true;
-      busy = true;
-      clearTimeout(settle);
-    };
-    const onTouchEnd = () => {
-      touching = false;
-      release(220);
-    };
-    const onScroll = () => {
-      busy = true;
-      release(160);
-    };
-    window.addEventListener('touchstart', onTouchStart, { passive: true });
-    window.addEventListener('touchend', onTouchEnd, { passive: true });
-    window.addEventListener('touchcancel', onTouchEnd, { passive: true });
-    window.addEventListener('scroll', onScroll, { passive: true });
-    const tick = setInterval(() => {
-      if (!busy && !document.hidden) invalidate();
-    }, 1000 / 30);
-    return () => {
-      clearInterval(tick);
-      clearTimeout(settle);
-      window.removeEventListener('touchstart', onTouchStart);
-      window.removeEventListener('touchend', onTouchEnd);
-      window.removeEventListener('touchcancel', onTouchEnd);
-      window.removeEventListener('scroll', onScroll);
-    };
-  }, [invalidate]);
-  return null;
-}
 
 /**
  * Low-end phones get one still frame of the hand instead of an animation: it
@@ -281,16 +254,20 @@ export default function RobotScene({ paused = false }: { paused?: boolean }) {
   const dist = cameraDistance(CONFIG.viewHeight, 10);
   /* Phones get a lower pixel-ratio ceiling: the hand is soft cel-shading, so
      the difference is invisible, but the fill-rate saving is large. */
-  const dpr = useMemo<[number, number]>(
-    () => [1, coarse ? 1.5 : 2],
-    [coarse],
-  );
+  /* Never above the screen's own density: a fixed dpr does not clamp. */
+  const maxDpr = Math.min(window.devicePixelRatio || 1, coarse ? 1.5 : 2);
+  /* If a device cannot hold a steady frame rate, drop to 1x pixels (and back
+     up when it recovers) rather than skipping frames. */
+  const [dpr, setDpr] = useState(maxDpr);
 
   return (
     <Canvas
       dpr={dpr}
       /* Stop rendering entirely while the hero is covered by the page. */
-      frameloop={paused ? 'never' : coarse ? 'demand' : 'always'}
+      /* Every device that animates renders every display frame, so the hand
+         moves as smoothly as the page scrolls. Low-end phones render one
+         still frame on demand. Nothing renders while the hero is covered. */
+      frameloop={paused ? 'never' : lowEnd ? 'demand' : 'always'}
       /* By default the canvas re-measures itself on every scroll stop using
          getBoundingClientRect, which includes the hero's scroll-driven scale.
          So every scroll "resized" it and reallocated the WebGL buffer — a
@@ -315,7 +292,14 @@ export default function RobotScene({ paused = false }: { paused?: boolean }) {
       <directionalLight position={[CONFIG.shading.light.x, CONFIG.shading.light.y, CONFIG.shading.light.z]} intensity={0.18} />
       <directionalLight position={[-2, 3, 2]} intensity={0.05} />
 
-      {coarse && !lowEnd && !paused && <MobileFrameGovernor />}
+      {!lowEnd && (
+        <PerformanceMonitor
+          onDecline={() => setDpr(1)}
+          onIncline={() => setDpr(maxDpr)}
+          flipflops={3}
+          onFallback={() => setDpr(1)}
+        />
+      )}
       <Suspense fallback={null}>
         <MindRoboticsHand />
         {lowEnd && <StillFrame />}
