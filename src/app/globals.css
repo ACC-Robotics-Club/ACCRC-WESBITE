@@ -844,3 +844,16 @@ html.cv-measure .cv-auto {
 @media (prefers-reduced-motion: reduce) {
   .event-banner { animation: none; }
 }
+
+/* Juicer social feed (components/events/SocialFeed.tsx): match the site's
+   cards instead of Juicer's default look. */
+@layer components {
+  .social-feed .juicer-feed { margin: 0; padding: 0; background: transparent; font-family: inherit; }
+  .social-feed .juicer-feed .feed-item {
+    border: 2px solid var(--color-border-strong);
+    border-radius: 1.25rem;
+    overflow: hidden;
+    background: var(--color-secondary);
+  }
+  .social-feed .juicer-feed h1.referral { font-size: 0.7rem; opacity: 0.6; }
+}

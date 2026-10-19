@@ -25,6 +25,7 @@ import { Hero } from '@/components/home/Hero';
 import { StatusStrip } from '@/components/home/StatusStrip';
 import { AchievementsAndPanels } from '@/components/home/AchievementsAndPanels';
 import { FacebookCard } from '@/components/events/FacebookCard';
+import { SocialFeed } from '@/components/events/SocialFeed';
 import { Marquee } from '@/components/fx/Marquee';
 import { Reveal } from '@/components/fx/Reveal';
 import { SplitReveal } from '@/components/fx/SplitReveal';
@@ -315,6 +316,8 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+      <SocialFeed />
 
       <AchievementsAndPanels />
 
