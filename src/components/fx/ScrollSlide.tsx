@@ -1,30 +1,21 @@
 'use client';
 
-import { useRef, type ReactNode } from 'react';
-import { motion, useScroll, useTransform, useReducedMotion } from 'framer-motion';
-
-/**
- * Framer's scroll-range tuple, derived from `useScroll` itself so it always
- * matches the installed version (the type is declared but not exported).
- */
-type ScrollOffset = NonNullable<
-  NonNullable<Parameters<typeof useScroll>[0]>['offset']
->;
+import { useEffect, useRef, type CSSProperties, type ElementType, type ReactNode } from 'react';
+import { track, type EdgeOffset } from './scrollEngine';
 
 /**
  * Bottom-to-top scroll slide: content rises from below into its resting place
  * as it is scrolled into view.
  *
- * The default scroll range is front-loaded (`start 0.9` → `start 0.35`): once
- * the element's top passes 35% of the viewport the value has already reached
- * `to` and stays there for the rest of the scroll. That guarantees the
- * animation always finishes, so content can never be left parked at an offset
- * (and therefore effectively hidden) further down the page.
+ * On desktop the travel is scrubbed by scroll position. The default range is
+ * front-loaded (`start 0.9` → `start 0.35`): once the element's top passes 35%
+ * of the viewport the value has reached `to` and stays there, so content can
+ * never be left parked at an offset further down the page. For a container
+ * taller than the viewport, pass a range ending on its `end` so the travel
+ * spans the container's own height.
  *
- * That range is tied to the element's *top*, so for a container taller than
- * the viewport it completes almost immediately and everything below sits
- * static. Pass a range ending on the element's `end` for tall containers —
- * that spreads the travel across the container's own height.
+ * On phones and touch screens the same travel plays once, as a CSS transition,
+ * when the element enters the viewport (see scrollEngine.ts for why).
  */
 export function ScrollSlide({
   children,
@@ -32,7 +23,9 @@ export function ScrollSlide({
   axis = 'y',
   from = 90,
   to = -25,
-  offset = ['start 0.9', 'start 0.35'] as ScrollOffset,
+  offset = ['start 0.9', 'start 0.35'],
+  delay = 0,
+  as: Tag = 'div',
 }: {
   children: ReactNode;
   className?: string;
@@ -41,20 +34,28 @@ export function ScrollSlide({
   from?: number;
   /** Final offset once the slide has played (px). */
   to?: number;
-  offset?: ScrollOffset;
+  offset?: EdgeOffset;
+  /** Extra delay for the one-shot (touch) entrance, in seconds. */
+  delay?: number;
+  as?: ElementType;
 }) {
-  const ref = useRef<HTMLDivElement>(null);
-  const reduce = useReducedMotion();
-  const { scrollYProgress } = useScroll({ target: ref, offset });
+  const ref = useRef<HTMLElement>(null);
+  const [start, end] = offset;
 
-  const value = useTransform(scrollYProgress, [0, 1], [from, to], { clamp: true });
-  const style = axis === 'x' ? { x: value } : { y: value };
+  useEffect(() => {
+    if (!ref.current) return;
+    return track(ref.current, { offset: [start, end] });
+  }, [start, end]);
+
+  const style = {
+    '--from': `${from}px`,
+    '--to': `${to}px`,
+    '--delay': `${delay}s`,
+  } as CSSProperties;
 
   return (
-    <div ref={ref} className={`relative ${className}`} data-scroll-slide={axis}>
-      <motion.div data-scroll-slide-motion className="h-full" style={reduce ? undefined : style}>
-        {children}
-      </motion.div>
-    </div>
+    <Tag ref={ref} className={`fx-slide relative ${className}`} data-axis={axis} style={style}>
+      <div className="fx-slide__inner h-full">{children}</div>
+    </Tag>
   );
 }

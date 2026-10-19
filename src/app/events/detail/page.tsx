@@ -2,7 +2,7 @@
 
 import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { subscribeToEvent, type FirestoreEvent } from '@/lib/firestore';
+import { subscribeToEvent, type FirestoreEvent } from '@/lib/publicData';
 import { EventStatus } from '@/components/events/EventStatus';
 import { EventRegistrationForm } from '@/components/events/EventRegistrationForm';
 import { Countdown } from '@/components/events/Countdown';

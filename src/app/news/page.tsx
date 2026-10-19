@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { getNewsPosts, type FirestoreNews } from '@/lib/firestore';
+import { getNewsPosts, type FirestoreNews } from '@/lib/publicData';
 import { NewsCard } from '@/components/news/NewsCard';
 import { SectionReveal } from '@/components/ui/SectionReveal';
 

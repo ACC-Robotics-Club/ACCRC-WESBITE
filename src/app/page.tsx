@@ -16,7 +16,7 @@ import {
   subscribeToPortalConfig,
   type FirestoreEvent,
   type PortalConfig,
-} from '@/lib/firestore';
+} from '@/lib/publicData';
 import { club } from '@/lib/club';
 import { readFacebookFeed, type FacebookEvent, type FacebookPost } from '@/lib/facebook-events';
 import { Hero } from '@/components/home/Hero';
@@ -27,11 +27,9 @@ import { Marquee } from '@/components/fx/Marquee';
 import { Reveal } from '@/components/fx/Reveal';
 import { SplitReveal } from '@/components/fx/SplitReveal';
 import { TiltCard } from '@/components/fx/TiltCard';
-import { Parallax } from '@/components/fx/Parallax';
 import { ScrollFillText } from '@/components/fx/ScrollFillText';
 import { ScrollSlide } from '@/components/fx/ScrollSlide';
 import { FanTag } from '@/components/fx/FanTag';
-import { motion } from 'framer-motion';
 
 /** One calendar row, whether it came from Firestore or a Facebook post. */
 type FeedEvent = {
@@ -60,18 +58,29 @@ export default function HomePage() {
 
     /* Facebook posts are mirrored into the calendar as post cards when the
        optional Pages Function is configured. The embedded official timeline
-       below still works without it. */
-    readFacebookFeed()
-      .then(({ events: fbEvents, posts }) => {
-        setFacebookEvents(fbEvents);
-        setFacebookPosts(posts);
-      })
-      .catch(() => {
-        setFacebookEvents([]);
-        setFacebookPosts([]);
-      });
+       below still works without it. Requested once the page is idle, so it
+       never competes with first paint. */
+    let cancelled = false;
+    const loadFeed = () =>
+      readFacebookFeed()
+        .then(({ events: fbEvents, posts }) => {
+          if (cancelled) return;
+          setFacebookEvents(fbEvents);
+          setFacebookPosts(posts);
+        })
+        .catch(() => {
+          if (cancelled) return;
+          setFacebookEvents([]);
+          setFacebookPosts([]);
+        });
+    const idleId =
+      'requestIdleCallback' in window ? window.requestIdleCallback(loadFeed, { timeout: 3000 }) : null;
+    const timerId = idleId === null ? setTimeout(loadFeed, 1500) : null;
 
     return () => {
+      cancelled = true;
+      if (idleId !== null) window.cancelIdleCallback(idleId);
+      if (timerId !== null) clearTimeout(timerId);
       unsubscribeEvents();
       unsubscribePortal();
     };
@@ -182,7 +191,7 @@ export default function HomePage() {
 
       {/* Everything below the hero is one opaque "sheet" that slides up over the
           pinned hero as you scroll (depth-curtain scroll, see Hero.tsx). */}
-      <div className="relative z-10 overflow-hidden rounded-t-[2rem] bg-primary shadow-[0_-28px_70px_-28px_rgba(13,27,24,0.35)] sm:rounded-t-[3rem]">
+      <div className="relative z-10 overflow-hidden rounded-t-[2rem] bg-primary shadow-[0_-28px_70px_-28px_rgba(28,25,23,0.2)] sm:rounded-t-[3rem]">
       <StatusStrip />
 
       {/* ═══ MARQUEE ═══ */}
@@ -197,20 +206,10 @@ export default function HomePage() {
         </Marquee>
       </div>
 
-      {/* ═══ MISSION — wipe + parallax depth ═══ */}
+      {/* ═══ MISSION ═══ */}
       <section className="relative section-padding overflow-hidden" id="mission">
-        {/* Oversized index numeral drifting behind the copy */}
-        <Parallax speed={22} className="pointer-events-none absolute -left-6 top-6 select-none" aria-hidden>
-          <p className="font-display text-[16rem] font-black leading-none tracking-display text-transparent [-webkit-text-stroke:1.5px_rgba(13,27,24,0.1)]">
-            01
-          </p>
-        </Parallax>
-
         <div className="container-content relative grid gap-10 md:grid-cols-12">
-          <Reveal className="md:col-span-3" direction="left">
-            <div className="mono-label text-text-tertiary">01 / 04</div>
-          </Reveal>
-          <div className="md:col-span-9">
+          <div className="md:col-span-9 md:col-start-4">
             {/* The mission statement keeps drifting as the section scrolls past. */}
             <ScrollSlide axis="y" from={110} to={-16}>
               <Reveal>
@@ -224,8 +223,8 @@ export default function HomePage() {
                 lines={[
                   <>
                     <FanTag
-                      layers={['#0d1b18', '#2be0d2', '#0e8a80']}
-                      bgColor="#0e8a80"
+                      layers={['#1C1917', '#FF7A59', '#C8432C']}
+                      bgColor="#C8432C"
                       textColor="white"
                       size="lg"
                       delay={0.2}
@@ -250,7 +249,7 @@ export default function HomePage() {
               <Reveal delay={0.1}>
                 <a
                   href="#join"
-                  className="group mt-7 inline-flex items-center gap-2.5 mono-label text-accent transition-colors hover:text-accent-hover"
+                  className="group mt-7 inline-flex min-h-11 items-center gap-2.5 mono-label text-accent transition-colors hover:text-accent-hover"
                 >
                   Meet the club
                   <span className="grid h-9 w-9 place-items-center rounded-full border-2 border-accent transition-all duration-300 group-hover:translate-x-1.5 group-hover:bg-accent group-hover:text-white" aria-hidden>
@@ -264,7 +263,7 @@ export default function HomePage() {
       </section>
 
       {/* ═══ EVENTS ═══ */}
-      <section className="relative border-t-2 border-border-strong bg-tertiary/50 section-padding" id="events">
+      <section className="cv-auto relative border-t-2 border-border-strong bg-tertiary/50 section-padding" id="events">
         <div className="dot-grid absolute inset-0 opacity-30 [mask-image:linear-gradient(to_bottom,black,transparent_70%)]" aria-hidden />
         <div className="container-content relative">
           <div className="mb-14 flex flex-col justify-between gap-6 sm:flex-row sm:items-end">
@@ -280,9 +279,9 @@ export default function HomePage() {
                 lines={[
                   <>
                     <FanTag
-                      layers={['#0e8a80', '#2be0d2', '#0d1b18']}
-                      bgColor="#0d1b18"
-                      textColor="#2be0d2"
+                      layers={['#C8432C', '#FF7A59', '#1C1917']}
+                      bgColor="#1C1917"
+                      textColor="#FF7A59"
                       size="lg"
                       delay={0.1}
                     >
@@ -299,7 +298,7 @@ export default function HomePage() {
               <Reveal delay={0.15}>
                 <a
                   href="/events/"
-                  className="group inline-flex items-center gap-2.5 mono-label text-accent transition-colors hover:text-accent-hover"
+                  className="group inline-flex min-h-11 items-center gap-2.5 mono-label text-accent transition-colors hover:text-accent-hover"
                 >
                   All events
                   <span className="grid h-9 w-9 place-items-center rounded-full border-2 border-accent transition-all duration-300 group-hover:translate-x-1.5 group-hover:bg-accent group-hover:text-white" aria-hidden>
@@ -335,7 +334,7 @@ export default function HomePage() {
                   </p>
                 </div>
                 <a
-                  className="inline-flex shrink-0 items-center gap-2 mono-label text-accent hover:text-accent-hover"
+                  className="-my-3 inline-flex shrink-0 items-center gap-2 py-3 mono-label text-accent hover:text-accent-hover"
                   href={club.socials.facebook}
                   target="_blank"
                   rel="noopener noreferrer"
@@ -359,16 +358,12 @@ export default function HomePage() {
                 {recentEvents.slice(0, 3).map((event, index) => {
                   const href = event.permalinkUrl ?? `/events/detail/?id=${event.id}`;
                   return (
-                    <motion.a
-                      key={event.id}
-                      className="group grid grid-cols-[auto_1fr_auto] items-center gap-x-5 gap-y-2 border-b-2 border-border-strong py-7 transition-colors duration-300 hover:bg-secondary sm:grid-cols-[70px_1fr_auto_auto] sm:gap-x-8 sm:px-4"
+                    <Reveal key={event.id} direction="right" distance={60} delay={index * 0.1}>
+                    <a
+                      className="group grid grid-cols-[auto_1fr_auto] items-center gap-x-4 gap-y-2 border-b-2 border-border-strong py-6 transition-colors duration-300 hover:bg-secondary sm:grid-cols-[70px_1fr_auto_auto] sm:gap-x-8 sm:px-4 sm:py-7"
                       href={href}
                       target="_blank"
                       rel="noopener noreferrer"
-                      initial={{ x: -70 }}
-                      whileInView={{ x: 0 }}
-                      viewport={{ once: true, amount: 0.25, margin: '0px 0px -10% 0px' }}
-                      transition={{ duration: 0.7, delay: index * 0.12, ease: [0.22, 1, 0.36, 1] }}
                     >
                       <div className="mono-label text-text-tertiary transition-colors group-hover:text-accent">
                         {String(index + 1).padStart(2, '0')}
@@ -406,7 +401,8 @@ export default function HomePage() {
                         </span>
                         <ChevronRight size={24} className="transition-transform duration-300 group-hover:translate-x-1.5" aria-hidden />
                       </div>
-                    </motion.a>
+                    </a>
+                    </Reveal>
                   );
                 })}
               </div>
@@ -418,15 +414,9 @@ export default function HomePage() {
                 const href = event.permalinkUrl ?? `/events/detail/?id=${event.id}`;
                 return (
                 /* Event rows slide in from the left, each with its own delay. */
-                <motion.div
-                  key={event.id}
-                  initial={{ x: -70 }}
-                  whileInView={{ x: 0 }}
-                  viewport={{ once: true, amount: 0.25, margin: '0px 0px -10% 0px' }}
-                  transition={{ duration: 0.7, delay: index * 0.12, ease: [0.22, 1, 0.36, 1] }}
-                >
+                <Reveal key={event.id} direction="right" distance={60} delay={index * 0.1}>
                   <a
-                    className="group grid grid-cols-[auto_1fr_auto] items-center gap-x-5 gap-y-2 border-b-2 border-border-strong py-7 transition-colors duration-300 hover:bg-secondary sm:grid-cols-[70px_1fr_auto_auto] sm:gap-x-8 sm:px-4"
+                    className="group grid grid-cols-[auto_1fr_auto] items-center gap-x-4 gap-y-2 border-b-2 border-border-strong py-6 transition-colors duration-300 hover:bg-secondary sm:grid-cols-[70px_1fr_auto_auto] sm:gap-x-8 sm:px-4 sm:py-7"
                     href={href}
                     {...(isPost ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
                   >
@@ -471,7 +461,7 @@ export default function HomePage() {
                       <ChevronRight size={24} className="transition-transform duration-300 group-hover:translate-x-1.5" aria-hidden />
                     </div>
                   </a>
-                </motion.div>
+                </Reveal>
                 );
               })}
             </div>
@@ -497,7 +487,7 @@ export default function HomePage() {
       <AchievementsAndPanels />
 
       {/* ═══ RECRUITMENT ANNOUNCEMENT ═══ */}
-      <section className="section-padding" id="news">
+      <section className="cv-auto section-padding" id="news">
         <div className="container-content">
           <ScrollSlide axis="y" from={100} to={-14}>
             <Reveal>
@@ -511,9 +501,9 @@ export default function HomePage() {
               lines={[
                 <>
                   <FanTag
-                    layers={['#2be0d2', '#0e8a80', '#0d1b18']}
-                    bgColor="#0d1b18"
-                    textColor="#2be0d2"
+                    layers={['#FF7A59', '#C8432C', '#1C1917']}
+                    bgColor="#1C1917"
+                    textColor="#FF7A59"
                     size="lg"
                     delay={0.15}
                   >
@@ -530,14 +520,9 @@ export default function HomePage() {
 
           {/* Recruitment banner — slides up into place, no fade */}
           <ScrollSlide axis="y" from={150} to={-16} className="mt-12">
-            <motion.div
-              initial={{ y: 70 }}
-              whileInView={{ y: 0 }}
-              viewport={{ once: true, amount: 0.2, margin: '0px 0px -10% 0px' }}
-              transition={{ duration: 0.85, ease: [0.22, 1, 0.36, 1] }}
-            >
-              <TiltCard className="overflow-hidden rounded-3xl border-2 border-border-strong bg-ink text-[#e8fffb] shadow-[0_30px_80px_-40px_rgba(13,27,24,0.8)]">
-                <div className="relative flex min-h-[240px] flex-col items-start justify-between gap-8 p-10 sm:flex-row sm:items-center sm:p-14">
+            <Reveal distance={70}>
+              <TiltCard className="overflow-hidden rounded-3xl border-2 border-border-strong bg-ink text-[#F7F5EE] shadow-[0_30px_80px_-40px_rgba(28,25,23,0.5)]">
+                <div className="relative flex min-h-[200px] flex-col items-start justify-between gap-6 p-7 sm:min-h-[240px] sm:flex-row sm:items-center sm:gap-8 sm:p-14">
                   <div className="dot-grid-light absolute inset-0 opacity-20" aria-hidden />
                   <h3 className="relative font-display text-display-md font-black tracking-display">
                     Accepting New{' '}
@@ -551,13 +536,13 @@ export default function HomePage() {
                   </time>
                 </div>
               </TiltCard>
-            </motion.div>
+            </Reveal>
           </ScrollSlide>
         </div>
       </section>
 
       {/* ═══ JOIN ═══ */}
-      <section className="border-t-2 border-border-strong bg-secondary section-padding" id="join">
+      <section className="cv-auto border-t-2 border-border-strong bg-secondary section-padding" id="join">
         <div className="container-content grid gap-14 lg:grid-cols-2 lg:gap-20">
           <ScrollSlide axis="y" from={100} to={-16}>
           <div>
@@ -573,8 +558,8 @@ export default function HomePage() {
                 <>YOUR NEXT</>,
                 <>
                   <FanTag
-                    layers={['#0d1b18', '#0e8a80', '#2be0d2']}
-                    bgColor="#0e8a80"
+                    layers={['#1C1917', '#FF7A59', '#C8432C']}
+                    bgColor="#C8432C"
                     textColor="white"
                     size="lg"
                     delay={0.1}
@@ -634,7 +619,7 @@ export default function HomePage() {
             ) : (
               /* Form fields cascade upward one after another. Each field animates
                  itself rather than relying on parent variant propagation. */
-              <motion.form
+              <form
                 className="mt-6 flex flex-col gap-6"
                 onSubmit={handleSubmit}
               >
@@ -646,49 +631,40 @@ export default function HomePage() {
                       { label: 'SECTION', name: 'classSection', type: 'text', placeholder: 'XI · Science A', autoComplete: 'off' },
                       { label: 'COLLEGE ID', name: 'collegeId', type: 'text', placeholder: 'Your college ID', autoComplete: 'off' },
                     ].map((field, i) => (
-                      <motion.label
-                        key={field.name}
-                        className="flex flex-col gap-2"
-                        initial={{ y: 28 }}
-                        whileInView={{ y: 0 }}
-                        viewport={{ once: true, amount: 0.25, margin: '0px 0px -10% 0px' }}
-                        transition={{ duration: 0.55, delay: i * 0.07, ease: [0.22, 1, 0.36, 1] }}
-                      >
+                      <Reveal key={field.name} distance={28} delay={i * 0.06}>
+                      <label className="flex flex-col gap-2">
                         <span className="mono-label text-text-tertiary">{field.label}</span>
                         <input
-                          className="rounded-xl border-2 border-border bg-primary px-4 py-3.5 text-body-md text-ink transition-all duration-200 placeholder:text-text-tertiary/70 focus:border-accent focus:outline-none focus:shadow-[0_0_0_4px_rgba(14,138,128,0.12)]"
+                          className="rounded-xl border-2 border-border bg-primary px-4 py-3.5 text-body-md text-ink transition-all duration-200 placeholder:text-text-tertiary/70 focus:border-accent focus:outline-none focus:shadow-[0_0_0_4px_rgba(200,67,44,0.15)]"
                           name={field.name}
                           required
                           type={field.type}
                           placeholder={field.placeholder}
                           autoComplete={field.autoComplete}
                         />
-                      </motion.label>
+                      </label>
+                      </Reveal>
                     ))}
                   </div>
-                  <motion.label
-                    className="flex flex-col gap-2"
-                    initial={{ y: 28 }}
-                    whileInView={{ y: 0 }}
-                    viewport={{ once: true, amount: 0.25, margin: '0px 0px -10% 0px' }}
-                    transition={{ duration: 0.55, delay: 0.36, ease: [0.22, 1, 0.36, 1] }}
-                  >
+                  <Reveal distance={28} delay={0.3}>
+                  <label className="flex flex-col gap-2">
                     <span className="mono-label text-text-tertiary">WHY DO YOU WANT TO JOIN?</span>
                     <textarea
-                      className="rounded-xl border-2 border-border bg-primary px-4 py-3.5 text-body-md text-ink transition-all duration-200 placeholder:text-text-tertiary/70 focus:border-accent focus:outline-none focus:shadow-[0_0_0_4px_rgba(14,138,128,0.12)]"
+                      className="rounded-xl border-2 border-border bg-primary px-4 py-3.5 text-body-md text-ink transition-all duration-200 placeholder:text-text-tertiary/70 focus:border-accent focus:outline-none focus:shadow-[0_0_0_4px_rgba(200,67,44,0.15)]"
                       name="motivation"
                       required
                       rows={4}
                       placeholder="Tell us why you want to join ACCRC..."
                     />
-                  </motion.label>
+                  </label>
+                  </Reveal>
                   {formError && (
                     <p className="m-0 text-body-sm font-bold text-danger" role="alert">
                       {formError}
                     </p>
                   )}
                   <button
-                    className="inline-flex w-fit items-center gap-2.5 rounded-full bg-accent px-8 py-4 font-mono text-mono-sm font-bold uppercase tracking-wider text-white shadow-[0_14px_36px_-12px_rgba(14,138,128,0.8)] transition-all duration-200 hover:bg-accent-hover active:scale-95 disabled:cursor-wait disabled:opacity-65"
+                    className="inline-flex w-full items-center justify-center gap-2.5 rounded-lg bg-accent px-8 py-4 font-mono text-mono-sm font-bold uppercase tracking-wider text-white shadow-[0_14px_36px_-12px_rgba(200,67,44,0.45)] sm:w-fit transition-all duration-200 hover:bg-accent-hover active:scale-95 disabled:cursor-wait disabled:opacity-65"
                     type="submit"
                     disabled={submitting}
                     aria-busy={submitting}
@@ -696,7 +672,7 @@ export default function HomePage() {
                     {submitting ? <Loader2 size={16} className="animate-spin" aria-hidden /> : <Send size={16} aria-hidden />}
                     {submitting ? 'Sending...' : 'Send application'}
                   </button>
-              </motion.form>
+              </form>
             )}
           </div>
           </ScrollSlide>

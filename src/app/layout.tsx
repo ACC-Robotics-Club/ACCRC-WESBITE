@@ -24,12 +24,9 @@ export const metadata: Metadata = {
   description:
     "Build what's next with ACCRC \u2014 the student robotics club at Adamjee Cantonment College, Dhaka.",
   generator: "ACCRC",
+  // favicon.ico is picked up from src/app automatically. The light/dark PNG
+  // and SVG icons previously listed here never existed and 404'd on every load.
   icons: {
-    icon: [
-      { url: "/icon-light-32x32.png", media: "(prefers-color-scheme: light)" },
-      { url: "/icon-dark-32x32.png", media: "(prefers-color-scheme: dark)" },
-      { url: "/icon.svg", type: "image/svg+xml" },
-    ],
     apple: "/apple-icon.png",
   },
   openGraph: {
@@ -55,11 +52,19 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className={`${nunito.variable} ${spaceMono.variable}`}>
+    <html lang="en" className={`${nunito.variable} ${spaceMono.variable} cv-measure`}>
       <head>
-        <meta name="theme-color" content="#ece8e0" media="(prefers-color-scheme: light)" />
-        <meta name="theme-color" content="#0d1b18" media="(prefers-color-scheme: dark)" />
+        <meta name="theme-color" content="#F7F5EE" media="(prefers-color-scheme: light)" />
+        <meta name="theme-color" content="#1C1917" media="(prefers-color-scheme: dark)" />
         <meta name="color-scheme" content="light dark" />
+        {/* Skip laying out offscreen sections from the first paint, unless the
+            page was opened on a #link — then lay everything out so the jump
+            lands exactly (see SiteChrome). Runs before the body renders. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: "if(!location.hash)document.documentElement.classList.remove('cv-measure')",
+          }}
+        />
       </head>
       <body className="antialiased">
         <ScrollProgress />

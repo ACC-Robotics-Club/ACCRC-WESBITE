@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { onAuthStateChanged } from 'firebase/auth';
-import { adminSessionReady, auth } from '@/lib/firebase';
+import { adminSessionReady, auth } from '@/lib/firebaseAuth';
 import { Loader2 } from 'lucide-react';
 
 export default function AdminGuard({ children }: { children: React.ReactNode }) {

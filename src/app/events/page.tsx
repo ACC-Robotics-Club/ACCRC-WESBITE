@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { getFacebookEvents, type FacebookEvent } from '@/lib/facebook-events';
-import { subscribeToEvents, type FirestoreEvent } from '@/lib/firestore';
+import { subscribeToEvents, type FirestoreEvent } from '@/lib/publicData';
 import { EventCard, type PublicEvent } from '@/components/events/EventCard';
 import { FacebookTimeline } from '@/components/events/FacebookTimeline';
 import { Reveal } from '@/components/fx/Reveal';

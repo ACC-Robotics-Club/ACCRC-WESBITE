@@ -22,11 +22,11 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
   ref
 ) {
   const baseStyles =
-    "inline-flex items-center justify-center font-bold rounded-full transition-all duration-200 ease-out focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.97] font-mono uppercase";
+    "inline-flex items-center justify-center font-bold rounded-lg transition-all duration-200 ease-out focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.97] font-mono uppercase";
 
   const variants = {
     primary:
-      "bg-accent text-white hover:bg-accent-hover border border-accent shadow-[0_10px_28px_-12px_rgba(14,138,128,0.8)] tracking-wider",
+      "bg-accent text-white hover:bg-accent-hover border border-accent shadow-[0_10px_24px_-8px_rgba(200,67,44,0.45)] tracking-wider",
     secondary:
       "bg-secondary text-ink border-2 border-border-strong hover:bg-tertiary tracking-wider",
     ghost:

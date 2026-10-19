@@ -4,7 +4,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { SectionReveal } from '@/components/ui/SectionReveal';
 import { Card } from '@/components/ui/Card';
 import { ApplicationForm } from '@/components/portal/ApplicationForm';
-import { subscribeToPortalConfig, type PortalConfig } from '@/lib/firestore';
+import { subscribeToPortalConfig, type PortalConfig } from '@/lib/publicData';
 import { CheckCircle, Lock } from 'lucide-react';
 import { motion } from 'framer-motion';
 

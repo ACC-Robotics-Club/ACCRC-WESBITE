@@ -50,6 +50,18 @@ export function FacebookTimeline({ compact = false }: { compact?: boolean }) {
   const [panelWidth, setPanelWidth] = useState<number | null>(null);
   const height = compact ? 460 : 520;
 
+  /* Facebook's widget polls its own size on a timer for as long as it is on
+     the page. On budget Android phones the iframe shares the page's main
+     thread, and each poll was a ~175ms hitch mid-scroll. So touch devices get
+     a lightweight placeholder and load the live feed only when asked;
+     desktops (where it runs in its own process) load it straight away. */
+  const [feedRequested, setFeedRequested] = useState(false);
+  const [autoLoad, setAutoLoad] = useState(false);
+  useLayoutEffect(() => {
+    setAutoLoad(window.matchMedia('(hover: hover) and (pointer: fine)').matches);
+  }, []);
+  const showFeed = autoLoad || feedRequested;
+
   const measure = useCallback(() => {
     const el = panelRef.current;
     if (!el) return;
@@ -93,11 +105,11 @@ export function FacebookTimeline({ compact = false }: { compact?: boolean }) {
   return (
     <aside
       ref={panelRef}
-      className="relative w-full overflow-hidden rounded-3xl border-2 border-ink bg-ink text-[#e8fffb] shadow-[0_40px_100px_-50px_rgba(13,27,24,0.9)]"
+      className="relative w-full overflow-hidden rounded-3xl border-2 border-ink bg-ink text-[#F7F5EE] shadow-[0_40px_100px_-50px_rgba(28,25,23,0.5)]"
     >
       <div className="dot-grid-light absolute inset-0 opacity-20" aria-hidden />
       <div
-        className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full bg-glow/20 blur-3xl"
+        className="pointer-events-none absolute -right-16 -top-16 h-72 w-72 rounded-full bg-[radial-gradient(circle,rgba(255,122,89,0.2),transparent_68%)]"
         aria-hidden
       />
 
@@ -118,7 +130,7 @@ export function FacebookTimeline({ compact = false }: { compact?: boolean }) {
           <h2 className="font-display text-display-xs font-extrabold tracking-tight">
             Official page feed
           </h2>
-          <p className="mt-2 text-body-sm text-[#e8fffb]/65">
+          <p className="mt-2 text-body-sm text-[#F7F5EE]/65">
             Follow our official page for announcements, event updates, and
             last-minute changes.
           </p>
@@ -126,7 +138,7 @@ export function FacebookTimeline({ compact = false }: { compact?: boolean }) {
             href={FACEBOOK_PAGE}
             target="_blank"
             rel="noopener noreferrer"
-            className="group mt-5 inline-flex shrink-0 items-center gap-2 self-start rounded-full border-2 border-glow px-5 py-2.5 font-mono text-mono-sm font-bold uppercase tracking-wider text-glow transition-colors duration-200 hover:bg-glow hover:text-ink"
+            className="group mt-5 inline-flex min-h-11 shrink-0 items-center gap-2 self-start rounded-full border-2 border-glow px-5 py-2.5 font-mono text-mono-sm font-bold uppercase tracking-wider text-glow transition-colors duration-200 hover:bg-glow hover:text-ink"
           >
             <FaFacebook size={15} aria-hidden />
             Open ACCRC on Facebook
@@ -147,6 +159,20 @@ export function FacebookTimeline({ compact = false }: { compact?: boolean }) {
               style={{ height }}
               aria-hidden
             />
+          ) : !showFeed ? (
+            <div className="flex flex-col items-center justify-center gap-4 bg-ink-soft px-6 py-12 text-center">
+              <FaFacebook size={34} className="text-glow" aria-hidden />
+              <p className="max-w-xs text-body-sm text-[#F7F5EE]/70">
+                See the latest posts and announcements without leaving the page.
+              </p>
+              <button
+                type="button"
+                onClick={() => setFeedRequested(true)}
+                className="inline-flex min-h-11 items-center gap-2 rounded-full bg-glow px-6 py-3 font-mono text-mono-sm font-bold uppercase tracking-wider text-ink transition-transform duration-200 active:scale-95"
+              >
+                Load Facebook feed
+              </button>
+            </div>
           ) : (
             <iframe
               key={pluginWidth}

@@ -1,7 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { motion, useReducedMotion } from 'framer-motion';
+import { useEffect, useState, type CSSProperties } from 'react';
 
 /**
  * Page-entry loader — a "blueprint assembling" sequence.
@@ -16,8 +15,9 @@ import { motion, useReducedMotion } from 'framer-motion';
  */
 
 const MARK = 'ACCRC';
-const DURATION_MS = 1900;
-const EXIT_MS = 850;
+/* Kept short: on a phone every extra moment behind the overlay reads as lag. */
+const DURATION_MS = 1300;
+const EXIT_MS = 700;
 const SEEN_KEY = 'accrc-loader-seen';
 
 /** Deterministic blueprint geometry — no randomness, so SSR and client match. */
@@ -38,7 +38,10 @@ const LINKS = [
 ];
 
 export function PageLoader() {
-  const reduceMotion = useReducedMotion();
+  const [reduceMotion, setReduceMotion] = useState(false);
+  useEffect(() => {
+    setReduceMotion(window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  }, []);
 
   /* One state machine instead of several cascading effects: 'loading' →
      'exiting' → 'done'. Kept deliberately flat so there is no way for the
@@ -98,36 +101,31 @@ export function PageLoader() {
     );
   }
 
+  /* Every piece animates with CSS keyframes (.loader-* in globals.css), so the
+     intro runs on the compositor while the page boots underneath it. */
+  const d = (seconds: number) => ({ '--d': `${seconds}s` }) as CSSProperties;
+
   return (
-    <motion.div
-      className="fixed inset-0 z-[100] overflow-hidden bg-primary"
+    <div
+      className="loader fixed inset-0 z-[100] overflow-hidden bg-primary"
+      data-phase={phase}
+      style={{ '--exit': `${EXIT_MS}ms` } as CSSProperties}
       aria-hidden
-      initial={{ y: 0 }}
-      animate={phase === 'exiting' ? { y: '-101%' } : { y: '0%' }}
-      transition={phase === 'exiting' ? { duration: 0.8, ease: [0.76, 0, 0.24, 1] } : { duration: 0.2 }}
     >
       {/* Blueprint grid that draws itself in */}
-      <motion.div
-        className="absolute inset-0"
+      <div
+        className="loader-fade absolute inset-0"
         style={{
           backgroundImage:
-            'linear-gradient(rgba(13,27,24,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(13,27,24,0.05) 1px, transparent 1px)',
+            'linear-gradient(rgba(28,25,23,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(28,25,23,0.05) 1px, transparent 1px)',
           backgroundSize: '48px 48px',
           maskImage: 'radial-gradient(70% 70% at 50% 50%, #000 20%, transparent 100%)',
           WebkitMaskImage: 'radial-gradient(70% 70% at 50% 50%, #000 20%, transparent 100%)',
         }}
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.5 }}
       />
 
       {/* Scanning highlight */}
-      <motion.div
-        className="absolute inset-x-0 h-32 bg-gradient-to-b from-transparent via-glow/20 to-transparent"
-        initial={{ y: -160 }}
-        animate={{ y: '100vh' }}
-        transition={{ duration: 1.5, ease: 'easeInOut' }}
-      />
+      <div className="loader-scan absolute inset-x-0 h-32 bg-gradient-to-b from-transparent via-glow/20 to-transparent" />
 
       <div className="relative grid h-full place-items-center">
         <div className="relative w-[min(78vw,420px)]">
@@ -138,8 +136,11 @@ export function PageLoader() {
             aria-hidden
           >
             {LINKS.map(([a, b], i) => (
-              <motion.line
+              <line
                 key={`link-${i}`}
+                className="loader-link"
+                style={d(0.15 + i * 0.05)}
+                pathLength={1}
                 x1={NODES[a].x}
                 y1={NODES[a].y}
                 x2={NODES[b].x}
@@ -147,22 +148,17 @@ export function PageLoader() {
                 stroke="var(--color-accent)"
                 strokeWidth="0.4"
                 strokeLinecap="round"
-                initial={{ pathLength: 0, opacity: 0 }}
-                animate={{ pathLength: 1, opacity: 0.55 }}
-                transition={{ duration: 0.5, delay: 0.25 + i * 0.07, ease: 'easeInOut' }}
               />
             ))}
             {NODES.map((n, i) => (
-              <motion.circle
+              <circle
                 key={`node-${i}`}
+                className="loader-node"
+                style={d(0.1 + i * 0.04)}
                 cx={n.x}
                 cy={n.y}
                 r="1.4"
                 fill="var(--color-accent)"
-                initial={{ scale: 0, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                transition={{ duration: 0.3, delay: 0.2 + i * 0.05, ease: 'backOut' }}
-                style={{ transformOrigin: `${n.x}px ${n.y}px` }}
               />
             ))}
           </svg>
@@ -170,39 +166,25 @@ export function PageLoader() {
           {/* Wordmark, letters assembling in */}
           <div className="relative flex items-center justify-center gap-[0.06em]">
             {MARK.split('').map((char, i) => (
-              <motion.span
+              <span
                 key={`${char}-${i}`}
-                className="font-display text-5xl font-black leading-none text-ink md:text-6xl"
-                initial={{ y: 24, opacity: 0, filter: 'blur(6px)' }}
-                animate={{ y: 0, opacity: 1, filter: 'blur(0px)' }}
-                transition={{ duration: 0.5, delay: 0.45 + i * 0.07, ease: [0.22, 1, 0.36, 1] }}
+                className="loader-letter font-display text-5xl font-black leading-none text-ink md:text-6xl"
+                style={d(0.25 + i * 0.06)}
               >
                 {char}
-              </motion.span>
+              </span>
             ))}
           </div>
 
-          {/* Status readout */}
-          <motion.p
-            className="mono-label relative mt-7 text-center text-text-tertiary"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.4, delay: 0.95 }}
-          >
-            Initialising systems
-          </motion.p>
-
           {/* Progress rail */}
-          <div className="relative mt-4 h-px w-full overflow-hidden bg-border">
-            <motion.div
-              className="absolute inset-y-0 left-0 bg-accent"
-              initial={{ width: '0%' }}
-              animate={{ width: '100%' }}
-              transition={{ duration: DURATION_MS / 1000, ease: [0.4, 0, 0.2, 1] }}
+          <div className="relative mt-8 h-px w-full overflow-hidden bg-border">
+            <div
+              className="loader-rail absolute inset-0 origin-left bg-accent"
+              style={{ '--rail': `${DURATION_MS}ms` } as CSSProperties}
             />
           </div>
         </div>
       </div>
-    </motion.div>
+    </div>
   );
 }

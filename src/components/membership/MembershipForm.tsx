@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Input, Textarea } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
-import { submitRegistration } from '@/lib/firestore';
+import { submitRegistration } from '@/lib/publicData';
 import { CheckCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
@@ -65,7 +65,7 @@ export function MembershipForm() {
   }
 
   return (
-    <div className="w-full max-w-2xl mx-auto rounded-3xl border-2 border-border-strong bg-secondary p-6 md:p-10 shadow-[0_40px_90px_-60px_rgba(13,27,24,0.6)]">
+    <div className="w-full max-w-2xl mx-auto rounded-3xl border-2 border-border-strong bg-secondary p-6 md:p-10 shadow-[0_40px_90px_-60px_rgba(28,25,23,0.35)]">
       {/* Progress Bar */}
       <div className="flex items-center justify-between mb-10 relative">
         <div className="absolute left-0 top-1/2 -translate-y-1/2 w-full h-0.5 bg-border z-0" />
@@ -73,7 +73,7 @@ export function MembershipForm() {
           <div key={num} className="relative z-10 flex flex-col items-center gap-2">
             <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-mono transition-all duration-300
               ${step > num ? 'bg-accent text-white border-accent' : 
-                step === num ? 'bg-accent text-white border-accent shadow-[0_0_0_6px_rgba(14,138,128,0.15)]' : 
+                step === num ? 'bg-accent text-white border-accent shadow-[0_0_0_6px_rgba(200,67,44,0.18)]' : 
                 'bg-secondary text-text-tertiary border-2 border-border'} border`}
             >
               {num}

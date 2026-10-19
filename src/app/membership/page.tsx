@@ -47,13 +47,13 @@ export default function MembershipPage() {
               </Reveal>
               <ul className="space-y-3">
                 {benefits.map((benefit, i) => (
-                  <ScrollSlide key={benefit} axis="y" from={60 + i * 18} to={-12}>
-                    <li className="flex items-start gap-4 rounded-2xl border-2 border-border bg-secondary p-4 transition-colors duration-300 hover:border-accent">
+                  <ScrollSlide key={benefit} as="li" axis="y" from={60 + i * 18} to={-12} delay={i * 0.05}>
+                    <div className="flex items-start gap-4 rounded-2xl border-2 border-border bg-secondary p-4 transition-colors duration-300 hover:border-accent">
                       <span className="mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-full bg-accent text-white" aria-hidden>
                         <Check className="h-3.5 w-3.5" />
                       </span>
                       <span className="text-body-sm text-text-secondary">{benefit}</span>
-                    </li>
+                    </div>
                   </ScrollSlide>
                 ))}
               </ul>

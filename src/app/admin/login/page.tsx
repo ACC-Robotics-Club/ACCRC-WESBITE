@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { motion } from 'framer-motion';
 import { Lock, Loader2 } from 'lucide-react';
-import { adminSessionReady, auth } from '@/lib/firebase';
+import { adminSessionReady, auth } from '@/lib/firebaseAuth';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Magnetic } from '@/components/fx/Magnetic';
@@ -61,7 +61,7 @@ export default function AdminLogin() {
 
         <form
           onSubmit={handleLogin}
-          className="flex flex-col gap-5 rounded-3xl border-2 border-border-strong bg-secondary p-7 shadow-[0_40px_90px_-55px_rgba(13,27,24,0.7)]"
+          className="flex flex-col gap-5 rounded-3xl border-2 border-border-strong bg-secondary p-7 shadow-[0_40px_90px_-55px_rgba(28,25,23,0.35)]"
         >
           {error && (
             <div className="rounded-xl border-2 border-danger/40 bg-danger/10 p-3 font-mono text-body-sm font-bold text-danger">

@@ -12,7 +12,7 @@ export function MissionSection() {
               </span>
               <div className="w-12 h-px bg-accent mb-6"></div>
               <h2 className="text-display-md font-bold text-text-primary leading-tight">
-                Building Tomorrow's Engineers
+                Building Tomorrow&apos;s Engineers
               </h2>
             </div>
             <div className="md:col-span-7 flex items-center">

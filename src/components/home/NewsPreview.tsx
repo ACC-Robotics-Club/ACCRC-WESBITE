@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Card } from '@/components/ui/Card';
 import { SectionReveal } from '@/components/ui/SectionReveal';
-import { getLatestNews, type FirestoreNews } from '@/lib/firestore';
+import { getLatestNews, type FirestoreNews } from '@/lib/publicData';
 
 export function NewsPreview() {
   const [news, setNews] = useState<FirestoreNews[]>([]);

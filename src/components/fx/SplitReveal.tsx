@@ -1,16 +1,16 @@
 'use client';
 
-import { motion } from 'framer-motion';
-import type { ReactNode } from 'react';
+import { useEffect, useRef, type CSSProperties, type ReactNode } from 'react';
+import { track } from './scrollEngine';
 
 /**
- * Editorial line-by-line reveal. Pass each visual line of the heading as a
- * child string or node; every line rises out of an overflow mask in a
- * staggered sequence when scrolled into view.
+ * Editorial line-by-line reveal. Pass each visual line of the heading; every
+ * line rises out of an overflow mask in a staggered sequence.
  *
- * The `whileInView` trigger lives on the untransformed mask, not on the
- * translated line: an element pushed below its own `overflow: hidden` mask has
- * a zero visible intersection ratio, so observing it directly would deadlock.
+ * Pure CSS: below the fold the shared scroll engine flips it on when the
+ * heading enters the viewport (a transition per line); with `intro` it plays
+ * as a keyframe animation from first paint, for headings already on screen at
+ * load. Either way it runs on the compositor, not in JavaScript.
  */
 export function SplitReveal({
   lines,
@@ -18,6 +18,7 @@ export function SplitReveal({
   lineClassName = '',
   delay = 0,
   stagger = 0.12,
+  intro = false,
   as: Tag = 'h2',
 }: {
   lines: ReactNode[];
@@ -25,33 +26,27 @@ export function SplitReveal({
   lineClassName?: string;
   delay?: number;
   stagger?: number;
+  /** Animate immediately on load instead of when scrolled into view. */
+  intro?: boolean;
   as?: 'h1' | 'h2' | 'h3' | 'p' | 'div';
 }) {
+  const ref = useRef<HTMLHeadingElement>(null);
+
+  useEffect(() => {
+    if (intro || !ref.current) return;
+    return track(ref.current, { offset: ['start 1', 'start 0'], reveal: true });
+  }, [intro]);
+
+  const style = { '--split-delay': `${delay}s`, '--split-stagger': `${stagger}s` } as CSSProperties;
+
   return (
-    <Tag className={className}>
+    <Tag ref={ref} className={`fx-split ${intro ? 'fx-split--intro' : ''} ${className}`} style={style}>
       {lines.map((line, i) => (
-        <motion.span
-          className="split-line-mask"
-          key={i}
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, amount: 0.2, margin: '0px 0px -10% 0px' }}
-          variants={{ visible: { transition: { delayChildren: delay + i * stagger } } }}
-        >
-          <motion.span
-            className={`block ${lineClassName}`}
-            variants={{
-              hidden: { y: '110%', rotate: 2.5 },
-              visible: {
-                y: '0%',
-                rotate: 0,
-                transition: { duration: 0.85, ease: [0.22, 1, 0.36, 1] },
-              },
-            }}
-          >
+        <span className="split-line-mask" key={i}>
+          <span className={`fx-split__line block ${lineClassName}`} style={{ '--i': i } as CSSProperties}>
             {line}
-          </motion.span>
-        </motion.span>
+          </span>
+        </span>
       ))}
     </Tag>
   );
