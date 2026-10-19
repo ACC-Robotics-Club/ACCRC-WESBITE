@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { Card } from '@/components/ui/Card';
-import type { FirestoreNews } from '@/lib/firestore';
+import type { FirestoreNews } from '@/lib/publicData';
 
 interface NewsCardProps {
   news: FirestoreNews;

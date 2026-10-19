@@ -2,10 +2,11 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { getFacebookEvents, type FacebookEvent } from '@/lib/facebook-events';
-import { subscribeToEvents, type FirestoreEvent } from '@/lib/firestore';
+import { subscribeToEvents, type FirestoreEvent } from '@/lib/publicData';
 import { EventCard, type PublicEvent } from '@/components/events/EventCard';
 import { FacebookTimeline } from '@/components/events/FacebookTimeline';
-import { motion } from 'framer-motion';
+import { Reveal } from '@/components/fx/Reveal';
+import { SplitReveal } from '@/components/fx/SplitReveal';
 
 export default function EventsPage() {
   const [clubEvents, setClubEvents] = useState<FirestoreEvent[]>([]);
@@ -46,52 +47,82 @@ export default function EventsPage() {
   }, [clubEvents, facebookEvents]);
 
   return (
-    <div className="pt-24 min-h-screen bg-[#f6f0e7]">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-12"
-        >
-          <span className="font-mono text-xs tracking-widest text-[#c94030] mb-4 block uppercase">EVENTS</span>
-          <h1 className="text-4xl md:text-5xl font-bold text-[#141210]">Competitions, workshops & meetups</h1>
-        </motion.div>
+    <div className="bg-primary pt-32 min-h-screen">
+      <div className="container-content py-12 md:py-16">
+        <Reveal>
+          <p className="mono-label mb-4 flex items-center gap-3 text-accent">
+            <span className="inline-block h-px w-10 bg-accent" aria-hidden />
+            EVENTS
+          </p>
+        </Reveal>
+        <SplitReveal
+          delay={0.1}
+          className="font-display text-display-lg font-black text-ink"
+          lines={[
+            <>Competitions,</>,
+            <><span className="text-text-tertiary">workshops &amp; meetups</span></>,
+          ]}
+        />
 
-        <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_360px] gap-10 items-start">
+        <div className="mt-16 grid grid-cols-1 items-start gap-10 xl:grid-cols-[minmax(0,1fr)_360px]">
           <div>
             {loading ? (
               <div className="animate-pulse space-y-6">
-                <div className="h-64 bg-[#ede7da] border border-[#cfc9bc] w-full" />
-                <div className="h-64 bg-[#ede7da] border border-[#cfc9bc] w-full" />
+                <div className="h-64 w-full rounded-2xl border-2 border-border bg-tertiary" />
+                <div className="h-64 w-full rounded-2xl border-2 border-border bg-tertiary" />
               </div>
             ) : error ? (
-              <p className="text-[#c72c2c]">Events could not be loaded. Please try again later.</p>
+              <p className="text-danger font-bold">Events could not be loaded. Please try again later.</p>
             ) : upcoming.length === 0 ? (
-              <section className="border border-[#cfc9bc] bg-[#ede7da] p-8 sm:p-12 text-center">
-                <p className="font-mono text-xs tracking-widest text-[#c94030] uppercase mb-3">Calendar clear</p>
-                <h2 className="text-2xl font-bold text-[#141210] mb-3">No upcoming events right now.</h2>
-                <p className="text-[#3a3530]">Stay tuned! New events will appear here as soon as the club publishes them.</p>
-              </section>
+              <Reveal>
+                <section className="rounded-3xl border-2 border-border-strong bg-secondary p-8 text-center sm:p-12">
+                  <p className="mono-label mb-3 text-accent">Calendar clear</p>
+                  <h2 className="mb-3 font-display text-display-xs font-extrabold text-ink">
+                    No upcoming events right now.
+                  </h2>
+                  <p className="text-body-sm text-text-secondary">
+                    Stay tuned! New events will appear here as soon as the club publishes them.
+                  </p>
+                </section>
+              </Reveal>
             ) : (
               <section>
-                <h2 className="text-2xl font-bold mb-6 text-[#141210]">Upcoming events</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {upcoming.map((event) => <EventCard key={event.id} event={event} />)}
+                <Reveal>
+                  <h2 className="mb-6 font-display text-display-xs font-extrabold tracking-tight text-ink">
+                    Upcoming events
+                  </h2>
+                </Reveal>
+                <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+                  {upcoming.map((event, i) => (
+                    <Reveal key={event.id} delay={0.06 * i}>
+                      <EventCard event={event} />
+                    </Reveal>
+                  ))}
                 </div>
               </section>
             )}
 
             {past.length > 0 && (
               <section className="mt-16 opacity-80">
-                <h2 className="text-2xl font-bold mb-6 text-[#3a3530]">Past events</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {past.map((event) => <EventCard key={event.id} event={event} />)}
+                <Reveal>
+                  <h2 className="mb-6 font-display text-display-xs font-extrabold tracking-tight text-text-secondary">
+                    Past events
+                  </h2>
+                </Reveal>
+                <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+                  {past.map((event, i) => (
+                    <Reveal key={event.id} delay={0.06 * i}>
+                      <EventCard event={event} />
+                    </Reveal>
+                  ))}
                 </div>
               </section>
             )}
           </div>
 
-          <FacebookTimeline />
+          <Reveal delay={0.15} direction="right">
+            <FacebookTimeline />
+          </Reveal>
         </div>
       </div>
     </div>

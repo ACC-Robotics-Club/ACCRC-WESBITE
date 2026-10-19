@@ -1,36 +1,42 @@
-
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { Menu, X, HelpCircle } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import React, { useState, useEffect, useRef } from "react";
+import { Menu, X, ArrowUpRight, HelpCircle } from "lucide-react";
 import {
   subscribeToFestConfig,
   subscribeToPortalConfig,
   type FestConfig,
   type PortalConfig,
-} from "@/lib/firestore";
+} from "@/lib/publicData";
+import { Magnetic } from "@/components/fx/Magnetic";
 
-const standardNavLinks = [
-  { href: "/", label: "Home" },
-  { href: "/events/", label: "Events" },
-  { href: "/#achievements", label: "Achievements" },
-  { href: "/membership/", label: "Membership" },
-  { href: "/news/", label: "News" },
-  { href: "/about/", label: "About" },
+const navLinks = [
+  { href: "/#mission", label: "MISSION" },
+  { href: "/events/", label: "EVENTS" },
+  { href: "/#achievements", label: "ACHIEVEMENTS" },
+  { href: "/news/", label: "UPDATES" },
 ];
 
 export function Navbar({
   onHelpClick,
   topOffset = 0,
 }: {
+  /** Opens the site guide; shows a help button when provided. */
   onHelpClick?: () => void;
+  /** Height of the global event banner above the navbar. */
   topOffset?: number;
 } = {}) {
   const [isOpen, setIsOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  /* The closed menu stays mounted for its CSS exit transition; `inert` keeps
+     it out of the tab order and away from screen readers meanwhile. */
+  useEffect(() => {
+    menuRef.current?.toggleAttribute("inert", !isOpen);
+  }, [isOpen]);
   const [scrolled, setScrolled] = useState(false);
-  const [festConfig, setFestConfig] = useState<FestConfig | null>(null);
   const [portalConfig, setPortalConfig] = useState<PortalConfig | null>(null);
+  const [festConfig, setFestConfig] = useState<FestConfig | null>(null);
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
@@ -38,10 +44,24 @@ export function Navbar({
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  /* Lock scrolling only while the menu is open. This used to clear the body's
+     overflow on mount too, which released the page loader's scroll lock. */
   useEffect(() => {
-    if (isOpen) document.body.style.overflow = "hidden";
-    else document.body.style.overflow = "";
-    return () => { document.body.style.overflow = ""; };
+    if (!isOpen) return;
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setIsOpen(false);
+    };
+    const desktop = window.matchMedia("(min-width: 1024px)");
+    const onDesktop = () => desktop.matches && setIsOpen(false);
+    window.addEventListener("keydown", onKey);
+    desktop.addEventListener("change", onDesktop);
+    return () => {
+      document.body.style.overflow = previous;
+      window.removeEventListener("keydown", onKey);
+      desktop.removeEventListener("change", onDesktop);
+    };
   }, [isOpen]);
 
   useEffect(() => {
@@ -58,117 +78,159 @@ export function Navbar({
   const leadershipApplicationsOpen = Boolean(
     portalConfig?.execOpen || portalConfig?.prefectOpen || portalConfig?.subExecOpen
   );
-  const navLinks = [
-    ...standardNavLinks,
-    ...(festConfig?.isLaunched === true ? [{ href: "/fest/", label: "Fest" }] : []),
-    ...(leadershipApplicationsOpen ? [{ href: "/portal/", label: "Leadership" }] : []),
+  const links = [
+    ...navLinks,
+    ...(festConfig?.isLaunched === true ? [{ href: "/fest/", label: "FEST" }] : []),
+    ...(leadershipApplicationsOpen ? [{ href: "/portal/", label: "LEADERSHIP" }] : []),
   ];
 
   return (
     <header
-      style={{ top: `${topOffset}px` }}
-      className={`fixed left-0 right-0 z-[90] transition-all duration-200 ${
-        scrolled
-          ? "bg-[#f6f0e7]/95 backdrop-blur-md border-b border-[#cfc9bc] shadow-[0_1px_4px_rgba(20,18,16,0.08)]"
-          : "bg-transparent"
-      }`}
+      className="fixed left-0 right-0 z-50 px-4 pt-4 sm:px-6 sm:pt-5"
+      style={{ top: `${topOffset}px`, "--nav-offset": `${topOffset}px` } as React.CSSProperties}
     >
-      <nav className="container-content flex items-center justify-between h-[68px] md:h-[76px]">
-        {/* Logo */}
+      <nav
+        className={`container-content flex items-center justify-between gap-4 rounded-xl border px-3 py-2 transition-[background-color,border-color,box-shadow] duration-300 sm:px-5 sm:py-2.5 ${
+          scrolled || isOpen
+            ? "border-border bg-primary/95 shadow-[0_12px_36px_-18px_rgba(28,25,23,0.18)] lg:backdrop-blur-xl"
+            : "border-transparent bg-transparent"
+        }`}
+        aria-label="Main navigation"
+      >
+        {/* Logo / Wordmark */}
         <a href="/" className="flex items-center gap-3 group" aria-label="ACCRC Home">
           <img
-            src="/accrc-logo.png"
+            src="/accrc-logo-sm.webp"
+            width={40}
+            height={40}
             alt="ACCRC Logo"
-            width={44}
-            height={44}
-            className="h-10 w-10 md:h-11 md:w-11 rounded-full object-contain filter drop-shadow-sm transition-transform duration-200 group-hover:scale-105"
+            className="h-10 w-10 rounded-full object-cover border border-border-strong transition-transform duration-300 group-hover:rotate-12"
           />
           <div className="flex flex-col leading-tight">
-            <span className="font-extrabold text-[#141210] text-[15px] md:text-[17px] tracking-[0.08em] leading-none">
+            <span className="font-display text-base font-black tracking-tight text-ink">
               ACCRC
             </span>
-            <span className="font-mono text-[9px] md:text-[10px] font-bold text-[#1e1b18] tracking-[0.06em] uppercase mt-[3px] leading-tight">
-              Adamjee Cantonment College<br className="sm:hidden" /> Robotics Club
+            <span className="whitespace-nowrap font-mono text-[10px] font-bold uppercase leading-none tracking-normal text-text-secondary min-[360px]:tracking-wider">
+              Adamjee Cantonment College
+            </span>
+            <span className="whitespace-nowrap font-mono text-[10px] font-bold uppercase leading-none tracking-normal text-text-secondary min-[360px]:tracking-wider">
+              Robotics Club
             </span>
           </div>
         </a>
 
         {/* Desktop Nav */}
-        <div className="hidden md:flex items-center gap-0.5">
-          {navLinks.map((link) => (
+        <div className="hidden lg:flex items-center gap-6 xl:gap-8">
+          {links.map((link) => (
             <a
               key={link.href}
               href={link.href}
-              className="px-4 py-2.5 text-[0.8125rem] font-semibold tracking-[0.03em] text-[#3a3530] hover:text-[#c94030] transition-colors duration-150 relative group"
+              className="text-xs font-mono font-bold tracking-widest text-ink hover:text-accent transition-colors duration-200 uppercase"
             >
               {link.label}
-              <span className="absolute bottom-1.5 left-1/2 -translate-x-1/2 w-0 h-[1.5px] bg-[#c94030] transition-all duration-200 group-hover:w-2/3" />
+            </a>
+          ))}
+        </div>
+
+        {/* Desktop actions */}
+        <div className="hidden lg:flex items-center gap-2.5">
+          {onHelpClick && (
+            <button
+              type="button"
+              onClick={onHelpClick}
+              aria-label="How it works — open site guide"
+              title="How it works"
+              className="grid h-10 w-10 place-items-center rounded-lg text-text-secondary transition-colors hover:bg-tertiary hover:text-accent"
+            >
+              <HelpCircle size={18} aria-hidden />
+            </button>
+          )}
+          <a
+            href="/admin/"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-border-strong bg-secondary px-4 py-2 font-mono text-mono-sm font-bold uppercase tracking-wider text-text-primary transition-all duration-200 hover:bg-tertiary active:scale-95"
+          >
+            Portal <ArrowUpRight size={14} aria-hidden />
+          </a>
+          <Magnetic strength={0.25}>
+            <a
+              href="/membership/"
+              className="inline-flex items-center rounded-lg bg-accent px-5 py-2 font-mono text-mono-sm font-bold uppercase tracking-wider text-white shadow-[0_8px_24px_-8px_rgba(200,67,44,0.45)] transition-all duration-200 hover:bg-accent-hover active:scale-95"
+            >
+              Join us
+            </a>
+          </Magnetic>
+        </div>
+
+        {/* Mobile Menu Toggle */}
+        <button
+          className="lg:hidden flex h-11 w-11 items-center justify-center rounded-lg border border-border-strong bg-secondary text-text-primary"
+          onClick={() => setIsOpen(!isOpen)}
+          aria-label={isOpen ? "Close menu" : "Open menu"}
+          aria-expanded={isOpen}
+          aria-controls="mobile-menu"
+        >
+          {isOpen ? <X size={20} /> : <Menu size={20} />}
+        </button>
+      </nav>
+
+      {/* Mobile Menu — always mounted and animated with CSS transitions (see
+          .mobile-menu in globals.css), so opening it costs no JavaScript
+          animation work. `inert` keeps the closed menu out of tab order. */}
+      <button
+        type="button"
+        aria-label="Close menu"
+        tabIndex={-1}
+        onClick={() => setIsOpen(false)}
+        className="mobile-menu-backdrop lg:hidden fixed inset-0 -z-10 cursor-default bg-ink/30"
+        data-open={isOpen}
+      />
+      <div
+        id="mobile-menu"
+        className="mobile-menu lg:hidden fixed inset-x-4 top-[calc(5.25rem+var(--nav-offset,0px))] z-40 max-h-[calc(100svh-6.5rem-var(--nav-offset,0px))] overflow-y-auto overscroll-contain rounded-3xl border border-border bg-secondary p-5 shadow-[0_30px_80px_-30px_rgba(28,25,23,0.35)] sm:inset-x-6 sm:top-[calc(6rem+var(--nav-offset,0px))] sm:p-6"
+        data-open={isOpen}
+        ref={menuRef}
+      >
+        <div className="flex flex-col">
+          {[
+            { href: "/", label: "Home" },
+            ...links,
+            { href: "/admin/", label: "Portals" },
+          ].map((link, i) => (
+            <a
+              key={link.href}
+              href={link.href}
+              onClick={() => setIsOpen(false)}
+              style={{ "--i": i } as React.CSSProperties}
+              className="mobile-menu__item flex items-center justify-between border-b border-border py-3 text-[1.6rem] font-extrabold leading-tight tracking-display transition-colors last:border-0 hover:text-accent active:text-accent"
+            >
+              {link.label}
+              <ArrowUpRight size={22} className="text-text-tertiary" aria-hidden />
             </a>
           ))}
           {onHelpClick && (
             <button
-              onClick={onHelpClick}
-              aria-label="How it works — open site guide"
-              title="How it works"
-              className="ml-1 p-2 text-[#6b6258] hover:text-[#c94030] transition-colors rounded-full"
+              type="button"
+              onClick={() => {
+                setIsOpen(false);
+                onHelpClick();
+              }}
+              style={{ "--i": 7 } as React.CSSProperties}
+              className="mobile-menu__item flex min-h-11 items-center gap-2 py-3 text-left font-mono text-mono-sm font-bold uppercase tracking-wider text-text-secondary transition-colors hover:text-accent"
             >
-              <HelpCircle size={18} />
+              <HelpCircle size={18} aria-hidden />
+              How it works
             </button>
           )}
-        </div>
-
-        {/* Mobile Toggle */}
-        <button
-          className="md:hidden p-2 text-[#3a3530] hover:text-[#141210] transition-colors"
-          onClick={() => setIsOpen(!isOpen)}
-          aria-label={isOpen ? "Close menu" : "Open menu"}
-          aria-expanded={isOpen}
-        >
-          {isOpen ? <X size={22} /> : <Menu size={22} />}
-        </button>
-      </nav>
-
-      {/* Mobile Menu */}
-      <AnimatePresence>
-        {isOpen && (
-          <motion.div
-            initial={{ opacity: 0, y: -8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            transition={{ duration: 0.18, ease: "easeOut" }}
-            style={{ top: `${topOffset + 68}px` }}
-            className="md:hidden fixed inset-x-0 bottom-0 bg-[#f6f0e7] z-[90] border-b border-[#cfc9bc] shadow-[0_8px_24px_rgba(20,18,16,0.1)]"
+          <a
+            href="/membership/"
+            onClick={() => setIsOpen(false)}
+            style={{ "--i": 8 } as React.CSSProperties}
+            className="mobile-menu__item mt-5 inline-flex items-center justify-center rounded-full bg-accent px-6 py-4 font-mono text-mono-sm font-bold uppercase tracking-wider text-white"
           >
-            <div className="container-content pt-4 pb-6 flex flex-col">
-              {navLinks.map((link, i) => (
-                <motion.a
-                  key={link.href}
-                  href={link.href}
-                  onClick={() => setIsOpen(false)}
-                  initial={{ opacity: 0, x: -16 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: i * 0.04, duration: 0.18 }}
-                  className="text-[1rem] font-bold tracking-[0.03em] text-[#141210] py-3.5 border-b border-[#cfc9bc] last:border-0 hover:text-[#c94030] transition-colors"
-                >
-                  {link.label}
-                </motion.a>
-              ))}
-              {onHelpClick && (
-                <motion.button
-                  initial={{ opacity: 0, x: -16 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: navLinks.length * 0.04, duration: 0.18 }}
-                  onClick={() => { setIsOpen(false); onHelpClick(); }}
-                  className="flex items-center gap-2 text-[1rem] font-bold tracking-[0.03em] text-[#6b6258] py-3.5 border-t border-[#cfc9bc] hover:text-[#c94030] transition-colors"
-                >
-                  <HelpCircle size={18} />
-                  How it Works
-                </motion.button>
-              )}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+            Join us
+          </a>
+        </div>
+      </div>
     </header>
   );
 }

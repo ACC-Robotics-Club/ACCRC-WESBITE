@@ -3,7 +3,7 @@
 import React, { useEffect, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { getNewsPost, type FirestoreNews } from '@/lib/firestore';
+import { getNewsPost, type FirestoreNews } from '@/lib/publicData';
 import { SectionReveal } from '@/components/ui/SectionReveal';
 
 function NewsDetailContent() {

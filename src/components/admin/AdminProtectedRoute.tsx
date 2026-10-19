@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { onAuthStateChanged, signOut, type User } from 'firebase/auth';
-import { auth, adminSessionReady } from '@/lib/firebase';
+import { auth, adminSessionReady } from '@/lib/firebaseAuth';
 import { Loader2, LogOut, Flame, Calendar, Trophy, Newspaper, Users, ShieldCheck, LayoutDashboard } from 'lucide-react';
 
 interface AdminProtectedRouteProps {

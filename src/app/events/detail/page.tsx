@@ -55,7 +55,7 @@ function EventDetailContent() {
 
   return (
     <div className="max-w-4xl mx-auto">
-      <Link href="/events" className="inline-flex items-center text-sm text-[#3a3530] hover:text-primary mb-8 transition-colors">
+      <Link href="/events" className="inline-flex items-center text-sm text-[#3a3530] hover:text-ink mb-8 transition-colors">
         <ArrowLeft className="w-4 h-4 mr-2" />
         Back to Events
       </Link>

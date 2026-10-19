@@ -62,7 +62,7 @@ export function EventCard({ event }: { event: PublicEvent }) {
               href={event.permalinkUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 text-sm text-[#c94030] hover:text-primary transition-colors"
+              className="inline-flex items-center gap-2 text-sm text-[#c94030] hover:text-ink transition-colors"
             >
               View on Facebook <ExternalLink className="w-4 h-4" />
             </a>

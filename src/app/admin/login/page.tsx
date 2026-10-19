@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { signInWithEmailAndPassword } from 'firebase/auth';
-import { adminSessionReady, auth } from '@/lib/firebase';
+import { adminSessionReady, auth } from '@/lib/firebaseAuth';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Lock } from 'lucide-react';

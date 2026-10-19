@@ -19,6 +19,14 @@ interface GraphEvent {
   permalink_url?: string;
 }
 
+interface GraphPost {
+  id: string;
+  message?: string;
+  created_time?: string;
+  permalink_url?: string;
+  full_picture?: string;
+}
+
 function getLocation(event: GraphEvent): string {
   const placeName = event.place?.name;
   if (placeName) return placeName;
@@ -42,31 +50,52 @@ function json(body: unknown, init?: ResponseInit) {
 /**
  * Cloudflare Pages Function that keeps the Facebook access token server-side.
  * Add FACEBOOK_PAGE_ID and FACEBOOK_PAGE_ACCESS_TOKEN in Cloudflare Pages to
- * enable automatic event imports from the official ACCRC Facebook page.
+ * enable automatic imports from the official ACCRC Facebook page.
+ *
+ * Two feeds are read, because the club announces most of its activities as
+ * ordinary posts rather than as structured calendar events:
+ *   - `/{id}/events` — dated, place-aware entries for the calendar
+ *   - `/{id}/feed`   — recent posts, surfaced on the site as "latest activity"
+ * Either one failing still returns whatever the other produced.
  */
 export const onRequestGet = async ({ env }: PagesContext): Promise<Response> => {
   if (!env.FACEBOOK_PAGE_ID || !env.FACEBOOK_PAGE_ACCESS_TOKEN) {
-    return json({ events: [], configured: false });
+    return json({ events: [], posts: [], configured: false });
   }
 
   const version = env.FACEBOOK_GRAPH_API_VERSION || "v24.0";
-  const url = new URL(`https://graph.facebook.com/${version}/${env.FACEBOOK_PAGE_ID}/events`);
-  url.searchParams.set(
-    "fields",
-    "id,name,description,start_time,end_time,place,cover,permalink_url"
-  );
-  url.searchParams.set("access_token", env.FACEBOOK_PAGE_ACCESS_TOKEN);
+  const base = `https://graph.facebook.com/${version}/${env.FACEBOOK_PAGE_ID}`;
+  const token = env.FACEBOOK_PAGE_ACCESS_TOKEN;
 
-  try {
+  const read = async <T>(path: string, fields: string, limit: number) => {
+    const url = new URL(`${base}${path}`);
+    url.searchParams.set("fields", fields);
+    url.searchParams.set("limit", String(limit));
+    url.searchParams.set("access_token", token);
     const response = await fetch(url);
     if (!response.ok) {
-      console.error("Facebook events request failed", response.status);
-      return json({ events: [], configured: true, error: "facebook_unavailable" }, { status: 502 });
+      console.error(`Facebook ${path} request failed`, response.status);
+      return null;
     }
+    return ((await response.json()) as { data?: T[] }).data ?? [];
+  };
 
-    const payload = (await response.json()) as { data?: GraphEvent[] };
+  try {
+    const [rawEvents, rawPosts] = await Promise.all([
+      read<GraphEvent>(
+        "/events",
+        "id,name,description,start_time,end_time,place,cover,permalink_url",
+        25
+      ),
+      read<GraphPost>(
+        "/feed",
+        "id,message,created_time,permalink_url,full_picture",
+        12
+      ),
+    ]);
+
     const now = Date.now();
-    const events = (payload.data ?? [])
+    const events = (rawEvents ?? [])
       .filter((event) => {
         if (!event.start_time) return false;
         return new Date(event.start_time).getTime() >= now;
@@ -82,9 +111,29 @@ export const onRequestGet = async ({ env }: PagesContext): Promise<Response> => 
         permalinkUrl: event.permalink_url ?? `https://www.facebook.com/events/${event.id}`,
       }));
 
-    return json({ events, configured: true });
+    // Posts are announcements rather than calendar entries. The first line
+    // usually reads as the title, so it becomes the headline and the rest of
+    // the message is kept as supporting copy.
+    const posts = (rawPosts ?? [])
+      .filter((post) => Boolean(post.message || post.permalink_url))
+      .map((post) => {
+        const message = (post.message ?? "").trim();
+        const [firstLine, ...rest] = message.split("\n").filter(Boolean);
+        return {
+          id: post.id,
+          message,
+          headline: (firstLine ?? message).slice(0, 90),
+          body: rest.join(" ").slice(0, 220),
+          createdTime: post.created_time,
+          permalinkUrl:
+            post.permalink_url ?? `https://www.facebook.com/${env.FACEBOOK_PAGE_ID}/posts/${post.id}`,
+          imageUrl: post.full_picture,
+        };
+      });
+
+    return json({ events, posts, configured: true });
   } catch (error) {
-    console.error("Facebook events request failed", error);
-    return json({ events: [], configured: true, error: "facebook_unavailable" }, { status: 502 });
+    console.error("Facebook request failed", error);
+    return json({ events: [], posts: [], configured: true, error: "facebook_unavailable" }, { status: 502 });
   }
 };

@@ -1,8 +1,12 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
-import { Award, GraduationCap, IdCard, Medal, ShieldCheck, Trophy, UsersRound } from 'lucide-react';
-import { subscribeToAchievements, type FirestoreAchievement } from '@/lib/firestore';
+import { memo, startTransition, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { Award, ChevronDown, GraduationCap, IdCard, Medal, ShieldCheck, Trophy, UsersRound } from 'lucide-react';
+import { subscribeToAchievements, type FirestoreAchievement } from '@/lib/publicData';
+import { SplitReveal } from '@/components/fx/SplitReveal';
+import { Parallax } from '@/components/fx/Parallax';
+import { TiltCard } from '@/components/fx/TiltCard';
+import { RiseIn } from '@/components/fx/RiseIn';
 import styles from './AchievementsAndPanels.module.css';
 
 type PanelKey = '2026' | '2025' | '2024' | '2023' | 'founder';
@@ -106,91 +110,91 @@ const panels: Record<PanelKey, PanelData> = {
       {
         name: 'Masroor Ali Neil',
         designation: 'President',
-        imageUrl: '/leadership/committee-26/photo_6170079490235634212_y.jpg',
+        imageUrl: '/leadership/committee-26/photo_6170079490235634212_y.webp',
         imageFrame: 'square',
       },
       {
         name: 'Md. Shafayet Biswas',
         designation: 'General Secretary',
-        imageUrl: '/leadership/committee-26/photo_6170079490235634213_y.jpg',
+        imageUrl: '/leadership/committee-26/photo_6170079490235634213_y.webp',
         imageFrame: 'square',
       },
       {
         name: 'Fatema Tooz-Zohra Falguni',
         designation: 'Assistant General Secretary',
-        imageUrl: '/leadership/committee-26/photo_6170079490235634214_y.jpg',
+        imageUrl: '/leadership/committee-26/photo_6170079490235634214_y.webp',
         imageFrame: 'square',
       },
       {
         name: 'Md. Farhad Hossain',
         designation: 'Organizing Secretary',
-        imageUrl: '/leadership/committee-26/photo_6170079490235634215_y.jpg',
+        imageUrl: '/leadership/committee-26/photo_6170079490235634215_y.webp',
         imageFrame: 'square',
       },
       {
         name: 'Waqil Chowdhury Jim',
         designation: 'Administrative Secretary',
-        imageUrl: '/leadership/committee-26/photo_6170079490235634216_y.jpg',
+        imageUrl: '/leadership/committee-26/photo_6170079490235634216_y.webp',
         imageFrame: 'square',
       },
       {
         name: 'Aisha Tabassum Probha',
         designation: 'Joint Secretary',
-        imageUrl: '/leadership/committee-26/photo_6170079490235634217_y.jpg',
+        imageUrl: '/leadership/committee-26/photo_6170079490235634217_y.webp',
         imageFrame: 'square',
       },
       {
         name: 'Mahdi Al Rayan Bhuiyan',
         designation: 'Head of Event Management',
-        imageUrl: '/leadership/committee-26/photo_6170079490235634218_y.jpg',
+        imageUrl: '/leadership/committee-26/photo_6170079490235634218_y.webp',
         imageFrame: 'square',
       },
       {
         name: 'Shahria Ahmed Arafat',
         designation: 'Vice President (Project)',
-        imageUrl: '/leadership/committee-26/photo_6170079490235634219_y.jpg',
+        imageUrl: '/leadership/committee-26/photo_6170079490235634219_y.webp',
         imageFrame: 'square',
       },
       {
         name: 'Nusrat Jahan',
         designation: 'Vice President (IT)',
-        imageUrl: '/leadership/committee-26/photo_6170079490235634220_y.jpg',
+        imageUrl: '/leadership/committee-26/photo_6170079490235634220_y.webp',
         imageFrame: 'square',
       },
       {
         name: 'Ayman Ibna Amir',
         designation: 'Vice President (Creative Works)',
-        imageUrl: '/leadership/committee-26/photo_6170079490235634221_y.jpg',
+        imageUrl: '/leadership/committee-26/photo_6170079490235634221_y.webp',
         imageFrame: 'square',
       },
       {
         name: 'Mst. Sraboni Akter Mimi',
         designation: 'Vice President (Publication)',
-        imageUrl: '/leadership/committee-26/photo_6170079490235634222_y.jpg',
+        imageUrl: '/leadership/committee-26/photo_6170079490235634222_y.webp',
         imageFrame: 'square',
       },
       {
         name: 'Azim Saikat Hassan Sagor',
         designation: 'Secretary of IT',
-        imageUrl: '/leadership/committee-26/photo_6170079490235634223_y.jpg',
+        imageUrl: '/leadership/committee-26/photo_6170079490235634223_y.webp',
         imageFrame: 'square',
       },
       {
         name: 'Mukaddim Rahman',
         designation: 'Secretary of Creative Works',
-        imageUrl: '/leadership/committee-26/photo_6170079490235634224_y.jpg',
+        imageUrl: '/leadership/committee-26/photo_6170079490235634224_y.webp',
         imageFrame: 'square',
       },
       {
         name: 'Shara Elahe',
         designation: 'Secretary of Content Writing',
-        imageUrl: '/leadership/committee-26/shara-elahe.jpg',
+        imageUrl: '/leadership/committee-26/shara-elahe.webp',
         imageFrame: 'square',
       },
       {
         name: 'Nabila Nawar',
         designation: 'Public Relations Officer',
-        imageUrl: '/leadership/committee-26/nabila-nawar.jpg',
+        imageUrl: '/leadership/committee-26/nabila-nawar.webp',
         imageFrame: 'square',
       },
     ],
@@ -198,13 +202,13 @@ const panels: Record<PanelKey, PanelData> = {
       {
         name: 'Naimul Haque Naim',
         designation: 'Moderator',
-        imageUrl: '/leadership/moderator-naimul-haque-naim.png',
+        imageUrl: '/leadership/moderator-naimul-haque-naim.webp',
         imageFrame: 'wide',
       },
       {
         name: 'Prof. Md. Abdul Halim',
         designation: 'Co-Moderator',
-        imageUrl: '/leadership/moderator-md-abdul-halim.jpg',
+        imageUrl: '/leadership/moderator-md-abdul-halim.webp',
         imageFrame: 'portrait',
       },
     ],
@@ -212,13 +216,13 @@ const panels: Record<PanelKey, PanelData> = {
       {
         name: 'Md. Shafayet Biswas',
         designation: 'Central Club Prefect \u2014 2026 Batch',
-        imageUrl: '/images/panel/prefect-2026/centralclubprefect.png',
+        imageUrl: '/images/panel/prefect-2026/centralclubprefect.webp',
         imageFrame: 'square',
       },
       {
         name: 'Fatema-Tooz-Zohra Falguni',
         designation: 'AST Central Club Prefect \u2014 2026 Batch',
-        imageUrl: '/images/panel/prefect-2026/astprefectbatch26.png',
+        imageUrl: '/images/panel/prefect-2026/astprefectbatch26.webp',
         imageFrame: 'square',
       },
     ],
@@ -387,25 +391,25 @@ const panels: Record<PanelKey, PanelData> = {
       {
         name: 'Sayeed Un Nur Shoaib',
         designation: "President'25",
-        imageUrl: '/leadership/committee-25/sayeed-un-nur-shoaib.jpg',
+        imageUrl: '/leadership/committee-25/sayeed-un-nur-shoaib.webp',
         imageFrame: 'square',
       },
       {
         name: 'Mirza Tamzid Hasan',
         designation: "General Secretary'25",
-        imageUrl: '/leadership/committee-25/mirza-tamzid-hasan.jpg',
+        imageUrl: '/leadership/committee-25/mirza-tamzid-hasan.webp',
         imageFrame: 'square',
       },
       {
         name: 'Halima Tus Shadia',
         designation: "Administrative Secretary'25",
-        imageUrl: '/leadership/committee-25/halima-tus-shadia.jpg',
+        imageUrl: '/leadership/committee-25/halima-tus-shadia.webp',
         imageFrame: 'square',
       },
       {
         name: 'Mohine Rana Soria',
         designation: "VP of Publications'25",
-        imageUrl: '/leadership/committee-25/mohine-rana-soria.jpg',
+        imageUrl: '/leadership/committee-25/mohine-rana-soria.webp',
         imageFrame: 'square',
       },
     ],
@@ -441,13 +445,13 @@ const panels: Record<PanelKey, PanelData> = {
       {
         name: 'DM Abrar Mead',
         designation: "President'24",
-        imageUrl: '/leadership/committee-24/dm-abrar-mead.jpg',
+        imageUrl: '/leadership/committee-24/dm-abrar-mead.webp',
         imageFrame: 'square',
       },
       {
         name: 'Sabrina Mustari',
         designation: "Organizing Secretary'24",
-        imageUrl: '/leadership/committee-24/sabrina-mustari.jpg',
+        imageUrl: '/leadership/committee-24/sabrina-mustari.webp',
         imageFrame: 'square',
       },
     ],
@@ -468,19 +472,19 @@ const panels: Record<PanelKey, PanelData> = {
       {
         name: 'Muedul Hasan Methun',
         designation: 'Founder & President',
-        imageUrl: '/leadership/muedul-hasan-methun.png',
+        imageUrl: '/leadership/muedul-hasan-methun.webp',
         imageFrame: 'portrait',
       },
       {
         name: 'Ahmad Zaim Khan',
         designation: 'Co-Founder & General Secretary',
-        imageUrl: '/leadership/ahmad-zaim-khan.png',
+        imageUrl: '/leadership/ahmad-zaim-khan.webp',
         imageFrame: 'portrait',
       },
       {
         name: 'Shibil Rahman',
         designation: 'Co-Founder & Vice President (Admin)',
-        imageUrl: '/leadership/shibil-rahman.png',
+        imageUrl: '/leadership/shibil-rahman.webp',
         imageFrame: 'portrait',
       },
     ],
@@ -492,9 +496,11 @@ const allAchievements = Object.values(panels).flatMap((panel) => panel.achieveme
 const leadershipPanels = (Object.entries(panels) as Array<[PanelKey, PanelData]>)
   .filter(([, panel]) => panel.executive_panel.length > 0 || panel.moderators?.length || panel.prefects?.length);
 
+/** Achievements shown before "Show more", and how many each click adds. */
+const ACHIEVEMENTS_PAGE = 6;
+
 export function AchievementsAndPanels() {
   const [adminAchievements, setAdminAchievements] = useState<FirestoreAchievement[]>([]);
-  const [visibleCount, setVisibleCount] = useState(8);
 
   useEffect(() => {
     return subscribeToAchievements(setAdminAchievements, (error) => {
@@ -510,137 +516,288 @@ export function AchievementsAndPanels() {
 
   return (
     <section className={styles.section} id="achievements" aria-labelledby="achievements-title">
+      {/* Depth layers: drifting glow orbs and an outlined wordmark behind the content */}
+      <div className={styles.backdrop} aria-hidden>
+        <Parallax speed={16} className={styles.orbA}><span /></Parallax>
+        <Parallax speed={28} className={styles.orbB}><span /></Parallax>
+        <p className={styles.wordmark}>Hall of Fame</p>
+      </div>
+
       <div className={styles.wrap}>
         <div className={styles.intro}>
           <div>
-            <p className={styles.eyebrow}>RECOGNITION / LEADERSHIP</p>
-            <h2 id="achievements-title">Achievements &amp; <span>Executive Panels.</span></h2>
+            <p className={styles.eyebrow}>Recognition / Leadership</p>
+            <SplitReveal
+              delay={0.1}
+              className="font-display"
+              lineClassName="text-white"
+              lines={[
+                <>Achievements &amp;</>,
+                <><span className={styles.introSpan}>Executive Panels.</span></>,
+              ]}
+            />
+            <h2 id="achievements-title" className="sr-only">Achievements &amp; Executive Panels.</h2>
           </div>
-          <p className={styles.introCopy}>
-            A growing record of the people, projects, and results that represent ACCRC.
-          </p>
+          <RiseIn stagger={false}>
+            <p className={styles.introCopy}>
+              A growing record of the people, projects, and results that represent ACCRC.
+            </p>
+          </RiseIn>
         </div>
 
         <div className={styles.panel}>
-          <div className={styles.contentDivider} />
-          <div className={styles.contentHeading}>
+          <RiseIn stagger={false} className={styles.contentHeading}>
             <div>
               <Trophy aria-hidden="true" />
               <h4>All Achievements</h4>
             </div>
-            <span>{achievements.length} published</span>
-          </div>
-          {achievements.length > 0 ? (
-            <AchievementGrid
-              achievements={achievements}
-              visibleCount={visibleCount}
-              onLoadMore={() => setVisibleCount((c) => c + 8)}
-            />
-          ) : (
-            <EmptyState label="achievement records" />
-          )}
+            <span className={styles.countBadge}>{achievements.length} published</span>
+          </RiseIn>
 
-          <div className={styles.leadershipArchive} aria-label="Leadership archive">
-            {leadershipPanels.map(([key, panel]) => (
-              <section className={styles.leadershipPanel} key={key} aria-labelledby={`leadership-${key}`}>
-                <div className={styles.panelIntro}>
-                  <div>
-                    <p className={styles.eyebrow}>{panel.eyebrow}</p>
-                    <h3 id={`leadership-${key}`}>{panel.label}</h3>
-                  </div>
-                  {panel.description && <p>{panel.description}</p>}
-                </div>
+          {achievements.length === 0
+            ? <EmptyState label="achievement records" />
+            : <AchievementList achievements={achievements} />}
 
-                {panel.moderators && panel.moderators.length > 0 && (
-                  <>
-                    <div className={`${styles.contentHeading} ${styles.executiveHeading}`}>
-                      <div><GraduationCap aria-hidden="true" /><h4>Advisor &amp; Moderation Panel</h4></div>
-                      <span>{panel.moderators.length} members</span>
-                    </div>
-                    <MemberGrid members={panel.moderators} className={styles.moderatorGrid} />
-                  </>
-                )}
-
-                {panel.executive_panel.length > 0 && (
-                  <>
-                    <div className={`${styles.contentHeading} ${styles.executiveHeading}`}>
-                      <div><UsersRound aria-hidden="true" /><h4>{key === 'founder' ? 'Founding Team' : 'Executive Panel'}</h4></div>
-                      <span>{panel.executive_panel.length} members</span>
-                    </div>
-                    <MemberGrid members={panel.executive_panel} className={key === 'founder' ? styles.founderGrid : undefined} />
-                  </>
-                )}
-
-                {panel.prefects && panel.prefects.length > 0 && (
-                  <>
-                    <div className={`${styles.contentHeading} ${styles.executiveHeading}`}>
-                      <div><ShieldCheck aria-hidden="true" /><h4>2026 Batch Prefects</h4></div>
-                      <span>{panel.prefects.length} prefects</span>
-                    </div>
-                    <MemberGrid members={panel.prefects} className={styles.prefectGrid} />
-                  </>
-                )}
-              </section>
-            ))}
-          </div>
+          <LeadershipArchive />
         </div>
       </div>
     </section>
   );
 }
 
-function AchievementGrid({
-  achievements,
-  visibleCount,
-  onLoadMore,
+/* The roll of leadership panels never changes after load. Memoised so that
+   paging through achievements doesn't re-render ~60 member cards. */
+const LeadershipArchive = memo(function LeadershipArchive() {
+  return (
+    <div className={styles.leadershipArchive} aria-label="Leadership archive">
+      {leadershipPanels.map(([key, panel]) => (
+        /* Panels are far too tall to move as one block, so the panel
+           itself stays put and its parts — heading, sub-headings, each
+           person — rise in as they reach the viewport. */
+        <section key={key} className={`cv-auto ${styles.leadershipPanel}`} aria-labelledby={`leadership-${key}`}>
+          <RiseIn stagger={false} className={styles.panelIntro}>
+            <div>
+              <p className={styles.eyebrow}>{panel.eyebrow}</p>
+              <h3 id={`leadership-${key}`}>{panel.label}</h3>
+            </div>
+            {panel.description && <p>{panel.description}</p>}
+          </RiseIn>
+
+          {panel.moderators && panel.moderators.length > 0 && (
+            <>
+              <PanelHeading
+                icon={<GraduationCap aria-hidden="true" />}
+                title="Advisor & Moderation Panel"
+                count={`${panel.moderators.length} members`}
+              />
+              <MemberGrid members={panel.moderators} className={styles.moderatorGrid} />
+            </>
+          )}
+
+          {panel.executive_panel.length > 0 && (
+            <>
+              <PanelHeading
+                icon={<UsersRound aria-hidden="true" />}
+                title={key === 'founder' ? 'Founding Team' : 'Executive Panel'}
+                count={`${panel.executive_panel.length} members`}
+              />
+              <MemberGrid members={panel.executive_panel} className={key === 'founder' ? styles.founderGrid : undefined} />
+            </>
+          )}
+
+          {panel.prefects && panel.prefects.length > 0 && (
+            <>
+              <PanelHeading
+                icon={<ShieldCheck aria-hidden="true" />}
+                title="2026 Batch Prefects"
+                count={`${panel.prefects.length} prefects`}
+              />
+              <MemberGrid members={panel.prefects} className={styles.prefectGrid} />
+            </>
+          )}
+        </section>
+      ))}
+    </div>
+  );
+});
+
+/* Owns the filter and "Show more" state, so changing either re-renders only
+   the achievement list. */
+function AchievementList({ achievements }: { achievements: Array<Achievement | FirestoreAchievement> }) {
+  const [levelFilter, setLevelFilter] = useState<'All' | AwardLevel>('All');
+  const [shown, setShown] = useState(ACHIEVEMENTS_PAGE);
+
+  const filtered = useMemo(
+    () => (levelFilter === 'All' ? achievements : achievements.filter((a) => a.level === levelFilter)),
+    [achievements, levelFilter],
+  );
+
+  /* Only the first `shown` records, grouped newest-first by year. */
+  const achievementYears = useMemo(() => {
+    const groups = new Map<number, Array<Achievement | FirestoreAchievement>>();
+    for (const item of filtered.slice(0, shown)) {
+      const list = groups.get(item.year) ?? [];
+      list.push(item);
+      groups.set(item.year, list);
+    }
+    return Array.from(groups.entries()).sort((a, b) => b[0] - a[0]);
+  }, [filtered, shown]);
+
+  return (
+    <AchievementArchive
+      years={achievementYears}
+      total={filtered.length}
+      shown={Math.min(shown, filtered.length)}
+      filter={levelFilter}
+      onFilter={(value) => {
+        setLevelFilter(value);
+        setShown(ACHIEVEMENTS_PAGE);
+      }}
+      /* Low priority, so the tap responds at once and the new cards render
+         right after instead of blocking the press. */
+      onMore={() => startTransition(() => setShown((n) => n + ACHIEVEMENTS_PAGE))}
+      onLess={() => setShown(ACHIEVEMENTS_PAGE)}
+    />
+  );
+}
+
+function PanelHeading({ icon, title, count }: { icon: ReactNode; title: string; count: string }) {
+  return (
+    <RiseIn stagger={false} distance={24} className={`${styles.contentHeading} ${styles.executiveHeading}`}>
+      <div>{icon}<h4>{title}</h4></div>
+      <span>{count}</span>
+    </RiseIn>
+  );
+}
+
+/* Achievements grouped by year. The year label pins to the left while its
+   records scroll past, so the archive reads as a ledger rather than a wall of
+   identical cards. Only a page of records is shown at first. */
+function AchievementArchive({
+  years,
+  total,
+  shown,
+  filter,
+  onFilter,
+  onMore,
+  onLess,
 }: {
-  achievements: Array<Achievement | FirestoreAchievement>;
-  visibleCount: number;
-  onLoadMore: () => void;
+  years: Array<[number, Array<Achievement | FirestoreAchievement>]>;
+  total: number;
+  shown: number;
+  filter: 'All' | AwardLevel;
+  onFilter: (value: 'All' | AwardLevel) => void;
+  onMore: () => void;
+  onLess: () => void;
 }) {
-  const visible = achievements.slice(0, visibleCount);
-  const hasMore = visibleCount < achievements.length;
+  const options: Array<'All' | AwardLevel> = ['All', 'Global', 'National'];
+  const topRef = useRef<HTMLDivElement>(null);
+  const remaining = total - shown;
+
+  const collapse = () => {
+    onLess();
+    // Bring the reader back to the top of the list they just shortened.
+    requestAnimationFrame(() => topRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
+  };
 
   return (
     <>
-      <div className={styles.achievementGrid}>
-        {visible.map((achievement, index) => (
-          <article className={styles.achievementCard} key={`${'id' in achievement ? achievement.id : 'built-in'}-${achievement.title}-${achievement.recipients}`}>
-            <div className={styles.awardIcon} aria-hidden="true">
-              {index % 2 === 0 ? <Trophy /> : <Medal />}
-            </div>
-            <div className={styles.achievementBody}>
-              <div className={styles.cardMeta}>
-                <span className={achievement.level === 'Global' ? styles.global : styles.national}>{achievement.level}</span>
-                <time dateTime={String(achievement.year)}>{achievement.year}</time>
-              </div>
-              <h5>{achievement.title}</h5>
-              <p className={styles.recipients}>{achievement.recipients}</p>
-              <p className={styles.competition}>{achievement.competition}</p>
-            </div>
-          </article>
-        ))}
+      <div ref={topRef} className={styles.filterRow}>
+        <div className={styles.filters} role="group" aria-label="Filter achievements by recognition level">
+          {options.map((option) => (
+            <button
+              key={option}
+              type="button"
+              onClick={() => onFilter(option)}
+              aria-pressed={filter === option}
+              className={`${styles.filterChip} ${filter === option ? styles.filterChipActive : ''}`}
+            >
+              {option}
+            </button>
+          ))}
+        </div>
+        <p className={styles.filterNote} aria-live="polite">
+          Showing {shown} of {total}
+        </p>
       </div>
-      {hasMore && (
-        <div className={styles.loadMoreWrap}>
-          <button
-            className={styles.loadMoreBtn}
-            onClick={onLoadMore}
-            aria-label={`Load more achievements (${achievements.length - visibleCount} remaining)`}
-          >
-            LOAD MORE <span className={styles.loadMoreCount}>+{achievements.length - visibleCount}</span>
-          </button>
+
+      {years.map(([year, items]) => (
+        <section className={styles.yearSection} key={`${filter}-${year}`} aria-label={`${year} achievements`}>
+          <div className={styles.yearSticky}>
+            <RiseIn stagger={false} distance={24} className={styles.yearLabel}>
+              <span className={styles.yearNumber} aria-hidden>{year}</span>
+              <span className={styles.yearCount}>
+                {items.length} {items.length === 1 ? 'record' : 'records'}
+              </span>
+            </RiseIn>
+          </div>
+          <div className={styles.yearGrid}>
+            {items.map((achievement, index) => (
+              <AchievementCard
+                key={`${'id' in achievement ? achievement.id : 'built-in'}-${achievement.title}`}
+                achievement={achievement}
+                trophy={index % 2 === 0}
+              />
+            ))}
+          </div>
+        </section>
+      ))}
+
+      {total > ACHIEVEMENTS_PAGE && (
+        <div className={styles.moreRow}>
+          {remaining > 0 ? (
+            <button type="button" className={styles.moreButton} onClick={onMore}>
+              Show more
+              <span className={styles.moreCount}>+{Math.min(remaining, ACHIEVEMENTS_PAGE)}</span>
+              <ChevronDown aria-hidden="true" />
+            </button>
+          ) : (
+            <button type="button" className={`${styles.moreButton} ${styles.lessButton}`} onClick={collapse}>
+              Show less
+              <ChevronDown aria-hidden="true" />
+            </button>
+          )}
         </div>
       )}
     </>
   );
 }
 
+const AchievementCard = memo(function AchievementCard({
+  achievement,
+  trophy,
+}: {
+  achievement: Achievement | FirestoreAchievement;
+  trophy: boolean;
+}) {
+  return (
+    <RiseIn>
+      <TiltCard className={styles.cardWrap} maxTilt={4}>
+        <article className={styles.card}>
+          <div className={styles.cardTop}>
+            <span className={styles.awardIcon} aria-hidden="true">
+              {trophy ? <Trophy /> : <Medal />}
+            </span>
+            <div className={styles.cardMeta}>
+              <span className={achievement.level === 'Global' ? styles.global : styles.national}>
+                {achievement.level}
+              </span>
+              <time dateTime={String(achievement.year)}>{achievement.year}</time>
+            </div>
+          </div>
+          <h5 className={styles.cardTitle}>{achievement.title}</h5>
+          <p className={styles.recipients}>{achievement.recipients}</p>
+          <p className={styles.competition}>{achievement.competition}</p>
+        </article>
+      </TiltCard>
+    </RiseIn>
+  );
+});
+
 function MemberGrid({ members, className = '' }: { members: ExecutiveMember[]; className?: string }) {
   return (
     <div className={`${styles.memberGrid} ${className}`}>
       {members.map((member) => {
-        const framed = Boolean(member.imageUrl && member.imageFrame);
         const imageClass = member.imageFrame === 'portrait'
           ? styles.portraitFrame
           : member.imageFrame === 'wide'
@@ -650,26 +807,34 @@ function MemberGrid({ members, className = '' }: { members: ExecutiveMember[]; c
               : '';
 
         return (
-          <article
-            className={`${styles.memberCard} ${framed ? styles.framedCard : ''}`}
+          /* Each person rises in as their row reaches the viewport, cascading
+             across the row, while the photo settles from a slight zoom. */
+          <RiseIn
             key={member.name}
+            as="article"
+            className={`${styles.memberCard} h-full`}
             aria-label={`${member.name}, ${member.designation}`}
           >
-            {member.imageUrl ? (
-              <img
-                className={`${styles.avatar} ${imageClass}`}
-                src={member.imageUrl}
-                alt={`${member.name}, ${member.designation}`}
-                width={768}
-                height={768}
-                loading="lazy"
-                decoding="async"
-              />
-            ) : (
-              <div className={styles.avatarFallback} aria-label={`Photo to be added for ${member.name}`}>
-                {member.name.split(' ').map((part) => part[0]).join('').slice(0, 3)}
+            <div className={styles.portrait}>
+              <div data-rise-zoom>
+                {member.imageUrl ? (
+                  <img
+                    className={`${styles.avatar} ${imageClass}`}
+                    src={member.imageUrl}
+                    alt={`${member.name}, ${member.designation}`}
+                    width={768}
+                    height={768}
+                    loading="lazy"
+                    decoding="async"
+                  />
+                ) : (
+                  <div className={styles.avatarFallback} aria-label={`Photo to be added for ${member.name}`}>
+                    {member.name.split(' ').map((part) => part[0]).join('').slice(0, 3)}
+                  </div>
+                )}
               </div>
-            )}
+              <span className={styles.portraitShine} aria-hidden="true" />
+            </div>
             <div className={styles.memberInfo}>
               <p className={styles.memberRole}>{member.designation}</p>
               <h5>{member.name}</h5>
@@ -677,7 +842,7 @@ function MemberGrid({ members, className = '' }: { members: ExecutiveMember[]; c
                 <p className={styles.memberId}><IdCard size={14} aria-hidden="true" /> College ID: {member.collegeId}</p>
               )}
             </div>
-          </article>
+          </RiseIn>
         );
       })}
     </div>
