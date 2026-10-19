@@ -90,7 +90,6 @@ export function Footer() {
                 { href: "/membership/", label: "Membership" },
                 { href: "/news/", label: "News" },
                 { href: "/about/", label: "About" },
-                { href: "/admin/", label: "Portals" },
                 ...(festConfig?.isLaunched === true ? [{ href: "/fest/", label: "Fest" }] : []),
                 ...(leadershipApplicationsOpen ? [{ href: "/portal/", label: "Leadership" }] : []),
               ].map((link) => (

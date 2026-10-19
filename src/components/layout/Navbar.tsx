@@ -145,12 +145,6 @@ export function Navbar({
               <HelpCircle size={18} aria-hidden />
             </button>
           )}
-          <a
-            href="/admin/"
-            className="inline-flex items-center gap-1.5 rounded-lg border border-border-strong bg-secondary px-4 py-2 font-mono text-mono-sm font-bold uppercase tracking-wider text-text-primary transition-all duration-200 hover:bg-tertiary active:scale-95"
-          >
-            Portal <ArrowUpRight size={14} aria-hidden />
-          </a>
           <Magnetic strength={0.25}>
             <a
               href="/membership/"
@@ -194,7 +188,6 @@ export function Navbar({
           {[
             { href: "/", label: "Home" },
             ...links,
-            { href: "/admin/", label: "Portals" },
           ].map((link, i) => (
             <a
               key={link.href}

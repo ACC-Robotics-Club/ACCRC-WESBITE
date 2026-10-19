@@ -76,8 +76,12 @@ export interface Registration {
   rollNumber?: string;
   areaOfInterest?: string;
   bloodGroup?: string;
+  /** Set by admins while reviewing; missing means not reviewed yet. */
+  status?: ReviewStatus;
   createdAt?: Date;
 }
+
+export type ReviewStatus = "pending" | "accepted" | "rejected";
 
 export interface Application {
   id?: string;
@@ -90,6 +94,8 @@ export interface Application {
   pastExperience: string;
   visionStatement: string;
   roleApplyingFor: string;
+  /** Set by admins while reviewing; missing means not reviewed yet. */
+  status?: ReviewStatus;
   createdAt?: Date;
 }
 
@@ -394,6 +400,10 @@ export async function getRegistrations(filters?: { type?: string; eventId?: stri
   }
 }
 
+export async function updateRegistrationStatus(id: string, status: ReviewStatus): Promise<void> {
+  await updateDoc(doc(db, "registrations", id), { status, reviewedAt: Timestamp.now() });
+}
+
 export async function deleteRegistration(id: string): Promise<void> {
   await deleteDoc(doc(db, "registrations", id));
 }
@@ -414,6 +424,10 @@ export async function getApplications(type?: Application["type"]): Promise<Appli
   const q = query(collection(db, "applications"), ...constraints);
   const snapshot = await getDocs(q);
   return snapshot.docs.map((d) => ({ id: d.id, ...d.data(), createdAt: toDate(d.data().createdAt) } as Application));
+}
+
+export async function updateApplicationStatus(id: string, status: ReviewStatus): Promise<void> {
+  await updateDoc(doc(db, "applications", id), { status, reviewedAt: Timestamp.now() });
 }
 
 export async function deleteApplication(id: string): Promise<void> {
