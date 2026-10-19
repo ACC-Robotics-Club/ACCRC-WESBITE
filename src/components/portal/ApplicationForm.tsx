@@ -31,7 +31,7 @@ export function ApplicationForm({ type, roles, onSuccess }: ApplicationFormProps
       roleApplyingFor: formData.get('role') as string,
       pastExperience: formData.get('experience') as string,
       visionStatement: formData.get('vision') as string,
-      status: 'pending',
+      status: 'pending' as const,
       submittedAt: new Date(),
     };
 

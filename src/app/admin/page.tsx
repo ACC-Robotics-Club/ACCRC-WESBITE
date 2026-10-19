@@ -1,93 +1,99 @@
 'use client';
 
 import Link from 'next/link';
-import { signOut } from 'firebase/auth';
-import { ArrowUpRight, CalendarDays, Crown, Flame, Loader2, LogOut, Newspaper, ShieldCheck, Trophy, UserCheck, UsersRound } from 'lucide-react';
-import { useState } from 'react';
+import { ArrowUpRight, CalendarDays, Flame, Newspaper, Trophy, UserCheck, UsersRound } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import AdminGuard from '@/components/admin/AdminGuard';
-import { auth } from '@/lib/firebaseAuth';
+import { getAllEvents, getApplications, getFestConfig, getRegistrations, type Application, type Registration } from '@/lib/firestore';
+
+interface HubStats {
+  pendingApplications: number;
+  pendingMemberships: number;
+  upcomingEvents: number;
+  liveEvents: number;
+  festLaunched: boolean;
+}
+
+const isPending = (record: Application | Registration) => (record.status ?? 'pending') === 'pending';
 
 const portals = [
   {
-    name: 'Fest Management Portal',
-    description: 'Manage National Robotics Fest segments, team registrations, event schedule, and announcements.',
+    name: 'Events',
+    description: 'Create events, publish them to the site, open or close registration, and see who signed up.',
+    href: '/admin/events/',
+    icon: CalendarDays,
+    stat: (s: HubStats) => `${s.upcomingEvents} upcoming · ${s.liveEvents} public`,
+  },
+  {
+    name: 'Fest Launcher & Teams',
+    description: 'Launch the fest page, open registration, manage segments, schedule, announcements, and check teams in.',
     href: '/admin/fest/',
     icon: Flame,
+    stat: (s: HubStats) => (s.festLaunched ? 'Fest is public' : 'Fest is hidden'),
   },
   {
     name: 'Membership Requests',
-    description: 'Review, manage, and process incoming club membership applications and student details.',
+    description: 'Review students who asked to join, mark them accepted or rejected, and export the list.',
     href: '/admin/portal/?tab=membership',
     icon: UserCheck,
+    stat: (s: HubStats) => `${s.pendingMemberships} waiting for review`,
   },
   {
-    name: 'Events Portal',
-    description: 'Create events, control registration windows, and review attendee records.',
-    href: '/admin/events/',
-    icon: CalendarDays,
+    name: 'Leadership Applications',
+    description: 'Open or close executive, prefect, and sub-executive applications, set the roles, and review applicants.',
+    href: '/admin/portal/?tab=executive',
+    icon: UsersRound,
+    stat: (s: HubStats) => `${s.pendingApplications} waiting for review`,
   },
   {
-    name: 'Achievements Portal',
-    description: 'Publish, edit, and remove achievements shown on the public site.',
+    name: 'Achievements',
+    description: 'Publish, edit, and remove the achievements shown on the home page.',
     href: '/admin/achievements/',
     icon: Trophy,
   },
   {
-    name: 'News Portal',
-    description: 'Write and publish club updates for the public news feed.',
+    name: 'News',
+    description: 'Write and publish club updates for the public news page.',
     href: '/admin/news/',
     icon: Newspaper,
-  },
-  {
-    name: 'Sub-Executive Portal',
-    description: 'Prepare and review the next sub-executive application cycle.',
-    href: '/admin/sub-executive/',
-    icon: UsersRound,
-  },
-  {
-    name: 'Executive Portal',
-    description: 'Coordinate executive recruitment and leadership roles.',
-    href: '/admin/executive/',
-    icon: Crown,
-  },
-  {
-    name: 'Prefect Portal',
-    description: 'Manage prefect applications and operational roles.',
-    href: '/admin/prefect/',
-    icon: ShieldCheck,
   },
 ];
 
 export default function AdminDashboard() {
-  const [isSigningOut, setIsSigningOut] = useState(false);
+  const [stats, setStats] = useState<HubStats | null>(null);
 
-  const handleLogout = async () => {
-    setIsSigningOut(true);
-    try {
-      await signOut(auth);
-      window.location.assign('/admin/login/');
-    } finally {
-      setIsSigningOut(false);
-    }
-  };
+  useEffect(() => {
+    let cancelled = false;
+    void Promise.all([getApplications(), getRegistrations({ type: 'membership' }), getAllEvents(), getFestConfig()])
+      .then(([applications, memberships, events, fest]) => {
+        if (cancelled) return;
+        const now = Date.now();
+        const upcoming = events.filter((event) => event.date.getTime() >= now);
+        setStats({
+          pendingApplications: applications.filter(isPending).length,
+          pendingMemberships: memberships.filter(isPending).length,
+          upcomingEvents: upcoming.length,
+          liveEvents: upcoming.filter((event) => event.isLaunched !== false).length,
+          festLaunched: fest.isLaunched,
+        });
+      })
+      .catch((error) => console.warn('Could not load hub counts.', error));
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   return (
     <AdminGuard>
       <main className="min-h-screen bg-[#f6f0e7] px-4 py-12 text-[#141210] sm:px-6 sm:py-16">
         <div className="mx-auto max-w-6xl">
-          <header className="flex flex-col justify-between gap-6 border-b border-[#cfc9bc] pb-8 sm:flex-row sm:items-end">
-            <div>
-              <p className="font-mono text-xs uppercase tracking-widest text-[#c94030]">ACCRC management system</p>
-              <h1 className="mt-3 text-4xl font-bold tracking-tight sm:text-5xl text-[#141210]">Portal Hub</h1>
-              <p className="mt-3 max-w-xl text-[#3a3530]">Choose a secure workspace for events, recruitment, membership requests, and club operations.</p>
-            </div>
-            <button type="button" onClick={() => void handleLogout()} disabled={isSigningOut} aria-busy={isSigningOut} aria-label="Sign out of the administration portal" className="inline-flex items-center justify-center gap-2 border border-[#cfc9bc] bg-[#ede7da] px-4 py-3 font-mono text-xs uppercase tracking-widest text-[#3a3530] transition-colors hover:border-[#c72c2c] hover:text-[#c72c2c] hover:bg-white disabled:cursor-wait disabled:opacity-60">
-              {isSigningOut ? <Loader2 size={16} className="animate-spin" aria-hidden /> : <LogOut size={16} aria-hidden />}
-              {isSigningOut ? 'Signing out...' : 'Sign out'}
-            </button>
+          <header className="border-b border-[#cfc9bc] pb-8">
+            <p className="font-mono text-xs uppercase tracking-widest text-[#c94030]">ACCRC management system</p>
+            <h1 className="mt-3 text-4xl font-bold tracking-tight sm:text-5xl text-[#141210]">Admin Hub</h1>
+            <p className="mt-3 max-w-xl text-[#3a3530]">Everything that changes the public site starts here.</p>
           </header>
 
-          <section className="mt-10 grid gap-5 md:grid-cols-2" aria-label="Administrative portals">
+          <section className="mt-10 grid gap-5 md:grid-cols-2" aria-label="Admin workspaces">
             {portals.map((portal) => {
               const Icon = portal.icon;
               return (
@@ -96,9 +102,13 @@ export default function AdminDashboard() {
                     <Icon className="h-7 w-7 text-[#c94030]" aria-hidden />
                     <ArrowUpRight className="h-5 w-5 text-[#6b6258] transition-colors group-hover:text-[#c94030]" aria-hidden />
                   </div>
-                  <h2 className="mt-12 text-2xl font-bold tracking-tight text-[#141210]">{portal.name}</h2>
+                  <h2 className="mt-10 text-2xl font-bold tracking-tight text-[#141210]">{portal.name}</h2>
                   <p className="mt-3 max-w-md text-[#3a3530] leading-relaxed">{portal.description}</p>
-                  <span className="mt-7 inline-block font-mono text-xs uppercase tracking-widest text-[#c94030] font-semibold">Launch workspace →</span>
+                  {portal.stat && (
+                    <span className="mt-6 inline-block border border-[#cfc9bc] bg-[#f6f0e7] px-2.5 py-1 font-mono text-[11px] font-bold uppercase tracking-wider text-[#3a3530]">
+                      {stats ? portal.stat(stats) : 'Loading…'}
+                    </span>
+                  )}
                 </Link>
               );
             })}

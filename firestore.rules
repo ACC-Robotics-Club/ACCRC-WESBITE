@@ -2,9 +2,19 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Helper functions
+    // Admins are the accounts listed in the "admins" collection (document ID =
+    // the account's Auth UID). Being signed in is not enough: anyone can
+    // create a Firebase Auth account with the site's public API key.
     function isAdmin() {
-      return request.auth != null;
+      return request.auth != null &&
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+
+    // Admin list: each account may check only its own entry. Admins are added
+    // and removed in the Firebase console, never from the website.
+    match /admins/{uid} {
+      allow read: if request.auth != null && request.auth.uid == uid;
+      allow write: if false;
     }
 
     // Fest Global Settings & Launcher Toggles: Public read, Admin write
@@ -64,14 +74,20 @@ service cloud.firestore {
     // Membership, event, and fest registrations. Fest entries are public only
     // for participant lookup; administrative mutations still require sign-in.
     match /registrations/{regId} {
-      allow create: if true;
+      // New entries start unreviewed (fest teams send 'pending'); only admins
+      // can mark one verified, accepted or rejected.
+      allow create: if !('status' in request.resource.data) ||
+        request.resource.data.status == 'pending';
       allow read: if isAdmin() || resource.data.type == 'fest';
       allow update, delete: if isAdmin();
     }
 
     // Leadership Applications (Executive, Prefect, Sub-Executive)
     match /applications/{appId} {
-      allow create: if exists(/databases/$(database)/documents/config/portal) && (
+      // Applications arrive as 'pending'; only admins can accept or reject.
+      allow create: if (!('status' in request.resource.data) ||
+          request.resource.data.status == 'pending') &&
+        exists(/databases/$(database)/documents/config/portal) && (
         (request.resource.data.type == 'executive' &&
           get(/databases/$(database)/documents/config/portal).data.execOpen == true) ||
         (request.resource.data.type == 'prefect' &&
