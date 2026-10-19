@@ -13,7 +13,6 @@ import { club } from "@/lib/club";
 import { Marquee } from "@/components/fx/Marquee";
 
 export function Footer() {
-  const [currentYear, setCurrentYear] = useState<number | null>(null);
   const [portalConfig, setPortalConfig] = useState<PortalConfig | null>(null);
   const [festConfig, setFestConfig] = useState<FestConfig | null>(null);
 
@@ -26,10 +25,6 @@ export function Footer() {
       unsubscribeFest();
       unsubscribePortal();
     };
-  }, []);
-
-  useEffect(() => {
-    setCurrentYear(new Date().getFullYear());
   }, []);
 
   const leadershipApplicationsOpen = Boolean(
@@ -170,7 +165,7 @@ export function Footer() {
         {/* Bottom bar */}
         <div className="border-t border-white/10 mt-8 pt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="font-mono text-mono-sm text-white/40">
-            © {currentYear ? `${currentYear} ` : ''}{club.shortName} — {club.name}
+            © 2019 {club.shortName} — {club.name}
           </p>
           <p className="font-mono text-mono-sm text-white/40">
             Dhaka, Bangladesh · Built by the club
