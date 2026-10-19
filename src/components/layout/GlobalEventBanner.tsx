@@ -8,7 +8,7 @@ import {
   subscribeToFestConfig,
   type FirestoreEvent,
   type FestConfig,
-} from '@/lib/firestore';
+} from '@/lib/publicData';
 
 interface GlobalEventBannerProps {
   onHeightChange?: (height: number) => void;

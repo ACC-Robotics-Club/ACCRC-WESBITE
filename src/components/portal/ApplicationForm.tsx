@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Input, Textarea, Select } from '@/components/ui/Input';
-import { submitApplication } from '@/lib/firestore';
+import { submitApplication } from '@/lib/publicData';
 
 interface ApplicationFormProps {
   type: 'sub-executive' | 'executive' | 'prefect';

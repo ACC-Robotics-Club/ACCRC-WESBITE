@@ -5,7 +5,7 @@ import { signOut } from 'firebase/auth';
 import { ArrowUpRight, CalendarDays, Crown, Flame, Loader2, LogOut, Newspaper, ShieldCheck, Trophy, UserCheck, UsersRound } from 'lucide-react';
 import { useState } from 'react';
 import AdminGuard from '@/components/admin/AdminGuard';
-import { auth } from '@/lib/firebase';
+import { auth } from '@/lib/firebaseAuth';
 
 const portals = [
   {

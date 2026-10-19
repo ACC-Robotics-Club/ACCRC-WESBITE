@@ -73,7 +73,7 @@ export function MembershipForm() {
           <div key={num} className="relative z-10 flex flex-col items-center gap-2">
             <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-mono transition-all duration-300
               ${step > num ? 'bg-[#c94030] text-[#141210] border-[#c94030]' : 
-                step === num ? 'bg-primary text-[#c94030] border-[#c94030] shadow-[0_0_10px_rgba(10,132,255,0.5)]' : 
+                step === num ? 'bg-ink text-[#c94030] border-[#c94030] shadow-[0_0_10px_rgba(10,132,255,0.5)]' : 
                 'bg-[#ede7da] text-[#6b6258] border-[#cfc9bc]'} border`}
             >
               {num}
