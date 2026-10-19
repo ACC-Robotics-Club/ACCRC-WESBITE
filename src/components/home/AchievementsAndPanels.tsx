@@ -1,7 +1,7 @@
 'use client';
 
 import { memo, startTransition, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { Award, ChevronDown, GraduationCap, IdCard, Medal, ShieldCheck, Trophy, UsersRound } from 'lucide-react';
+import { Award, ChevronDown, GraduationCap, IdCard, Medal, Trophy, UsersRound } from 'lucide-react';
 import { subscribeToAchievements, type FirestoreAchievement } from '@/lib/publicData';
 import { SplitReveal } from '@/components/fx/SplitReveal';
 import { Parallax } from '@/components/fx/Parallax';
@@ -35,7 +35,6 @@ type PanelData = {
   achievements: Achievement[];
   executive_panel: ExecutiveMember[];
   moderators?: ExecutiveMember[];
-  prefects?: ExecutiveMember[];
 };
 
 /*
@@ -115,13 +114,13 @@ const panels: Record<PanelKey, PanelData> = {
       },
       {
         name: 'Md. Shafayet Biswas',
-        designation: 'General Secretary',
+        designation: 'General Secretary & CCP',
         imageUrl: '/leadership/committee-26/photo_6170079490235634213_y.webp',
         imageFrame: 'square',
       },
       {
         name: 'Fatema Tooz-Zohra Falguni',
-        designation: 'Assistant General Secretary',
+        designation: 'Assistant General Secretary & ACCP',
         imageUrl: '/leadership/committee-26/photo_6170079490235634214_y.webp',
         imageFrame: 'square',
       },
@@ -210,20 +209,6 @@ const panels: Record<PanelKey, PanelData> = {
         designation: 'Co-Moderator',
         imageUrl: '/leadership/moderator-md-abdul-halim.webp',
         imageFrame: 'portrait',
-      },
-    ],
-    prefects: [
-      {
-        name: 'Md. Shafayet Biswas',
-        designation: 'Central Club Prefect \u2014 2026 Batch',
-        imageUrl: '/images/panel/prefect-2026/centralclubprefect.webp',
-        imageFrame: 'square',
-      },
-      {
-        name: 'Fatema-Tooz-Zohra Falguni',
-        designation: 'AST Central Club Prefect \u2014 2026 Batch',
-        imageUrl: '/images/panel/prefect-2026/astprefectbatch26.webp',
-        imageFrame: 'square',
       },
     ],
   },
@@ -493,8 +478,13 @@ const panels: Record<PanelKey, PanelData> = {
 
 const allAchievements = Object.values(panels).flatMap((panel) => panel.achievements);
 
-const leadershipPanels = (Object.entries(panels) as Array<[PanelKey, PanelData]>)
-  .filter(([, panel]) => panel.executive_panel.length > 0 || panel.moderators?.length || panel.prefects?.length);
+/* Newest first. Listed explicitly because JavaScript always iterates
+   number-like object keys ('2023'…'2026') in ascending order, which put the
+   oldest panel at the top. The founding team (2019) comes last. */
+const PANEL_ORDER: PanelKey[] = ['2026', '2025', '2024', '2023', 'founder'];
+
+const leadershipPanels = PANEL_ORDER.map((key) => [key, panels[key]] as [PanelKey, PanelData])
+  .filter(([, panel]) => panel.executive_panel.length > 0 || panel.moderators?.length);
 
 /** Achievements shown before "Show more", and how many each click adds. */
 const ACHIEVEMENTS_PAGE = 6;
@@ -602,17 +592,6 @@ const LeadershipArchive = memo(function LeadershipArchive() {
                 count={`${panel.executive_panel.length} members`}
               />
               <MemberGrid members={panel.executive_panel} className={key === 'founder' ? styles.founderGrid : undefined} />
-            </>
-          )}
-
-          {panel.prefects && panel.prefects.length > 0 && (
-            <>
-              <PanelHeading
-                icon={<ShieldCheck aria-hidden="true" />}
-                title="2026 Batch Prefects"
-                count={`${panel.prefects.length} prefects`}
-              />
-              <MemberGrid members={panel.prefects} className={styles.prefectGrid} />
             </>
           )}
         </section>
