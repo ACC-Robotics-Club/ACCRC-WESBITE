@@ -2,12 +2,12 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { motion, useReducedMotion, useScroll, useTransform } from 'framer-motion';
-import { Pause, Play, Volume2, VolumeX } from 'lucide-react';
+import { Pause, Play } from 'lucide-react';
 
 const FILM_SRC = '/media/accrc-launch-film.mp4';
 
 /**
- * The launch film as a design element: a muted, looping frame that grows from
+ * The launch film as a design element: a silent, looping frame that grows from
  * an inset card to near full-bleed as it scrolls into view. It only fetches
  * and plays while on screen, so the 25 MB file never costs a visitor who
  * doesn't scroll this far.
@@ -16,7 +16,6 @@ export function LaunchFilm() {
   const reduceMotion = useReducedMotion();
   const sectionRef = useRef<HTMLElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
-  const [muted, setMuted] = useState(true);
   const [playing, setPlaying] = useState(false);
   // Once the viewer pauses, scrolling back into view must not restart it.
   const userPaused = useRef(false);
@@ -56,20 +55,6 @@ export function LaunchFilm() {
     } else {
       userPaused.current = true;
       video.pause();
-    }
-  };
-
-  const toggleSound = () => {
-    const video = videoRef.current;
-    if (!video) return;
-    const next = !muted;
-    video.muted = next;
-    setMuted(next);
-    // Turning sound on is a request to watch: start from the top.
-    if (!next) {
-      video.currentTime = 0;
-      userPaused.current = false;
-      video.play().catch(() => setPlaying(false));
     }
   };
 
@@ -144,15 +129,6 @@ export function LaunchFilm() {
                 aria-label={playing ? 'Pause film' : 'Play film'}
               >
                 {playing ? <Pause size={18} aria-hidden /> : <Play size={18} aria-hidden />}
-              </button>
-              <button
-                type="button"
-                onClick={toggleSound}
-                className="inline-flex h-11 items-center gap-2 rounded-full border border-white/25 bg-black/40 px-4 font-mono text-mono-sm font-bold uppercase tracking-wider text-white backdrop-blur transition-colors hover:bg-glow hover:text-ink"
-                aria-pressed={!muted}
-              >
-                {muted ? <VolumeX size={18} aria-hidden /> : <Volume2 size={18} aria-hidden />}
-                {muted ? 'Sound on' : 'Mute'}
               </button>
             </div>
           </div>
