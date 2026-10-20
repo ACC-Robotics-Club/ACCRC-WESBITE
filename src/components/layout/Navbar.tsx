@@ -72,12 +72,12 @@ export function Navbar() {
         </a>
 
         {/* Desktop Nav */}
-        <div className="hidden lg:flex items-center gap-1">
+        <div className="hidden lg:flex items-center gap-0.5 xl:gap-1">
           {links.map((link) => (
             <a
               key={link.href}
               href={link.href}
-              className="px-3.5 py-2 text-body-sm font-bold text-text-secondary hover:text-text-primary transition-colors duration-200 relative group rounded-full hover:bg-tertiary"
+              className="whitespace-nowrap px-2.5 xl:px-3.5 py-2 text-body-sm font-bold text-text-secondary hover:text-text-primary transition-colors duration-200 relative group rounded-full hover:bg-tertiary"
             >
               {link.label}
             </a>
@@ -88,14 +88,14 @@ export function Navbar() {
         <div className="hidden lg:flex items-center gap-2.5">
           <a
             href="/admin/"
-            className="inline-flex items-center gap-1.5 rounded-full border border-border-strong bg-secondary px-5 py-2.5 font-mono text-mono-sm font-bold uppercase tracking-wider text-text-primary transition-all duration-200 hover:bg-tertiary active:scale-95"
+            className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border border-border-strong bg-secondary px-4 xl:px-5 py-2.5 font-mono text-mono-sm font-bold uppercase tracking-wider text-text-primary transition-all duration-200 hover:bg-tertiary active:scale-95"
           >
             Portal <ArrowUpRight size={14} aria-hidden />
           </a>
           <Magnetic strength={0.25}>
             <a
               href="/membership/"
-              className="inline-flex items-center rounded-full bg-accent px-6 py-2.5 font-mono text-mono-sm font-bold uppercase tracking-wider text-white shadow-[0_8px_24px_-8px_rgba(14,138,128,0.7)] transition-all duration-200 hover:bg-accent-hover active:scale-95"
+              className="inline-flex items-center whitespace-nowrap rounded-full bg-accent px-5 xl:px-6 py-2.5 font-mono text-mono-sm font-bold uppercase tracking-wider text-white shadow-[0_8px_24px_-8px_rgba(14,138,128,0.7)] transition-all duration-200 hover:bg-accent-hover active:scale-95"
             >
               Join us
             </a>
