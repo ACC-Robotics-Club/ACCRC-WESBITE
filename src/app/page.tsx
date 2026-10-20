@@ -11,17 +11,19 @@ import {
   Sparkles,
 } from 'lucide-react';
 import {
-  submitRegistration,
   subscribeToEvents,
   subscribeToPortalConfig,
   type FirestoreEvent,
   type PortalConfig,
 } from '@/lib/firestore';
 import { club } from '@/lib/club';
+import { registerMember, type RegistrationResult } from '@/lib/registerMember';
+import { RegistrationSuccess } from '@/components/membership/RegistrationSuccess';
 import { readFacebookFeed, type FacebookEvent, type FacebookPost } from '@/lib/facebook-events';
 import { Hero } from '@/components/home/Hero';
 import { StatusStrip } from '@/components/home/StatusStrip';
-import { AchievementsAndPanels } from '@/components/home/AchievementsAndPanels';
+import { Achievements } from '@/components/home/AchievementsAndPanels';
+import { LaunchFilm } from '@/components/home/LaunchFilm';
 import { FacebookTimeline } from '@/components/events/FacebookTimeline';
 import { Marquee } from '@/components/fx/Marquee';
 import { Reveal } from '@/components/fx/Reveal';
@@ -46,7 +48,7 @@ type FeedEvent = {
 };
 
 export default function HomePage() {
-  const [submitted, setSubmitted] = useState(false);
+  const [registration, setRegistration] = useState<{ result: RegistrationResult; email: string } | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState('');
   const [events, setEvents] = useState<FirestoreEvent[]>([]);
@@ -157,20 +159,21 @@ export default function HomePage() {
     setFormError('');
 
     try {
-      await submitRegistration({
-        type: 'membership',
+      const email = String(formData.get('email') ?? '').trim().toLowerCase();
+      const result = await registerMember({
         name: String(formData.get('name') ?? ''),
         email: String(formData.get('email') ?? ''),
         whatsapp: String(formData.get('whatsapp') ?? ''),
         classSection: String(formData.get('classSection') ?? ''),
         collegeId: String(formData.get('collegeId') ?? ''),
         motivation: String(formData.get('motivation') ?? ''),
+        website: String(formData.get('website') ?? ''),
       });
       form.reset();
-      setSubmitted(true);
+      setRegistration({ result, email });
     } catch (error) {
-      console.error('Failed to submit membership application', error);
-      setFormError('We could not submit your application. Please try again.');
+      console.error('Failed to register member', error);
+      setFormError(error instanceof Error ? error.message : 'We could not complete your registration. Please try again.');
     } finally {
       setSubmitting(false);
     }
@@ -196,6 +199,9 @@ export default function HomePage() {
           ))}
         </Marquee>
       </div>
+
+      {/* ═══ LAUNCH FILM ═══ */}
+      <LaunchFilm />
 
       {/* ═══ MISSION — wipe + parallax depth ═══ */}
       <section className="relative section-padding overflow-hidden" id="mission">
@@ -494,7 +500,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      <AchievementsAndPanels />
+      <Achievements />
 
       {/* ═══ RECRUITMENT ANNOUNCEMENT ═══ */}
       <section className="section-padding" id="news">
@@ -616,21 +622,13 @@ export default function HomePage() {
           <ScrollSlide axis="y" from={120} to={-16}>
           <div className="lg:border-l-2 lg:border-border lg:pl-16">
             <Reveal>
-              <p className="mono-label text-text-tertiary">Membership application / always open</p>
+              <p className="mono-label text-text-tertiary">New member registration / always open</p>
             </Reveal>
 
-            {submitted ? (
-              <Reveal>
-                <div className="mt-6 flex min-h-[350px] flex-col justify-center gap-3 rounded-3xl border-2 border-border-strong bg-tertiary/50 p-10">
-                  <span className="grid h-14 w-14 place-items-center rounded-2xl bg-accent text-white" aria-hidden>
-                    <Send size={26} />
-                  </span>
-                  <h3 className="mt-2 font-display text-display-xs font-extrabold text-ink">Application received.</h3>
-                  <p className="text-body-sm text-text-secondary">
-                    We&apos;ll review your submission and reach out soon. Welcome to the build.
-                  </p>
-                </div>
-              </Reveal>
+            {registration ? (
+              <div className="mt-6">
+                <RegistrationSuccess result={registration.result} email={registration.email} />
+              </div>
             ) : (
               /* Form fields cascade upward one after another. Each field animates
                  itself rather than relying on parent variant propagation. */
@@ -638,6 +636,8 @@ export default function HomePage() {
                 className="mt-6 flex flex-col gap-6"
                 onSubmit={handleSubmit}
               >
+                  {/* Honeypot for bots; hidden from people and assistive tech. */}
+                  <input type="text" name="website" tabIndex={-1} autoComplete="off" aria-hidden className="hidden" />
                   <div className="grid gap-x-6 gap-y-6 sm:grid-cols-2">
                     {[
                       { label: 'FULL NAME', name: 'name', type: 'text', placeholder: 'Your name', autoComplete: 'name' },
@@ -694,7 +694,7 @@ export default function HomePage() {
                     aria-busy={submitting}
                   >
                     {submitting ? <Loader2 size={16} className="animate-spin" aria-hidden /> : <Send size={16} aria-hidden />}
-                    {submitting ? 'Sending...' : 'Send application'}
+                    {submitting ? 'Registering...' : 'Register & get club ID'}
                   </button>
               </motion.form>
             )}

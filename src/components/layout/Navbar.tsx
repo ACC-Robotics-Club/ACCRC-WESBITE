@@ -9,6 +9,7 @@ import { Magnetic } from "@/components/fx/Magnetic";
 const navLinks = [
   { href: "/events/", label: "Events" },
   { href: "/#achievements", label: "Achievements" },
+  { href: "/panels/", label: "Panels" },
   { href: "/news/", label: "News" },
   { href: "/about/", label: "About" },
   { href: "/membership/", label: "Membership" },
