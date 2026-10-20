@@ -80,6 +80,8 @@ export interface Registration {
   bloodGroup?: string;
   /** Set by admins while reviewing; missing means not reviewed yet. */
   status?: ReviewStatus;
+  /** When the "you're accepted" email with the club ID went out. */
+  acceptanceEmailSentAt?: unknown;
   createdAt?: Date;
 }
 

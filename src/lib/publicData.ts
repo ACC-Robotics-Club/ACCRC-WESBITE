@@ -18,6 +18,8 @@ import type {
   Registration,
 } from './firestore';
 
+import { submitPublicForm } from './submitForm';
+
 export type { FestConfig, FirestoreAchievement, FirestoreEvent, FirestoreNews, PortalConfig } from './firestore';
 
 type FirestoreModule = typeof import('./firestore');
@@ -81,7 +83,8 @@ export const getNewsPosts = async () => (await loadWhenIdle()).getNewsPosts();
 export const getNewsPost = async (id: string) => (await loadWhenIdle()).getNewsPost(id);
 export const getLatestNews = async (count?: number) => (await loadWhenIdle()).getLatestNews(count);
 
+/* Public forms save with one plain request (see submitForm.ts), not the SDK. */
 export const submitRegistration = async (data: Omit<Registration, 'id' | 'createdAt'>) =>
-  (await loadNow()).submitRegistration(data);
+  submitPublicForm('registrations', data as unknown as Record<string, string | undefined>);
 export const submitApplication = async (data: Omit<Application, 'id' | 'createdAt'>) =>
-  (await loadNow()).submitApplication(data);
+  submitPublicForm('applications', data as unknown as Record<string, string | undefined>);

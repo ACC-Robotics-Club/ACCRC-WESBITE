@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { onAuthStateChanged, signOut, type User } from 'firebase/auth';
 import { auth, adminSessionReady } from '@/lib/firebaseAuth';
-import { isApprovedAdmin, NOT_APPROVED_MESSAGE } from '@/lib/adminAccess';
+import { adminCheckFailedMessage, isApprovedAdmin, NOT_APPROVED_MESSAGE } from '@/lib/adminAccess';
 import { Loader2, LogOut, Flame, Calendar, Trophy, Newspaper, Users, ShieldCheck, LayoutDashboard } from 'lucide-react';
 
 interface AdminProtectedRouteProps {
@@ -151,7 +151,17 @@ export default function AdminProtectedRoute({ children, showHeader = true }: Adm
           async (currentUser) => {
             if (currentUser) {
               // Signed in is not enough: the account must be on the admin list.
-              if (!(await isApprovedAdmin(currentUser))) {
+              let approved: boolean;
+              try {
+                approved = await isApprovedAdmin(currentUser);
+              } catch (checkErr) {
+                // Couldn't reach the database: keep the session so a retry works.
+                setUser(null);
+                setError(adminCheckFailedMessage(checkErr));
+                setLoading(false);
+                return;
+              }
+              if (!approved) {
                 await signOut(firebaseAuth).catch(() => undefined);
                 setUser(null);
                 setError(NOT_APPROVED_MESSAGE);

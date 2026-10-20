@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { ChevronLeft, X, Loader2, Search, Trash2, Download } from 'lucide-react';
 import { DeleteModal } from '@/components/admin/DeleteModal';
+import { acceptMembership, acceptanceEmailReady, sendAcceptanceEmail, type AcceptResult } from '@/lib/memberAcceptance';
 
 type StatusFilter = 'all' | ReviewStatus;
 
@@ -72,6 +73,7 @@ export default function AdminPortal() {
   const [configSaving, setConfigSaving] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [statusSaving, setStatusSaving] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
 
   const [newRoles, setNewRoles] = useState({
     subExecRoles: '',
@@ -210,13 +212,43 @@ export default function AdminPortal() {
     }
   };
 
+  const reportAcceptance = (member: Registration, result: AcceptResult) => {
+    setMemberships((prev) => prev.map((membership) => membership.id === member.id
+      ? { ...membership, status: 'accepted', clubId: result.clubId, ...(result.emailSent ? { acceptanceEmailSentAt: new Date() } : {}) }
+      : membership));
+    setNotice(result.emailSent
+      ? `${member.name} is accepted as ${result.clubId}. The welcome email with the club ID was sent to ${member.email}.`
+      : null);
+    if (!result.emailSent) {
+      setError(`${member.name} is accepted as ${result.clubId}, but the email was not sent: ${result.emailProblem} Use "Send email" in their row to try again.`);
+    }
+  };
+
+  const handleResendEmail = async (member: Registration) => {
+    if (!member.clubId) return;
+    setStatusSaving(member.id!);
+    setError(null);
+    setNotice(null);
+    try {
+      reportAcceptance(member, await sendAcceptanceEmail(member, member.clubId));
+    } finally {
+      setStatusSaving(null);
+    }
+  };
+
   const handleStatusChange = async (id: string, type: 'application' | 'membership', status: ReviewStatus) => {
     setStatusSaving(id);
     setError(null);
+    setNotice(null);
     try {
       if (type === 'application') {
         await updateApplicationStatus(id, status);
         setApplications((prev) => prev.map((application) => application.id === id ? { ...application, status } : application));
+      } else if (status === 'accepted') {
+        // Accepting gives the member a club ID and emails it to them.
+        const member = memberships.find((membership) => membership.id === id);
+        if (!member) throw new Error('Membership request not found.');
+        reportAcceptance(member, await acceptMembership(member));
       } else {
         await updateRegistrationStatus(id, status);
         setMemberships((prev) => prev.map((membership) => membership.id === id ? { ...membership, status } : membership));
@@ -297,6 +329,12 @@ export default function AdminPortal() {
 
         <h1 className="text-3xl font-sans font-bold text-[#141210]">Applications &amp; Membership</h1>
         <p className="mt-2 mb-8 max-w-2xl text-[#3a3530]">Open or close leadership applications, set the roles people can apply for, and review every application and membership request.</p>
+
+        {notice && (
+          <div className="mb-6 p-4 bg-[#2f7d4f]/10 border border-[#2f7d4f]/25 text-[#245f3c] font-mono text-sm rounded">
+            {notice}
+          </div>
+        )}
 
         {error && (
           <div className="mb-6 p-4 bg-[#c72c2c]/10 border border-[#c72c2c]/20 text-[#c72c2c] font-mono text-sm rounded">
@@ -667,7 +705,36 @@ export default function AdminPortal() {
                         <tbody>
                           {filteredMemberships.map(mem => (
                             <tr key={mem.id} className="border-b border-[#cfc9bc] hover:bg-[#e6dfd1]/60 transition-colors">
-                              <td className="px-4 py-3 font-mono text-xs font-bold text-[#c94030] whitespace-nowrap">{mem.clubId || '—'}</td>
+                              <td className="px-4 py-3 font-mono text-xs font-bold text-[#c94030] whitespace-nowrap">
+                                {mem.clubId || (statusOf(mem) === 'accepted' ? '' : '—')}
+                                {statusOf(mem) === 'accepted' && !mem.clubId && (
+                                  /* Accepted before club IDs existed. */
+                                  <button
+                                    type="button"
+                                    disabled={statusSaving === mem.id}
+                                    title="Give this member a club ID and email it to them"
+                                    onClick={() => void handleStatusChange(mem.id!, 'membership', 'accepted')}
+                                    className="block text-[10px] font-semibold uppercase tracking-wider text-[#3a3530] underline underline-offset-2 disabled:cursor-wait disabled:opacity-50"
+                                  >
+                                    Give ID &amp; email
+                                  </button>
+                                )}
+                                {statusOf(mem) === 'accepted' && mem.clubId && (
+                                  mem.acceptanceEmailSentAt ? (
+                                    <span className="mt-1 block text-[10px] font-semibold uppercase tracking-wider text-[#2f7d4f]">Emailed</span>
+                                  ) : (
+                                    <button
+                                      type="button"
+                                      disabled={statusSaving === mem.id || !acceptanceEmailReady}
+                                      title={acceptanceEmailReady ? 'Email the club ID to this member' : 'Email sending is not set up yet'}
+                                      onClick={() => void handleResendEmail(mem)}
+                                      className="mt-1 block text-[10px] font-semibold uppercase tracking-wider text-[#3a3530] underline underline-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                    >
+                                      Send email
+                                    </button>
+                                  )
+                                )}
+                              </td>
                               <td className="px-4 py-3 font-bold text-[#141210]">{mem.name}</td>
                               <td className="px-4 py-3 text-[#3a3530]">{mem.email}</td>
                               <td className="px-4 py-3 font-mono text-[#3a3530] text-xs">{mem.whatsapp || '—'}</td>

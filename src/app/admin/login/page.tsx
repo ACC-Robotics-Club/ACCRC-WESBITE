@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { signInWithEmailAndPassword, signOut } from 'firebase/auth';
 import { adminSessionReady, auth } from '@/lib/firebaseAuth';
-import { isApprovedAdmin, NOT_APPROVED_MESSAGE } from '@/lib/adminAccess';
+import { adminCheckFailedMessage, isApprovedAdmin, NOT_APPROVED_MESSAGE } from '@/lib/adminAccess';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Lock } from 'lucide-react';
@@ -50,7 +50,16 @@ export default function AdminLogin() {
         console.warn('adminSessionReady notice:', initErr);
       });
       const { user } = await signInWithEmailAndPassword(auth, email.trim(), password);
-      if (!(await isApprovedAdmin(user))) {
+      let approved: boolean;
+      try {
+        approved = await isApprovedAdmin(user);
+      } catch (checkErr) {
+        console.error('Admin check failed.', checkErr);
+        await signOut(auth).catch(() => undefined);
+        setError(adminCheckFailedMessage(checkErr));
+        return;
+      }
+      if (!approved) {
         await signOut(auth).catch(() => undefined);
         setError(NOT_APPROVED_MESSAGE);
         return;
