@@ -250,6 +250,24 @@ function StillFrame() {
 }
 
 /**
+ * Half-rate mode: draws the hand 30 times a second instead of every display
+ * frame. The animation keeps its real timing, so it still moves smoothly,
+ * just with half the work. Used when a phone can't hold full speed.
+ */
+function HalfRate() {
+  const invalidate = useThree((state) => state.invalidate);
+  useEffect(() => {
+    const timer = setInterval(() => {
+      if (!document.hidden) invalidate();
+    }, 1000 / 30);
+    return () => clearInterval(timer);
+  }, [invalidate]);
+  return null;
+}
+
+type HandMode = 'full' | 'half' | 'still';
+
+/**
  * Start with a still hand only when it's certain to struggle: very little
  * memory, or the visitor asked to save data. Core counts are not used: iPhones
  * and many fast Androids report few cores, which wrongly froze the hand.
@@ -262,8 +280,10 @@ function startStill() {
 
 export default function RobotScene({ paused = false }: { paused?: boolean }) {
   const coarse = useMemo(() => window.matchMedia('(pointer: coarse)').matches, []);
-  /* Becomes true if the device can't keep the hand smooth (see below). */
-  const [still, setStill] = useState(startStill);
+  /* full (every frame) → half (30fps) → still, stepping down only if the
+     device can't keep up (see below). */
+  const [mode, setMode] = useState<HandMode>(() => (startStill() ? 'still' : 'full'));
+  const still = mode === 'still';
   const dist = cameraDistance(CONFIG.viewHeight, 10);
   /* Phones render at 1x: the hand is soft cel-shading, so the difference is
      invisible on a small screen, but it is half or less of the pixel work.
@@ -271,15 +291,15 @@ export default function RobotScene({ paused = false }: { paused?: boolean }) {
   const maxDpr = Math.min(window.devicePixelRatio || 1, coarse ? 1 : 2);
   const [dpr, setDpr] = useState(maxDpr);
 
-  /* Measured, not guessed. If the frame rate drops, first drop to 1x pixels;
-     if it is still too slow at 1x (or keeps flip-flopping), switch to a still
-     hand rather than let it stutter. Resolution never climbs back up on its
-     own, because every change reallocates the canvas (a visible hitch). */
+  /* Measured, not guessed. If the hand can't hold 30fps, first drop to 1x
+     pixels, then to drawing 30 times a second; only if it can't manage even
+     ~12fps that way does it become a still hand. Steps never go back up on
+     their own: each change can cause a visible hitch. */
   const dprRef = useRef(dpr);
   dprRef.current = dpr;
-  const onDecline = () => {
+  const onFullDecline = () => {
     if (dprRef.current > 1) setDpr(1);
-    else setStill(true);
+    else setMode('half');
   };
 
   /* Start judging only once the page has settled: the first seconds are busy
@@ -298,7 +318,7 @@ export default function RobotScene({ paused = false }: { paused?: boolean }) {
       /* Every device that animates renders every display frame, so the hand
          moves as smoothly as the page scrolls. Low-end phones render one
          still frame on demand. Nothing renders while the hero is covered. */
-      frameloop={paused ? 'never' : still ? 'demand' : 'always'}
+      frameloop={paused ? 'never' : mode === 'full' ? 'always' : 'demand'}
       /* By default the canvas re-measures itself on every scroll stop using
          getBoundingClientRect, which includes the hero's scroll-driven scale.
          So every scroll "resized" it and reallocated the WebGL buffer — a
@@ -323,17 +343,28 @@ export default function RobotScene({ paused = false }: { paused?: boolean }) {
       <directionalLight position={[CONFIG.shading.light.x, CONFIG.shading.light.y, CONFIG.shading.light.z]} intensity={0.18} />
       <directionalLight position={[-2, 3, 2]} intensity={0.05} />
 
-      {judging && !still && !paused && (
-        /* Judged over ~1.5s windows: below 30fps declines. */
+      {judging && !paused && mode === 'full' && (
+        /* Judged over ~2.5s windows: a sustained drop below 30fps steps down. */
         <PerformanceMonitor
+          key="full"
           ms={250}
-          iterations={6}
+          iterations={10}
           bounds={() => [30, 1000]}
           flipflops={3}
-          onDecline={onDecline}
-          onFallback={() => setStill(true)}
+          onDecline={onFullDecline}
+          onFallback={() => setMode('half')}
         />
       )}
+      {judging && !paused && mode === 'half' && (
+        <PerformanceMonitor
+          key="half"
+          ms={250}
+          iterations={12}
+          bounds={() => [12, 1000]}
+          onDecline={() => setMode('still')}
+        />
+      )}
+      {mode === 'half' && !paused && <HalfRate />}
       <Suspense fallback={null}>
         <MindRoboticsHand still={still} />
         {still && <StillFrame />}
