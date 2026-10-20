@@ -19,7 +19,8 @@ import { club } from '@/lib/club';
 export const JUICER_FEED_ID = process.env.NEXT_PUBLIC_JUICER_FEED_ID?.trim();
 const SCRIPT_SRC = 'https://assets.juicer.io/embed.js';
 const STYLE_HREF = 'https://assets.juicer.io/embed.css';
-const PREVIEW_COUNT = 6;
+/** The home page shows just one row of the latest posts. */
+const PREVIEW_COUNT = 3;
 
 function loadJuicer() {
   if (!document.querySelector(`link[href="${STYLE_HREF}"]`)) {
@@ -82,9 +83,8 @@ function Placeholder({ count }: { count: number }) {
 function InstagramGrid({ count, paged }: { count: number; paged: boolean }) {
   const [ref, near] = useNearViewport<HTMLDivElement>();
   return (
-    /* Reserve space so the page doesn't jump when the posts arrive. The home
-       preview shows only the first three posts on phones (one column). */
-    <div ref={ref} className={`social-feed min-h-[420px] ${paged ? '' : 'social-feed--preview'}`}>
+    /* Reserve space so the page doesn't jump when the posts arrive. */
+    <div ref={ref} className="social-feed min-h-[420px]">
       {near ? (
         <ul
           className="juicer-feed"
