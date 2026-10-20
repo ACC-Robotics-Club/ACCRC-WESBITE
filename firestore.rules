@@ -98,6 +98,13 @@ service cloud.firestore {
       allow read, update, delete: if isAdmin();
     }
 
+    // Club-ID counters for member registration. Written only by the
+    // /api/register function (a service account, which bypasses rules).
+    match /counters/{counterId} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+
     // Portal Config: Public read, Admin write
     match /config/{configId} {
       allow read: if true;

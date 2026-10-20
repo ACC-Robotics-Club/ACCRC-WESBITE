@@ -1,7 +1,7 @@
 'use client';
 
 import { memo, startTransition, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { Award, ChevronDown, GraduationCap, IdCard, Medal, Trophy, UsersRound } from 'lucide-react';
+import { ArrowRight, Award, ChevronDown, GraduationCap, IdCard, Medal, Trophy, UsersRound } from 'lucide-react';
 import { subscribeToAchievements, type FirestoreAchievement } from '@/lib/publicData';
 import { SplitReveal } from '@/components/fx/SplitReveal';
 import { Parallax } from '@/components/fx/Parallax';
@@ -489,7 +489,9 @@ const leadershipPanels = PANEL_ORDER.map((key) => [key, panels[key]] as [PanelKe
 /** Achievements shown before "Show more", and how many each click adds. */
 const ACHIEVEMENTS_PAGE = 6;
 
-export function AchievementsAndPanels() {
+/* Home page: the achievements ledger. The leadership panels have their own
+   page (/panels/), linked from here, the navbar and the footer. */
+export function Achievements() {
   const [adminAchievements, setAdminAchievements] = useState<FirestoreAchievement[]>([]);
 
   useEffect(() => {
@@ -516,22 +518,25 @@ export function AchievementsAndPanels() {
       <div className={styles.wrap}>
         <div className={styles.intro}>
           <div>
-            <p className={styles.eyebrow}>Recognition / Leadership</p>
+            <p className={styles.eyebrow}>Recognition / Results</p>
             <SplitReveal
               delay={0.1}
               className="font-display"
               lineClassName="text-white"
               lines={[
-                <>Achievements &amp;</>,
-                <><span className={styles.introSpan}>Executive Panels.</span></>,
+                <>Hall of</>,
+                <><span className={styles.introSpan}>Achievements.</span></>,
               ]}
             />
-            <h2 id="achievements-title" className="sr-only">Achievements &amp; Executive Panels.</h2>
+            <h2 id="achievements-title" className="sr-only">Hall of Achievements.</h2>
           </div>
           <RiseIn stagger={false}>
             <p className={styles.introCopy}>
-              A growing record of the people, projects, and results that represent ACCRC.
+              A growing record of the projects and results that represent ACCRC.
             </p>
+            <a href="/panels/" className={styles.panelsLink}>
+              Meet the executive panels <ArrowRight size={16} aria-hidden="true" />
+            </a>
           </RiseIn>
         </div>
 
@@ -547,8 +552,46 @@ export function AchievementsAndPanels() {
           {achievements.length === 0
             ? <EmptyState label="achievement records" />
             : <AchievementList achievements={achievements} />}
+        </div>
+      </div>
+    </section>
+  );
+}
 
-          <LeadershipArchive />
+/* The /panels/ page: every committee, newest first. */
+export function LeadershipPanels() {
+  return (
+    <section className={`${styles.section} ${styles.pageSection}`} aria-labelledby="panels-title">
+      <div className={styles.backdrop} aria-hidden>
+        <Parallax speed={16} className={styles.orbA}><span /></Parallax>
+        <Parallax speed={28} className={styles.orbB}><span /></Parallax>
+        <p className={styles.wordmark}>Leadership</p>
+      </div>
+
+      <div className={styles.wrap}>
+        <div className={styles.intro}>
+          <div>
+            <p className={styles.eyebrow}>Leadership / Archive</p>
+            <SplitReveal
+              delay={0.1}
+              className="font-display"
+              lineClassName="text-white"
+              lines={[
+                <>Executive</>,
+                <><span className={styles.introSpan}>Panels.</span></>,
+              ]}
+            />
+            <h1 id="panels-title" className="sr-only">Executive Panels</h1>
+          </div>
+          <RiseIn stagger={false}>
+            <p className={styles.introCopy}>
+              The people who have led ACCRC, from the founding team to the current committee.
+            </p>
+          </RiseIn>
+        </div>
+
+        <div className={styles.panel}>
+          <LeadershipArchive first />
         </div>
       </div>
     </section>
@@ -557,9 +600,9 @@ export function AchievementsAndPanels() {
 
 /* The roll of leadership panels never changes after load. Memoised so that
    paging through achievements doesn't re-render ~60 member cards. */
-const LeadershipArchive = memo(function LeadershipArchive() {
+const LeadershipArchive = memo(function LeadershipArchive({ first = false }: { first?: boolean }) {
   return (
-    <div className={styles.leadershipArchive} aria-label="Leadership archive">
+    <div className={`${styles.leadershipArchive} ${first ? styles.leadershipArchiveFirst : ''}`} aria-label="Leadership archive">
       {leadershipPanels.map(([key, panel]) => (
         /* Panels are far too tall to move as one block, so the panel
            itself stays put and its parts — heading, sub-headings, each

@@ -14,6 +14,7 @@ const navLinks = [
   { href: "/#mission", label: "MISSION" },
   { href: "/events/", label: "EVENTS" },
   { href: "/#achievements", label: "ACHIEVEMENTS" },
+  { href: "/panels/", label: "PANELS" },
   { href: "/news/", label: "UPDATES" },
 ];
 

@@ -627,3 +627,35 @@
 @media (max-width: 480px) {
   .moreButton { justify-content: center; width: 100%; }
 }
+
+/* "Meet the executive panels" link under the achievements intro. */
+.panelsLink {
+  align-items: center;
+  border: 1.5px solid rgba(255, 122, 89, 0.45);
+  border-radius: 999px;
+  color: #FF7A59;
+  display: inline-flex;
+  font: 700 0.72rem/1 var(--font-spacemono), "Courier New", monospace;
+  gap: 0.6rem;
+  letter-spacing: 0.12em;
+  margin-top: 1.5rem;
+  min-height: 44px;
+  padding: 0.85rem 1.25rem;
+  text-transform: uppercase;
+  transition: background 200ms ease, color 200ms ease;
+}
+
+.panelsLink:hover {
+  background: #FF7A59;
+  color: #1C1917;
+}
+
+/* The standalone /panels/ page. */
+.pageSection {
+  min-height: 100svh;
+  padding-top: clamp(8rem, 14vw, 11rem);
+}
+
+.leadershipArchiveFirst {
+  margin-top: 0;
+}
