@@ -39,7 +39,7 @@ function cameraDistance(viewHeight: number, fov: number) {
   return (0.5 * viewHeight) / Math.tan(0.5 * THREE.MathUtils.degToRad(fov));
 }
 
-function MindRoboticsHand() {
+function MindRoboticsHand({ still }: { still: boolean }) {
   const groupRef = useRef<THREE.Group>(null);
   const { gl, camera, invalidate } = useThree();
   /* Compiling the toon shaders inside the first frame blocked the main thread
@@ -70,6 +70,15 @@ function MindRoboticsHand() {
       active.reset().play();
     }
   }, [actions]);
+
+  /* In still mode the animation is paused where it is, so a stray redraw
+     (scroll, browser bar, tap) shows the same pose instead of jumping ahead.
+     Without this, an on-demand canvas looked like a 1-frame-per-second hand. */
+  useEffect(() => {
+    for (const action of Object.values(actions)) {
+      if (action) action.paused = still;
+    }
+  }, [actions, still]);
 
   // Window pointer tracking
   useEffect(() => {
@@ -171,7 +180,7 @@ function MindRoboticsHand() {
     const s = orientRef.current;
     if (!r || !s) return;
 
-    const speed = env.reduced ? 0 : 1;
+    const speed = env.reduced || still ? 0 : 1;
 
     // Viewport calculations matching Mind Robotics
     const a = 0.5 * CONFIG.viewHeight;
@@ -219,10 +228,10 @@ function MindRoboticsHand() {
 useGLTF.preload(CONFIG.url);
 
 /**
- * Low-end phones get one still frame of the hand instead of an animation: it
- * renders a couple of frames once the model is in, then the GPU and main
- * thread are left completely free. Mounted inside the same Suspense boundary
- * as the hand, so it runs only after the model has loaded.
+ * Phones that can't keep the hand smooth get one still frame of it instead:
+ * it renders a couple of frames, then the GPU and main thread are left
+ * completely free. Mounted inside the same Suspense boundary as the hand, so
+ * it runs only after the model has loaded.
  */
 function StillFrame() {
   const invalidate = useThree((state) => state.invalidate);
@@ -240,25 +249,47 @@ function StillFrame() {
   return null;
 }
 
-/** Few cores or little memory on a touch device: a budget phone. */
-function isLowEndPhone(coarse: boolean) {
-  const nav = navigator as Navigator & { deviceMemory?: number };
-  const cores = nav.hardwareConcurrency || 8;
-  const memory = nav.deviceMemory ?? 8;
-  return coarse && (cores <= 4 || memory <= 3);
+/**
+ * Start with a still hand only when it's certain to struggle: very little
+ * memory, or the visitor asked to save data. Core counts are not used: iPhones
+ * and many fast Androids report few cores, which wrongly froze the hand.
+ * Every other device starts animated and is judged on its real frame rate.
+ */
+function startStill() {
+  const nav = navigator as Navigator & { deviceMemory?: number; connection?: { saveData?: boolean } };
+  return (nav.deviceMemory ?? 8) <= 2 || nav.connection?.saveData === true;
 }
 
 export default function RobotScene({ paused = false }: { paused?: boolean }) {
   const coarse = useMemo(() => window.matchMedia('(pointer: coarse)').matches, []);
-  const lowEnd = useMemo(() => isLowEndPhone(coarse), [coarse]);
+  /* Becomes true if the device can't keep the hand smooth (see below). */
+  const [still, setStill] = useState(startStill);
   const dist = cameraDistance(CONFIG.viewHeight, 10);
-  /* Phones get a lower pixel-ratio ceiling: the hand is soft cel-shading, so
-     the difference is invisible, but the fill-rate saving is large. */
-  /* Never above the screen's own density: a fixed dpr does not clamp. */
-  const maxDpr = Math.min(window.devicePixelRatio || 1, coarse ? 1.5 : 2);
-  /* If a device cannot hold a steady frame rate, drop to 1x pixels (and back
-     up when it recovers) rather than skipping frames. */
+  /* Phones render at 1x: the hand is soft cel-shading, so the difference is
+     invisible on a small screen, but it is half or less of the pixel work.
+     Never above the screen's own density: a fixed dpr does not clamp. */
+  const maxDpr = Math.min(window.devicePixelRatio || 1, coarse ? 1 : 2);
   const [dpr, setDpr] = useState(maxDpr);
+
+  /* Measured, not guessed. If the frame rate drops, first drop to 1x pixels;
+     if it is still too slow at 1x (or keeps flip-flopping), switch to a still
+     hand rather than let it stutter. Resolution never climbs back up on its
+     own, because every change reallocates the canvas (a visible hitch). */
+  const dprRef = useRef(dpr);
+  dprRef.current = dpr;
+  const onDecline = () => {
+    if (dprRef.current > 1) setDpr(1);
+    else setStill(true);
+  };
+
+  /* Start judging only once the page has settled: the first seconds are busy
+     loading fonts, data and the model, which would wrongly look like a slow
+     device. */
+  const [judging, setJudging] = useState(false);
+  useEffect(() => {
+    const timer = setTimeout(() => setJudging(true), 4000);
+    return () => clearTimeout(timer);
+  }, []);
 
   return (
     <Canvas
@@ -267,7 +298,7 @@ export default function RobotScene({ paused = false }: { paused?: boolean }) {
       /* Every device that animates renders every display frame, so the hand
          moves as smoothly as the page scrolls. Low-end phones render one
          still frame on demand. Nothing renders while the hero is covered. */
-      frameloop={paused ? 'never' : lowEnd ? 'demand' : 'always'}
+      frameloop={paused ? 'never' : still ? 'demand' : 'always'}
       /* By default the canvas re-measures itself on every scroll stop using
          getBoundingClientRect, which includes the hero's scroll-driven scale.
          So every scroll "resized" it and reallocated the WebGL buffer — a
@@ -292,17 +323,20 @@ export default function RobotScene({ paused = false }: { paused?: boolean }) {
       <directionalLight position={[CONFIG.shading.light.x, CONFIG.shading.light.y, CONFIG.shading.light.z]} intensity={0.18} />
       <directionalLight position={[-2, 3, 2]} intensity={0.05} />
 
-      {!lowEnd && (
+      {judging && !still && !paused && (
+        /* Judged over ~1.5s windows: below 30fps declines. */
         <PerformanceMonitor
-          onDecline={() => setDpr(1)}
-          onIncline={() => setDpr(maxDpr)}
+          ms={250}
+          iterations={6}
+          bounds={() => [30, 1000]}
           flipflops={3}
-          onFallback={() => setDpr(1)}
+          onDecline={onDecline}
+          onFallback={() => setStill(true)}
         />
       )}
       <Suspense fallback={null}>
-        <MindRoboticsHand />
-        {lowEnd && <StillFrame />}
+        <MindRoboticsHand still={still} />
+        {still && <StillFrame />}
       </Suspense>
     </Canvas>
   );
