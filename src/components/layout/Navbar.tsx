@@ -10,6 +10,7 @@ const navLinks = [
   { href: "/#mission", label: "MISSION" },
   { href: "/events/", label: "EVENTS" },
   { href: "/#achievements", label: "ACHIEVEMENTS" },
+  { href: "/panels/", label: "PANELS" },
   { href: "/news/", label: "UPDATES" },
 ];
 
@@ -78,7 +79,7 @@ export function Navbar() {
             <a
               key={link.href}
               href={link.href}
-              className="text-xs font-mono font-bold tracking-widest text-ink hover:text-accent transition-colors duration-200 uppercase"
+              className="whitespace-nowrap text-xs font-mono font-bold tracking-widest text-ink hover:text-accent transition-colors duration-200 uppercase"
             >
               {link.label}
             </a>

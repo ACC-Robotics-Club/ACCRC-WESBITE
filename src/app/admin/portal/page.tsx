@@ -460,6 +460,7 @@ export default function AdminPortal() {
                       <table className="w-full text-sm text-left">
                         <thead className="text-xs font-mono uppercase bg-primary text-text-secondary">
                           <tr>
+                            <th className="px-4 py-3 border-b border-border">Club ID</th>
                             <th className="px-4 py-3 border-b border-border">Name</th>
                             <th className="px-4 py-3 border-b border-border">Email</th>
                             <th className="px-4 py-3 border-b border-border">WhatsApp</th>
@@ -472,6 +473,7 @@ export default function AdminPortal() {
                         <tbody>
                           {memberships.map(mem => (
                             <tr key={mem.id} className="border-b border-border hover:bg-primary/50">
+                              <td className="px-4 py-3 font-mono text-xs font-bold text-accent whitespace-nowrap">{mem.clubId || '—'}</td>
                               <td className="px-4 py-3 font-bold">{mem.name}</td>
                               <td className="px-4 py-3 text-text-secondary">{mem.email}</td>
                               <td className="px-4 py-3 font-mono text-text-secondary text-xs">{mem.whatsapp || '—'}</td>

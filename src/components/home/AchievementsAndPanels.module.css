@@ -125,6 +125,36 @@
   margin-top: clamp(3rem, 6vw, 5rem);
 }
 
+.panelsLink {
+  align-items: center;
+  border: 1.5px solid rgba(43, 224, 210, 0.45);
+  border-radius: 999px;
+  color: #2be0d2;
+  display: inline-flex;
+  font: 700 0.72rem/1 var(--font-spacemono), "Courier New", monospace;
+  gap: 0.6rem;
+  letter-spacing: 0.12em;
+  margin-top: 1.5rem;
+  padding: 0.85rem 1.25rem;
+  text-transform: uppercase;
+  transition: background 200ms ease, color 200ms ease;
+}
+
+.panelsLink:hover {
+  background: #2be0d2;
+  color: #0d1b18;
+}
+
+/* Standalone /panels/ page: clear the fixed navbar and fill the viewport. */
+.pageSection {
+  min-height: 100svh;
+  padding-top: clamp(8rem, 14vw, 11rem);
+}
+
+.leadershipArchiveFirst {
+  margin-top: 0;
+}
+
 .contentHeading {
   align-items: center;
   display: flex;
