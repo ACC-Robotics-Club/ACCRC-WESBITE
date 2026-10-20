@@ -407,6 +407,25 @@
   to { transform: scaleX(1); }
 }
 
+/* ─── Paused loops ───
+   Looping animations stop while off screen (fx/pauseOffscreenLoops.ts), and
+   everything in the hero stops once the page has slid over it: running
+   animations are re-styled every rendered frame even when unseen. The hero's
+   scroll-linked effects are switched off there too; it is hidden by then. */
+.loop-paused,
+.loop-paused * {
+  animation-play-state: paused !important;
+}
+.hero-depth-root[data-covered] * {
+  animation-play-state: paused !important;
+}
+.hero-depth-root[data-covered] .hero-depth-content,
+.hero-depth-root[data-covered] .hero-depth-hand,
+.hero-depth-root[data-covered] .hero-depth-bg,
+.hero-depth-root[data-covered] .hero-depth-cue {
+  animation: none !important;
+}
+
 /* ─── Skip offscreen sections ───
    Every frame the 3D hand draws (and every scroll frame) Chrome re-runs its
    paint/layer pipeline over the whole page; on a budget phone that, not the

@@ -17,10 +17,22 @@ export function ScrollProgress() {
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (!reduced && typeof CSS !== 'undefined' && CSS.supports('animation-timeline: scroll()')) return;
 
+    /* Page height is cached (re-read on resize) instead of read every scroll
+       frame, which could force a synchronous layout. */
+    let max = 0;
+    const measure = () => {
+      max = document.documentElement.scrollHeight - window.innerHeight;
+    };
+    measure();
+    const sizes = new ResizeObserver(() => {
+      measure();
+      onScroll();
+    });
+    sizes.observe(document.body);
+
     let raf = 0;
     const update = () => {
       raf = 0;
-      const max = document.documentElement.scrollHeight - window.innerHeight;
       el.style.transform = `scaleX(${max > 0 ? Math.min(1, window.scrollY / max).toFixed(4) : 0})`;
     };
     const onScroll = () => {
@@ -31,6 +43,7 @@ export function ScrollProgress() {
     window.addEventListener('resize', onScroll, { passive: true });
     return () => {
       cancelAnimationFrame(raf);
+      sizes.disconnect();
       window.removeEventListener('scroll', onScroll);
       window.removeEventListener('resize', onScroll);
     };

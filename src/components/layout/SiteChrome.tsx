@@ -7,6 +7,7 @@ import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { PageLoader } from '@/components/fx/PageLoader';
 import { GlobalEventBanner } from '@/components/layout/GlobalEventBanner';
+import { pauseOffscreenLoops } from '@/components/fx/pauseOffscreenLoops';
 
 /* The site guide uses an animation library, so it is only downloaded the
    first time someone opens it — not on every page load. */
@@ -78,6 +79,7 @@ function useRecordSectionHeights() {
 }
 
 export function SiteChrome({ children }: { children: ReactNode }) {
+  useEffect(() => pauseOffscreenLoops(), []);
   const pathname = usePathname();
   const isAdmin = pathname?.startsWith('/admin');
 

@@ -44,13 +44,30 @@ export function Hero() {
     const jsDepth = !reduced && !cssTimeline;
     if (jsDepth) el.classList.add('hero-js-depth');
 
+    /* Per scroll frame this only reads scrollY and (when needed) writes one
+       variable. The hero's height is cached rather than read after that write,
+       which forced a synchronous style and layout pass every frame, and React
+       is only told when "covered" actually flips. */
+    let height = el.offsetHeight;
+    let viewport = window.innerHeight;
+    const sizes = new ResizeObserver(() => {
+      height = el.offsetHeight;
+      viewport = window.innerHeight;
+      onScroll();
+    });
+    sizes.observe(el);
+
     let raf = 0;
+    let wasCovered: boolean | null = null;
     const update = () => {
       raf = 0;
       const y = window.scrollY;
-      if (jsDepth) el.style.setProperty('--curtain', Math.min(1, y / window.innerHeight).toFixed(4));
-      const next = y > el.offsetHeight + 8;
-      setCovered((prev) => (prev === next ? prev : next));
+      if (jsDepth) el.style.setProperty('--curtain', Math.min(1, y / viewport).toFixed(4));
+      const next = y > height + 8;
+      if (next !== wasCovered) {
+        wasCovered = next;
+        setCovered(next);
+      }
     };
     const onScroll = () => {
       if (!raf) raf = requestAnimationFrame(update);
@@ -59,6 +76,7 @@ export function Hero() {
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => {
       cancelAnimationFrame(raf);
+      sizes.disconnect();
       window.removeEventListener('scroll', onScroll);
       el.classList.remove('hero-js-depth');
     };
@@ -101,8 +119,9 @@ export function Hero() {
     <section
       ref={sectionRef}
       id="top"
-      className="sticky top-0 z-0 flex min-h-[100svh] items-center overflow-hidden bg-primary pt-28 pb-24 sm:pt-32"
+      className="hero-depth-root sticky top-0 z-0 flex min-h-[100svh] items-center overflow-hidden bg-primary pt-28 pb-24 sm:pt-32"
       style={{ visibility: covered ? 'hidden' : 'visible' }}
+      data-covered={covered ? '' : undefined}
     >
       {/* ── Parallax backdrop layer (drifts down = deeper) ── */}
       <div className="hero-depth-bg absolute inset-0 z-[1]" aria-hidden>
