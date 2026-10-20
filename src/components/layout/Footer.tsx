@@ -22,7 +22,7 @@ export function Footer() {
   );
 
   return (
-    <footer className="site-footer bg-ink text-[#e8fffb]">
+    <footer className="site-footer bg-ink text-[#F7F5EE]">
       {/* Tagline marquee */}
       <div className="border-b border-white/10 py-6">
         <Marquee speed={26}>
@@ -135,7 +135,7 @@ export function Footer() {
 
         {/* Giant wordmark */}
         <div className="mt-14 select-none" aria-hidden="true">
-          <p className="font-display text-display-xl font-black tracking-display leading-none text-transparent [-webkit-text-stroke:1.5px_rgba(232,255,251,0.22)]">
+          <p className="font-display text-display-xl font-black tracking-display leading-none text-transparent [-webkit-text-stroke:1.5px_rgba(247,245,238,0.2)]">
             ACCRC
           </p>
         </div>

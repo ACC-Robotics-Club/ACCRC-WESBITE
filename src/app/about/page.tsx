@@ -85,11 +85,11 @@ export default function AboutPage() {
           <ScrollSlide axis="y" from={120} to={-16} className="lg:col-span-7">
             <TiltCard
               maxTilt={4}
-              className="relative overflow-hidden rounded-3xl border-2 border-ink bg-ink p-9 text-[#e8fffb] shadow-[0_40px_100px_-50px_rgba(13,27,24,0.9)] sm:p-12"
+              className="relative overflow-hidden rounded-3xl border-2 border-ink bg-ink p-9 text-[#F7F5EE] shadow-[0_40px_100px_-50px_rgba(28,25,23,0.5)] sm:p-12"
             >
               <div className="dot-grid-light absolute inset-0 opacity-20" aria-hidden />
               <div
-                className="absolute -right-10 bottom-8 h-64 w-64 rounded-full bg-glow/15 blur-3xl"
+                className="pointer-events-none absolute -right-10 bottom-8 h-64 w-64 rounded-full bg-glow/15 blur-3xl"
                 aria-hidden
               />
               {/* Year watermark lives inside the clipped panel, so it can never
@@ -99,7 +99,7 @@ export default function AboutPage() {
                 className="pointer-events-none absolute -right-8 -top-10 select-none"
                 aria-hidden
               >
-                <p className="font-display text-[9rem] font-black leading-none text-transparent [-webkit-text-stroke:1.5px_rgba(43,224,210,0.18)] sm:text-[11rem]">
+                <p className="font-display text-[9rem] font-black leading-none text-transparent [-webkit-text-stroke:1.5px_rgba(255,122,89,0.2)] sm:text-[11rem]">
                   2019
                 </p>
               </Parallax>
@@ -113,8 +113,8 @@ export default function AboutPage() {
                   Our History
                 </h2>
                 <ScrollFillText
-                  fill="#2be0d2"
-                  base="rgba(232,255,251,0.34)"
+                  fill="#FF7A59"
+                  base="rgba(247,245,238,0.35)"
                   className="mt-7 text-display-xs font-extrabold leading-snug tracking-tight"
                 >
                   {history}

@@ -1,15 +1,12 @@
 'use client';
 
-import { useRef, useEffect, useMemo, Suspense } from 'react';
+import { useRef, useEffect, useMemo, useState, Suspense } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { useGLTF, useAnimations } from '@react-three/drei';
 import * as THREE from 'three';
 
-// Light steel-blue. Deliberately saturated in blue rather than a near-white:
-// the hero backdrop puts a mint glow directly behind the hand, and a near-white
-// surface absorbs that tint and reads green. Holding real blue keeps the hand
-// cool against both the warm paper and the mint glow.
-const THEME_WHITE = new THREE.Color('#bcd4ee');
+// Warm ivory paper-matched light tone for the 3D hand
+const THEME_WHITE = new THREE.Color('#eae6dd');
 
 // Exact Mind Robotics configuration & viewport mapping
 const CONFIG = {
@@ -41,6 +38,18 @@ function MindRoboticsHand() {
   const groupRef = useRef<THREE.Group>(null);
   const orientRef = useRef<THREE.Group>(null);
   const normalizedPointer = useRef({ x: 0, y: 0 });
+  // Cached once (media queries are not cheap enough to run per render frame).
+  const reducedMotionRef = useRef(false);
+
+  useEffect(() => {
+    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const update = () => {
+      reducedMotionRef.current = mq.matches;
+    };
+    update();
+    mq.addEventListener?.('change', update);
+    return () => mq.removeEventListener?.('change', update);
+  }, []);
 
   // Load exact model and animation
   const { scene, animations } = useGLTF(CONFIG.url);
@@ -79,7 +88,7 @@ function MindRoboticsHand() {
     };
   }, []);
 
-  // Clone scene and apply pristine cel/toon shaders with original Mind Robotics material colors
+  // Clone scene and apply pristine cel/toon shaders with terracotta & warm ivory materials
   const clonedScene = useMemo(() => {
     const clone = scene.clone(true);
 
@@ -91,20 +100,16 @@ function MindRoboticsHand() {
 
         const origMat = mesh.material as THREE.MeshStandardMaterial;
         let baseColor = THEME_WHITE.clone();
-        // Every recoloured part carries an emissive floor in its OWN hue. That
-        // lifts shadowed faces well clear of the light budget, so the white
-        // stays light and blue and the accents stay vivid instead of being
-        // crushed to near-black by the dim lights.
         let emissiveColor = THEME_WHITE.clone().multiplyScalar(0.55);
         let emissiveIntensity = 1;
 
         if (origMat) {
           const matName = (origMat.name || '').toLowerCase();
           if (matName.includes('blue') || matName.includes('teal')) {
-            baseColor = new THREE.Color(0x1a8f89); // Signature Teal accent
+            baseColor = new THREE.Color(0xc8432c); // Signature Terracotta accent
             emissiveColor = baseColor.clone().multiplyScalar(0.55);
           } else if (matName.includes('red') || matName.includes('coral')) {
-            baseColor = new THREE.Color(0xef6156); // Coral accent
+            baseColor = new THREE.Color(0xff7a59); // Warm Ember Coral accent
             emissiveColor = baseColor.clone().multiplyScalar(0.55);
           } else if (origMat.color) {
             const hsl = { h: 0, s: 0, l: 0 };
@@ -137,8 +142,7 @@ function MindRoboticsHand() {
     const s = orientRef.current;
     if (!r || !s) return;
 
-    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const speed = reduced ? 0 : 1;
+    const speed = reducedMotionRef.current ? 0 : 1;
 
     // Viewport calculations matching Mind Robotics
     const a = 0.5 * CONFIG.viewHeight;
@@ -173,12 +177,26 @@ function MindRoboticsHand() {
 
 useGLTF.preload(CONFIG.url);
 
-export default function RobotScene() {
+export default function RobotScene({ paused = false }: { paused?: boolean }) {
   const dist = cameraDistance(CONFIG.viewHeight, 10);
+  /* Lower render resolution on small viewports: the hand occupies roughly the
+     same fraction of the screen everywhere, so a phone needs fewer pixels to
+     look identical. Capping DPR is the single biggest GPU saving. */
+  const [dprCap, setDprCap] = useState(1.5);
+  useEffect(() => {
+    const small = Math.min(window.innerWidth, window.innerHeight) < 640;
+    setDprCap(small ? 1 : 1.5);
+  }, []);
 
   return (
     <Canvas
-      dpr={[1, 2]}
+      /* 'never' fully stops the WebGL frame loop: the GPU sits idle instead of
+         rendering a hand that is covered by the opaque content sheet. */
+      frameloop={paused ? 'never' : 'always'}
+      dpr={[1, dprCap]}
+      /* This scene is stylised flat shading — MSAA adds little and costs a
+         lot on integrated/mobile GPUs. */
+      gl={{ antialias: false, alpha: true, powerPreference: 'high-performance' }}
       flat /* NoToneMapping — stops ACES from desaturating the blue tint to grey */
       camera={{
         fov: 10,

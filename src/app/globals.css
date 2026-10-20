@@ -8,28 +8,29 @@
 
 @theme {
   /* ── Surfaces ── */
-  --color-primary: #ece8e0;          /* page background (warm paper) */
+  --color-primary: #F7F5EE;          /* page background (warm ivory/cream paper) */
   --color-secondary: #ffffff;        /* cards */
-  --color-tertiary: #e1dcd1;         /* recessed surfaces */
-  --color-ink: #0d1b18;              /* near-black green ink / dark panels */
-  --color-ink-soft: #12312b;         /* raised dark panels */
-  --color-border: #d9d3c7;           /* hairlines on paper */
-  --color-border-strong: #0d1b18;    /* bold editorial outlines */
+  --color-tertiary: #EFECE2;         /* recessed surfaces */
+  --color-ink: #1C1917;              /* near-black warm charcoal ink / dark panels */
+  --color-ink-soft: #292524;         /* raised dark stone panels */
+  --color-border: #E5E0D5;           /* hairlines on paper */
+  --color-border-strong: #1C1917;    /* bold editorial outlines */
 
   /* ── Text ── */
-  --color-text-primary: #0d1b18;
-  --color-text-secondary: #4c5a55;
-  --color-text-tertiary: #7e8b85;
+  --color-text-primary: #1C1917;
+  --color-text-secondary: #57534E;
+  --color-text-tertiary: #8C857B;
 
   /* ── Brand ── */
-  --color-accent: #0e8a80;           /* deep teal — buttons, links */
-  --color-accent-hover: #0b6f66;
-  --color-glow: #2be0d2;             /* bright identity teal — glows on ink */
+  --color-accent: #C8432C;           /* terracotta / rust red — buttons, links, accents */
+  --color-accent-hover: #B03823;
+  --color-accent-active: #992E1B;
+  --color-glow: #FF7A59;             /* warm ember/coral glow on ink panels */
 
   /* ── Status ── */
-  --color-success: #2e9e5b;
-  --color-warning: #c98a2d;
-  --color-danger: #d64545;
+  --color-success: #2A8F53;
+  --color-warning: #D97706;
+  --color-danger: #DC2626;
 
   /* ── Type ── */
   --font-display: var(--font-nunito), ui-sans-serif, system-ui, sans-serif;
@@ -159,23 +160,37 @@ button, a, input, select, textarea {
   transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
   &:hover {
     transform: translateY(-4px);
-    box-shadow: 0 18px 40px -18px rgba(13, 27, 24, 0.35);
+    box-shadow: 0 18px 40px -18px rgba(28, 25, 23, 0.35);
     border-color: var(--color-accent);
   }
 }
 
+@utility line-grid {
+  background-image:
+    linear-gradient(to right, rgba(28, 25, 23, 0.055) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(28, 25, 23, 0.055) 1px, transparent 1px);
+  background-size: 84px 84px;
+}
+
+@utility line-grid-light {
+  background-image:
+    linear-gradient(to right, rgba(247, 245, 238, 0.065) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(247, 245, 238, 0.065) 1px, transparent 1px);
+  background-size: 84px 84px;
+}
+
 @utility dot-grid {
-  background-image: radial-gradient(rgba(13, 27, 24, 0.22) 1.3px, transparent 1.3px);
+  background-image: radial-gradient(rgba(28, 25, 23, 0.18) 1.2px, transparent 1.2px);
   background-size: 18px 18px;
 }
 
 @utility dot-grid-light {
-  background-image: radial-gradient(rgba(236, 232, 224, 0.28) 1.3px, transparent 1.3px);
+  background-image: radial-gradient(rgba(247, 245, 238, 0.25) 1.2px, transparent 1.2px);
   background-size: 18px 18px;
 }
 
 @utility paper-noise {
-  background-image: radial-gradient(rgba(13, 27, 24, 0.05) 1px, transparent 1px);
+  background-image: radial-gradient(rgba(28, 25, 23, 0.04) 1px, transparent 1px);
   background-size: 7px 7px;
 }
 
@@ -211,7 +226,7 @@ button, a, input, select, textarea {
   width: 38px;
   height: 38px;
   margin: -19px 0 0 -19px;
-  border: 1.5px solid rgba(14, 138, 128, 0.75);
+  border: 1.5px solid rgba(200, 67, 44, 0.75);
   transition: width 0.22s ease, height 0.22s ease, margin 0.22s ease,
     background-color 0.22s ease, border-color 0.22s ease;
 }
@@ -219,7 +234,7 @@ button, a, input, select, textarea {
   width: 58px;
   height: 58px;
   margin: -29px 0 0 -29px;
-  background: rgba(14, 138, 128, 0.12);
+  background: rgba(200, 67, 44, 0.12);
   border-color: var(--color-accent);
 }
 .cursor-ring.is-press {
@@ -265,7 +280,7 @@ button, a, input, select, textarea {
   transition: opacity 0.3s ease;
   background: radial-gradient(
     420px circle at var(--shine-x, 50%) var(--shine-y, 50%),
-    rgba(43, 224, 210, 0.16),
+    rgba(255, 122, 89, 0.15),
     transparent 55%
   );
 }
@@ -283,12 +298,10 @@ button, a, input, select, textarea {
 .hero-3d-fallback {
   position: absolute;
   inset: 0;
-  /* The hand is rendered over this layer. A mint wash this saturated made the
-     hand pick up green, so the glow sits well below it while staying visible. */
   background:
-    radial-gradient(58% 52% at 26% 30%, rgba(43, 224, 210, 0.1), transparent 68%),
-    radial-gradient(45% 45% at 22% 78%, rgba(14, 138, 128, 0.08), transparent 70%),
-    radial-gradient(32% 32% at 78% 16%, rgba(43, 224, 210, 0.05), transparent 62%);
+    radial-gradient(58% 52% at 26% 30%, rgba(200, 67, 44, 0.08), transparent 68%),
+    radial-gradient(45% 45% at 22% 78%, rgba(255, 122, 89, 0.06), transparent 70%),
+    radial-gradient(32% 32% at 78% 16%, rgba(200, 67, 44, 0.04), transparent 62%);
 }
 
 /* ─── Scan-line overlay (subtle CRT effect) ─── */
@@ -299,22 +312,22 @@ button, a, input, select, textarea {
     to bottom,
     transparent 0px,
     transparent 2px,
-    rgba(13, 27, 24, 0.015) 2px,
-    rgba(13, 27, 24, 0.015) 4px
+    rgba(28, 25, 23, 0.015) 2px,
+    rgba(28, 25, 23, 0.015) 4px
   );
   pointer-events: none;
 }
 
 /* ─── Selection / scrollbar ─── */
 ::selection {
-  background-color: rgba(14, 138, 128, 0.28);
+  background-color: rgba(200, 67, 44, 0.22);
   color: var(--color-ink);
 }
 
 ::-webkit-scrollbar { width: 10px; }
 ::-webkit-scrollbar-track { background: var(--color-primary); }
 ::-webkit-scrollbar-thumb {
-  background: #b9b2a4;
+  background: #c8c2b5;
   border-radius: 5px;
   border: 2px solid var(--color-primary);
 }

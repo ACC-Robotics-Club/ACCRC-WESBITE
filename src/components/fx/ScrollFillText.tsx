@@ -2,6 +2,7 @@
 
 import { useRef, type ReactNode } from 'react';
 import { motion, useScroll, useTransform, useReducedMotion } from 'framer-motion';
+import { isLowPowerDevice } from '@/lib/perf';
 
 /**
  * Large statement whose colour fills in as it scrolls through the viewport —
@@ -10,8 +11,8 @@ import { motion, useScroll, useTransform, useReducedMotion } from 'framer-motion
 export function ScrollFillText({
   children,
   className = '',
-  fill = '#0e8a80',
-  base = 'rgba(13,27,24,0.22)',
+  fill = '#C8432C',
+  base = 'rgba(28,25,23,0.22)',
 }: {
   children: ReactNode;
   className?: string;
@@ -19,7 +20,7 @@ export function ScrollFillText({
   base?: string;
 }) {
   const ref = useRef<HTMLParagraphElement>(null);
-  const reduce = useReducedMotion();
+  const reduce = useReducedMotion() || (typeof window !== 'undefined' && isLowPowerDevice());
   const { scrollYProgress } = useScroll({
     target: ref,
     offset: ['start 0.85', 'start 0.25'],

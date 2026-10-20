@@ -1,12 +1,14 @@
 'use client';
 
 import dynamic from 'next/dynamic';
+import { useEffect, useState } from 'react';
+import { isLowPowerDevice } from '@/lib/perf';
 import { motion, useReducedMotion, useScroll, useTransform } from 'framer-motion';
 import { ArrowRight, CalendarDays, ChevronDown } from 'lucide-react';
 import { Magnetic } from '@/components/fx/Magnetic';
 import { SplitReveal } from '@/components/fx/SplitReveal';
 import { ParticleCanvas } from '@/components/fx/ParticleCanvas';
-import { StrokeRevealText } from '@/components/fx/StrokeRevealText';
+import { useWebGL } from '@/lib/perf';
 
 /* WebGL scene is client-only; a gradient fallback sits underneath it. */
 const RobotScene = dynamic(() => import('@/components/fx/RobotScene'), {
@@ -25,13 +27,33 @@ const item = {
 
 export function Hero() {
   const reduceMotion = useReducedMotion();
+  /* The hand now renders on phones too (user request); only devices without
+     WebGL, or browsers with a reduced-motion preference, skip it. */
+  const webgl = useWebGL();
+
+  /* The 3D hand is the single most expensive thing on the page. Once the
+     opaque content sheet has swept fully over the sticky hero (~one viewport
+     of scroll) it is invisible, so the WebGL frame loop is stopped entirely. */
+  const [scenePaused, setScenePaused] = useState(false);
+  useEffect(() => {
+    const onScroll = () => {
+      const covered = window.scrollY > window.innerHeight * 1.1;
+      setScenePaused((prev) => (prev === covered ? prev : covered));
+    };
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
 
   /* Depth-curtain scroll: the hero stays pinned behind the page while content
      slides over it (the sheet in page.tsx). Progress is measured in viewport
      heights so all the depth effects finish within the first screen of scroll —
      exactly while the sheet is sweeping over the hero. */
   const { scrollY } = useScroll();
-  const depth = (from: number, to: number) => (reduceMotion ? from : to);
+  /* Depth values turn into their resting state on weak devices, which lets
+     framer-motion drop every one of these per-frame transform listeners
+     instead of repainting seven motion values on each scroll event. */
+  const depth = (from: number, to: number) => (reduceMotion || isLowPowerDevice() ? from : to);
 
   const curtain = useTransform(scrollY, (y) =>
     Math.min(1, y / (typeof window === 'undefined' ? 800 : window.innerHeight)),
@@ -56,19 +78,19 @@ export function Hero() {
         <div className="absolute inset-0" aria-hidden>
           <ParticleCanvas
             className="absolute inset-0 w-full h-full"
-            particleCount={70}
-            particleColor="14, 138, 128"
-            lineColor="43, 224, 210"
+            particleCount={60}
+            particleColor="200, 67, 44"
+            lineColor="200, 67, 44"
             maxLineDistance={140}
             mouseRadius={130}
           />
         </div>
 
-        {/* Backdrop decorations */}
-        <div className="dot-grid absolute inset-0 opacity-25 [mask-image:radial-gradient(70%_70%_at_60%_40%,black,transparent)]" aria-hidden />
+        {/* Architectural grid & backdrop decorations matching reference image */}
+        <div className="line-grid absolute inset-0 opacity-80" aria-hidden />
         <div className="hero-3d-fallback" aria-hidden />
 
-      {/* Organic blobs — enhanced with glow effects */}
+      {/* Organic blobs — enhanced with warm glow effects */}
       <motion.div
         className="absolute -left-24 top-1/4 z-[1] h-72 w-72 rounded-full bg-secondary/80 animate-float-slow"
         initial={{ scale: 0, opacity: 0 }}
@@ -84,7 +106,7 @@ export function Hero() {
         aria-hidden
       />
       <motion.div
-        className="absolute left-[38%] top-12 z-[1] h-24 w-24 rounded-full bg-glow/25 animate-float-slow [animation-delay:-2s]"
+        className="absolute left-[38%] top-12 z-[1] h-24 w-24 rounded-full bg-glow/20 animate-float-slow [animation-delay:-2s]"
         initial={{ scale: 0, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         transition={{ duration: 1.2, delay: 0.9, ease: [0.22, 1, 0.36, 1] }}
@@ -92,8 +114,8 @@ export function Hero() {
       />
       {/* Extra decorative glow orb */}
         <motion.div
-          className="absolute right-[15%] top-[18%] h-32 w-32 rounded-full blur-2xl"
-          style={{ background: 'radial-gradient(circle, rgba(43,224,210,0.3) 0%, transparent 70%)' }}
+          className="absolute right-[15%] top-[18%] h-48 w-48 rounded-full"
+          style={{ background: 'radial-gradient(circle, rgba(200,67,44,0.18) 0%, transparent 65%)' }}
           initial={{ scale: 0, opacity: 0 }}
           animate={{ scale: [1, 1.2, 1], opacity: [0.5, 0.8, 0.5] }}
           transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
@@ -113,7 +135,7 @@ export function Hero() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 1.2, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
         >
-          <RobotScene />
+          {webgl && <RobotScene paused={scenePaused} />}
         </motion.div>
       </motion.div>
 
@@ -128,23 +150,10 @@ export function Hero() {
         initial="hidden"
         animate="visible"
       >
-        <motion.p variants={item} className="mono-label mb-6 flex items-center gap-3 text-text-tertiary">
-          <span className="inline-block h-px w-10 bg-accent" aria-hidden />
+        <motion.p variants={item} className="mono-label mb-6 flex items-center gap-3 text-text-secondary text-xs font-bold tracking-widest">
+          <span className="inline-block h-0.5 w-7 bg-accent" aria-hidden />
           EST. 2019 · DHAKA, BANGLADESH
         </motion.p>
-
-        {/* Stroke-reveal wordmark */}
-        <motion.div
-          variants={item}
-          className="mb-2 max-w-[360px] md:max-w-[420px]"
-        >
-          <StrokeRevealText
-            text="ACCRC"
-            strokeColor="var(--color-glow)"
-            delay={0.5}
-            duration={1.6}
-          />
-        </motion.div>
 
         <SplitReveal
           as="h1"
@@ -152,9 +161,8 @@ export function Hero() {
           className="font-display text-display-xl font-black text-ink"
           lines={[
             <>BUILD</>,
-            <>
-              WHAT&apos;S <span className="text-accent">NEXT.</span>
-            </>,
+            <>WHAT&apos;S</>,
+            <>NEXT.</>,
           ]}
         />
 
@@ -162,15 +170,14 @@ export function Hero() {
           variants={item}
           className="mt-7 max-w-md text-body-lg text-text-secondary"
         >
-          ACC Robotics Club is a student-led community at Adamjee Cantonment
-          College where we build, learn, and compete together.
+          Adamjee Cantonment College Robotics Club is a student-led community where we build, learn, and compete together.
         </motion.p>
 
         <motion.div variants={item} className="mt-10 flex flex-wrap gap-4">
           <Magnetic strength={0.2}>
             <a
               href="#join"
-              className="inline-flex items-center gap-2.5 rounded-full bg-accent px-8 py-4 font-mono text-mono-sm font-bold uppercase tracking-wider text-white shadow-[0_14px_36px_-12px_rgba(14,138,128,0.8)] transition-all duration-200 hover:bg-accent-hover hover:shadow-[0_18px_44px_-12px_rgba(14,138,128,0.9)] active:scale-95"
+              className="inline-flex items-center gap-2.5 rounded-lg bg-accent px-8 py-4 font-mono text-mono-sm font-bold uppercase tracking-wider text-white shadow-[0_10px_24px_-6px_rgba(200,67,44,0.45)] transition-all duration-200 hover:bg-accent-hover hover:shadow-[0_14px_30px_-6px_rgba(200,67,44,0.6)] active:scale-95"
             >
               Become a member <ArrowRight size={16} aria-hidden />
             </a>
@@ -178,7 +185,7 @@ export function Hero() {
           <Magnetic strength={0.2}>
             <a
               href="#events"
-              className="inline-flex items-center gap-2.5 rounded-full border-2 border-border-strong bg-secondary px-8 py-4 font-mono text-mono-sm font-bold uppercase tracking-wider text-ink transition-all duration-200 hover:bg-tertiary active:scale-95"
+              className="inline-flex items-center gap-2.5 rounded-lg border-2 border-border-strong bg-transparent px-8 py-4 font-mono text-mono-sm font-bold uppercase tracking-wider text-ink transition-all duration-200 hover:bg-secondary/70 active:scale-95"
             >
               View events <CalendarDays size={16} aria-hidden />
             </a>

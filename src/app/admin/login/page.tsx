@@ -61,7 +61,7 @@ export default function AdminLogin() {
 
         <form
           onSubmit={handleLogin}
-          className="flex flex-col gap-5 rounded-3xl border-2 border-border-strong bg-secondary p-7 shadow-[0_40px_90px_-55px_rgba(13,27,24,0.7)]"
+          className="flex flex-col gap-5 rounded-3xl border-2 border-border-strong bg-secondary p-7 shadow-[0_40px_90px_-55px_rgba(28,25,23,0.35)]"
         >
           {error && (
             <div className="rounded-xl border-2 border-danger/40 bg-danger/10 p-3 font-mono text-body-sm font-bold text-danger">

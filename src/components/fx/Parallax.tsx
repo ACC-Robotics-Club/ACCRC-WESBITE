@@ -2,6 +2,7 @@
 
 import { useRef, type ReactNode } from 'react';
 import { motion, useScroll, useTransform, useReducedMotion } from 'framer-motion';
+import { isLowPowerDevice } from '@/lib/perf';
 
 /**
  * Scroll-linked parallax. Drifts the content against the page as it passes
@@ -27,7 +28,7 @@ export function Parallax({
   offset?: ['start end' | 'center center', 'end start' | 'start start'];
 }) {
   const ref = useRef<HTMLDivElement>(null);
-  const reduce = useReducedMotion();
+  const reduce = useReducedMotion() || (typeof window !== 'undefined' && isLowPowerDevice());
   const { scrollYProgress } = useScroll({ target: ref, offset });
 
   const y = useTransform(scrollYProgress, [0, 1], [`${speed}%`, `${-speed}%`]);

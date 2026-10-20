@@ -182,7 +182,7 @@ export default function HomePage() {
 
       {/* Everything below the hero is one opaque "sheet" that slides up over the
           pinned hero as you scroll (depth-curtain scroll, see Hero.tsx). */}
-      <div className="relative z-10 overflow-hidden rounded-t-[2rem] bg-primary shadow-[0_-28px_70px_-28px_rgba(13,27,24,0.35)] sm:rounded-t-[3rem]">
+      <div className="relative z-10 overflow-hidden rounded-t-[2rem] bg-primary shadow-[0_-28px_70px_-28px_rgba(28,25,23,0.2)] sm:rounded-t-[3rem]">
       <StatusStrip />
 
       {/* ═══ MARQUEE ═══ */}
@@ -201,7 +201,7 @@ export default function HomePage() {
       <section className="relative section-padding overflow-hidden" id="mission">
         {/* Oversized index numeral drifting behind the copy */}
         <Parallax speed={22} className="pointer-events-none absolute -left-6 top-6 select-none" aria-hidden>
-          <p className="font-display text-[16rem] font-black leading-none tracking-display text-transparent [-webkit-text-stroke:1.5px_rgba(13,27,24,0.1)]">
+          <p className="font-display text-[16rem] font-black leading-none tracking-display text-transparent [-webkit-text-stroke:1.5px_rgba(28,25,23,0.08)]">
             01
           </p>
         </Parallax>
@@ -224,8 +224,8 @@ export default function HomePage() {
                 lines={[
                   <>
                     <FanTag
-                      layers={['#0d1b18', '#2be0d2', '#0e8a80']}
-                      bgColor="#0e8a80"
+                      layers={['#1C1917', '#FF7A59', '#C8432C']}
+                      bgColor="#C8432C"
                       textColor="white"
                       size="lg"
                       delay={0.2}
@@ -280,9 +280,9 @@ export default function HomePage() {
                 lines={[
                   <>
                     <FanTag
-                      layers={['#0e8a80', '#2be0d2', '#0d1b18']}
-                      bgColor="#0d1b18"
-                      textColor="#2be0d2"
+                      layers={['#C8432C', '#FF7A59', '#1C1917']}
+                      bgColor="#1C1917"
+                      textColor="#FF7A59"
                       size="lg"
                       delay={0.1}
                     >
@@ -511,9 +511,9 @@ export default function HomePage() {
               lines={[
                 <>
                   <FanTag
-                    layers={['#2be0d2', '#0e8a80', '#0d1b18']}
-                    bgColor="#0d1b18"
-                    textColor="#2be0d2"
+                    layers={['#FF7A59', '#C8432C', '#1C1917']}
+                    bgColor="#1C1917"
+                    textColor="#FF7A59"
                     size="lg"
                     delay={0.15}
                   >
@@ -536,7 +536,7 @@ export default function HomePage() {
               viewport={{ once: true, amount: 0.2, margin: '0px 0px -10% 0px' }}
               transition={{ duration: 0.85, ease: [0.22, 1, 0.36, 1] }}
             >
-              <TiltCard className="overflow-hidden rounded-3xl border-2 border-border-strong bg-ink text-[#e8fffb] shadow-[0_30px_80px_-40px_rgba(13,27,24,0.8)]">
+              <TiltCard className="overflow-hidden rounded-3xl border-2 border-border-strong bg-ink text-[#F7F5EE] shadow-[0_30px_80px_-40px_rgba(28,25,23,0.5)]">
                 <div className="relative flex min-h-[240px] flex-col items-start justify-between gap-8 p-10 sm:flex-row sm:items-center sm:p-14">
                   <div className="dot-grid-light absolute inset-0 opacity-20" aria-hidden />
                   <h3 className="relative font-display text-display-md font-black tracking-display">
@@ -573,8 +573,8 @@ export default function HomePage() {
                 <>YOUR NEXT</>,
                 <>
                   <FanTag
-                    layers={['#0d1b18', '#0e8a80', '#2be0d2']}
-                    bgColor="#0e8a80"
+                    layers={['#1C1917', '#FF7A59', '#C8432C']}
+                    bgColor="#C8432C"
                     textColor="white"
                     size="lg"
                     delay={0.1}
@@ -656,7 +656,7 @@ export default function HomePage() {
                       >
                         <span className="mono-label text-text-tertiary">{field.label}</span>
                         <input
-                          className="rounded-xl border-2 border-border bg-primary px-4 py-3.5 text-body-md text-ink transition-all duration-200 placeholder:text-text-tertiary/70 focus:border-accent focus:outline-none focus:shadow-[0_0_0_4px_rgba(14,138,128,0.12)]"
+                          className="rounded-xl border-2 border-border bg-primary px-4 py-3.5 text-body-md text-ink transition-all duration-200 placeholder:text-text-tertiary/70 focus:border-accent focus:outline-none focus:shadow-[0_0_0_4px_rgba(200,67,44,0.15)]"
                           name={field.name}
                           required
                           type={field.type}
@@ -675,7 +675,7 @@ export default function HomePage() {
                   >
                     <span className="mono-label text-text-tertiary">WHY DO YOU WANT TO JOIN?</span>
                     <textarea
-                      className="rounded-xl border-2 border-border bg-primary px-4 py-3.5 text-body-md text-ink transition-all duration-200 placeholder:text-text-tertiary/70 focus:border-accent focus:outline-none focus:shadow-[0_0_0_4px_rgba(14,138,128,0.12)]"
+                      className="rounded-xl border-2 border-border bg-primary px-4 py-3.5 text-body-md text-ink transition-all duration-200 placeholder:text-text-tertiary/70 focus:border-accent focus:outline-none focus:shadow-[0_0_0_4px_rgba(200,67,44,0.15)]"
                       name="motivation"
                       required
                       rows={4}
@@ -688,7 +688,7 @@ export default function HomePage() {
                     </p>
                   )}
                   <button
-                    className="inline-flex w-fit items-center gap-2.5 rounded-full bg-accent px-8 py-4 font-mono text-mono-sm font-bold uppercase tracking-wider text-white shadow-[0_14px_36px_-12px_rgba(14,138,128,0.8)] transition-all duration-200 hover:bg-accent-hover active:scale-95 disabled:cursor-wait disabled:opacity-65"
+                    className="inline-flex w-fit items-center gap-2.5 rounded-lg bg-accent px-8 py-4 font-mono text-mono-sm font-bold uppercase tracking-wider text-white shadow-[0_14px_36px_-12px_rgba(200,67,44,0.45)] transition-all duration-200 hover:bg-accent-hover active:scale-95 disabled:cursor-wait disabled:opacity-65"
                     type="submit"
                     disabled={submitting}
                     aria-busy={submitting}

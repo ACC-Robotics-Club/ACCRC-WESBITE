@@ -24,7 +24,7 @@ export function EventCard({ event }: { event: PublicEvent }) {
     && now < event.registrationClosesAt!;
 
   return (
-    <article className="flex h-full flex-col overflow-hidden rounded-2xl border-2 border-border bg-secondary transition-all duration-300 hover:-translate-y-1 hover:border-accent hover:shadow-[0_24px_50px_-28px_rgba(13,27,24,0.45)]">
+    <article className="flex h-full flex-col overflow-hidden rounded-2xl border-2 border-border bg-secondary transition-all duration-300 hover:-translate-y-1 hover:border-accent hover:shadow-[0_24px_50px_-28px_rgba(28,25,23,0.25)]">
       {event.imageUrl && (
         <img
           src={event.imageUrl}

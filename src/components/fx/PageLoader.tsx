@@ -111,7 +111,7 @@ export function PageLoader() {
         className="absolute inset-0"
         style={{
           backgroundImage:
-            'linear-gradient(rgba(13,27,24,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(13,27,24,0.05) 1px, transparent 1px)',
+            'linear-gradient(rgba(28,25,23,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(28,25,23,0.05) 1px, transparent 1px)',
           backgroundSize: '48px 48px',
           maskImage: 'radial-gradient(70% 70% at 50% 50%, #000 20%, transparent 100%)',
           WebkitMaskImage: 'radial-gradient(70% 70% at 50% 50%, #000 20%, transparent 100%)',
