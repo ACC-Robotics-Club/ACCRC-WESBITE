@@ -1,17 +1,18 @@
-import { getAuth, inMemoryPersistence, setPersistence } from 'firebase/auth';
+import { browserSessionPersistence, getAuth, setPersistence } from 'firebase/auth';
 import { app, firebaseConfigReady } from './firebase';
 
 /* Admin-only. Kept out of firebase.ts so public pages don't ship Firebase Auth. */
 export const auth = firebaseConfigReady ? getAuth(app) : null;
 
 /*
- * Admin sessions deliberately stay in memory only. We do not sign the user out
- * on every page load because that breaks valid admin sessions and causes login
- * loops. The browser still clears the in-memory session on refresh by design.
+ * Admin sessions last for the browser tab: a refresh, a typed admin URL, or a
+ * phone reloading the tab keeps you signed in, and closing the tab signs you
+ * out. (Memory-only sessions were tried and read as "login doesn't work":
+ * every reload dropped the admin back at the login page.)
  */
 export const adminSessionReady = auth
-  ? setPersistence(auth, inMemoryPersistence).catch((error) => {
-      console.error('Unable to initialise the secure admin session.', error);
+  ? setPersistence(auth, browserSessionPersistence).catch((error) => {
+      console.error('Unable to initialise the admin session.', error);
       throw error;
     })
   : Promise.reject(
