@@ -40,8 +40,18 @@ export function Navbar({
   const [portalConfig, setPortalConfig] = useState<PortalConfig | null>(null);
   const [festConfig, setFestConfig] = useState<FestConfig | null>(null);
 
+  /* Only wakes React when the "scrolled" state actually flips, not on every
+     scroll event. */
   useEffect(() => {
-    const handleScroll = () => setScrolled(window.scrollY > 20);
+    let was: boolean | null = null;
+    const handleScroll = () => {
+      const now = window.scrollY > 20;
+      if (now !== was) {
+        was = now;
+        setScrolled(now);
+      }
+    };
+    handleScroll();
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
