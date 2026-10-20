@@ -91,10 +91,11 @@ export function Navbar({
       style={{ top: `${topOffset}px`, "--nav-offset": `${topOffset}px` } as React.CSSProperties}
     >
       <nav
-        className={`container-content flex items-center justify-between gap-4 rounded-xl border px-3 py-2 transition-[background-color,border-color,box-shadow] duration-300 sm:px-5 sm:py-2.5 ${
-          scrolled || isOpen
-            ? "border-border bg-primary/95 shadow-[0_12px_36px_-18px_rgba(28,25,23,0.18)] lg:backdrop-blur-xl"
-            : "border-transparent bg-transparent"
+        /* Always on its own light panel, so the header stays readable on every
+           page, including ones that open on a dark section (e.g. /panels/).
+           Scrolling only adds the shadow. */
+        className={`container-content flex items-center justify-between gap-4 rounded-xl border border-border bg-primary/95 px-3 py-2 transition-[box-shadow] duration-300 lg:backdrop-blur-xl sm:px-5 sm:py-2.5 ${
+          scrolled || isOpen ? "shadow-[0_12px_36px_-18px_rgba(28,25,23,0.18)]" : ""
         }`}
         aria-label="Main navigation"
       >
