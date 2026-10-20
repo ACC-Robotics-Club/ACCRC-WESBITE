@@ -867,3 +867,6 @@ html.cv-measure .cv-auto {
 @media (prefers-reduced-motion: reduce) {
   .success-rise { animation: none; }
 }
+@media (max-width: 639px) {
+  .social-feed--preview .juicer-feed .feed-item:nth-of-type(n + 4) { display: none; }
+}
