@@ -491,7 +491,9 @@ export interface FestConfig {
 }
 
 export const DEFAULT_FEST_CONFIG: FestConfig = {
-  isLaunched: true,
+  /* Never public by default: if the real settings can't be read, the site
+     must not advertise a fest that may not be launched. */
+  isLaunched: false,
   registrationOpen: true,
   festTitle: 'National Robotics & Tech Fest 2026',
   festSubtitle: 'Ignite the Future. Build & Compete.',
@@ -803,6 +805,10 @@ export function subscribeToFestConfig(
     docRef,
     (snapshot) => {
       if (!snapshot.exists()) {
+        /* A missing document from the local cache only means the server
+           hasn't answered yet (slow or offline): wait instead of falling
+           back to defaults. */
+        if (snapshot.metadata.fromCache) return;
         callback(DEFAULT_FEST_CONFIG);
         return;
       }
