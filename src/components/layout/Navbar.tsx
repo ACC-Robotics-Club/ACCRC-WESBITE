@@ -15,6 +15,7 @@ const navLinks = [
   { href: "/events/", label: "EVENTS" },
   { href: "/#achievements", label: "ACHIEVEMENTS" },
   { href: "/panels/", label: "PANELS" },
+  { href: "/social/", label: "POSTS" },
   { href: "/news/", label: "UPDATES" },
 ];
 
@@ -122,12 +123,12 @@ export function Navbar({
         </a>
 
         {/* Desktop Nav */}
-        <div className="hidden lg:flex items-center gap-6 xl:gap-8">
+        <div className="hidden lg:flex items-center gap-3 xl:gap-8">
           {links.map((link) => (
             <a
               key={link.href}
               href={link.href}
-              className="text-xs font-mono font-bold tracking-widest text-ink hover:text-accent transition-colors duration-200 uppercase"
+              className="whitespace-nowrap text-xs font-mono font-bold tracking-widest text-ink hover:text-accent transition-colors duration-200 uppercase"
             >
               {link.label}
             </a>
@@ -150,7 +151,7 @@ export function Navbar({
           <Magnetic strength={0.25}>
             <a
               href="/membership/"
-              className="inline-flex items-center rounded-lg bg-accent px-5 py-2 font-mono text-mono-sm font-bold uppercase tracking-wider text-white shadow-[0_8px_24px_-8px_rgba(200,67,44,0.45)] transition-all duration-200 hover:bg-accent-hover active:scale-95"
+              className="inline-flex items-center whitespace-nowrap rounded-lg bg-accent px-4 py-2 xl:px-5 font-mono text-mono-sm font-bold uppercase tracking-wider text-white shadow-[0_8px_24px_-8px_rgba(200,67,44,0.45)] transition-all duration-200 hover:bg-accent-hover active:scale-95"
             >
               Join us
             </a>
