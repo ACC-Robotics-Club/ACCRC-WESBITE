@@ -8,15 +8,16 @@ import { club } from '@/lib/club';
 /**
  * The club's Instagram posts, from a Juicer feed (juicer.io).
  *
- * Set NEXT_PUBLIC_JUICER_FEED_ID in Vercel to the feed's name from the Juicer
- * dashboard. Only Instagram posts are shown, even if the feed also has other
- * sources (Juicer filters by network).
+ * Uses the club's feed (acc_robotics_club) unless NEXT_PUBLIC_JUICER_FEED_ID
+ * names a different one, so posts show on any host without extra settings.
+ * Only Instagram posts are shown, even if the feed also has other sources
+ * (Juicer filters by network).
  *
  * Juicer's script and styles are only fetched once a feed is about to scroll
  * into view, so they never compete with the hero or slow down scrolling near
  * the top of the page.
  */
-export const JUICER_FEED_ID = process.env.NEXT_PUBLIC_JUICER_FEED_ID?.trim();
+export const JUICER_FEED_ID = process.env.NEXT_PUBLIC_JUICER_FEED_ID?.trim() || 'acc_robotics_club';
 const SCRIPT_SRC = 'https://assets.juicer.io/embed.js';
 const STYLE_HREF = 'https://assets.juicer.io/embed.css';
 /** The home page shows just one row of the latest posts. */
