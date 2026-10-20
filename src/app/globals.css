@@ -645,6 +645,15 @@ html.cv-measure .cv-auto {
 }
 .tilt-card:hover > .tilt-shine { opacity: 1; }
 
+/* ─── Launch film ───
+   The grow-into-view scale runs only where scroll effects scrub (desktop).
+   On phones the frame stays still: transforming a video layer while it
+   starts decoding made it stutter there. */
+.is-scrub .film-frame {
+  transform: scale(var(--film-scale, 1));
+  will-change: transform;
+}
+
 /* ─── Marquee ─── */
 .marquee-track {
   display: flex;
