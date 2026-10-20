@@ -14,9 +14,9 @@ import { track } from './scrollEngine';
  */
 export function FanTag({
   children,
-  layers = ['#0d1b18', '#0e8a80', '#2be0d2'],
+  layers = ['#1C1917', '#C8432C', '#FF7A59'],
   textColor = 'white',
-  bgColor = '#0e8a80',
+  bgColor = '#C8432C',
   className = '',
   delay = 0,
   size = 'md',

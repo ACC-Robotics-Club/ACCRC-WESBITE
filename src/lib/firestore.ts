@@ -66,6 +66,8 @@ export interface Registration {
   id?: string;
   type: "membership" | "event";
   eventId?: string;
+  /** Issued by /api/register for membership registrations. */
+  clubId?: string;
   name: string;
   email: string;
   whatsapp?: string;

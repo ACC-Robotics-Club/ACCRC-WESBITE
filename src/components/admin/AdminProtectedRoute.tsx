@@ -134,7 +134,9 @@ export default function AdminProtectedRoute({ children, showHeader = true }: Adm
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!auth) {
+    // Captured so the callbacks below keep the non-null type.
+    const firebaseAuth = auth;
+    if (!firebaseAuth) {
       setError('Firebase Auth is not initialized');
       setLoading(false);
       return;
@@ -145,12 +147,12 @@ export default function AdminProtectedRoute({ children, showHeader = true }: Adm
     void adminSessionReady
       .then(() => {
         unsubscribe = onAuthStateChanged(
-          auth,
+          firebaseAuth,
           async (currentUser) => {
             if (currentUser) {
               // Signed in is not enough: the account must be on the admin list.
               if (!(await isApprovedAdmin(currentUser))) {
-                await signOut(auth).catch(() => undefined);
+                await signOut(firebaseAuth).catch(() => undefined);
                 setUser(null);
                 setError(NOT_APPROVED_MESSAGE);
                 setLoading(false);

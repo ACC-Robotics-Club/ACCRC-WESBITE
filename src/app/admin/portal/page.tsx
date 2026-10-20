@@ -247,6 +247,7 @@ export default function AdminPortal() {
   const filteredMemberships = memberships.filter((membership) =>
     matchesStatus(membership) &&
     [
+      membership.clubId,
       membership.name,
       membership.email,
       membership.whatsapp,
@@ -272,8 +273,8 @@ export default function AdminPortal() {
     if (activeTab === 'membership') {
       downloadCsv(
         `accrc-membership-${date}.csv`,
-        ['Status', 'Name', 'Email', 'WhatsApp', 'Class / Section', 'College ID', 'Area of interest', 'Blood group', 'Reason for joining', 'Submitted'],
-        filteredMemberships.map((m) => [statusOf(m), m.name, m.email, m.whatsapp, m.classSection, m.collegeId || m.rollNumber, m.areaOfInterest, m.bloodGroup, m.motivation, formatDate(m.createdAt)]),
+        ['Status', 'Club ID', 'Name', 'Email', 'WhatsApp', 'Class / Section', 'College ID', 'Area of interest', 'Blood group', 'Reason for joining', 'Submitted'],
+        filteredMemberships.map((m) => [statusOf(m), m.clubId, m.name, m.email, m.whatsapp, m.classSection, m.collegeId || m.rollNumber, m.areaOfInterest, m.bloodGroup, m.motivation, formatDate(m.createdAt)]),
       );
     } else {
       downloadCsv(
@@ -652,6 +653,7 @@ export default function AdminPortal() {
                       <table className="w-full text-sm text-left">
                         <thead className="text-xs font-mono uppercase bg-[#141210] text-white">
                           <tr>
+                            <th className="px-4 py-3 border-b border-[#cfc9bc]">Club ID</th>
                             <th className="px-4 py-3 border-b border-[#cfc9bc]">Name</th>
                             <th className="px-4 py-3 border-b border-[#cfc9bc]">Email</th>
                             <th className="px-4 py-3 border-b border-[#cfc9bc]">WhatsApp</th>
@@ -665,6 +667,7 @@ export default function AdminPortal() {
                         <tbody>
                           {filteredMemberships.map(mem => (
                             <tr key={mem.id} className="border-b border-[#cfc9bc] hover:bg-[#e6dfd1]/60 transition-colors">
+                              <td className="px-4 py-3 font-mono text-xs font-bold text-[#c94030] whitespace-nowrap">{mem.clubId || '—'}</td>
                               <td className="px-4 py-3 font-bold text-[#141210]">{mem.name}</td>
                               <td className="px-4 py-3 text-[#3a3530]">{mem.email}</td>
                               <td className="px-4 py-3 font-mono text-[#3a3530] text-xs">{mem.whatsapp || '—'}</td>
