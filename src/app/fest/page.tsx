@@ -240,7 +240,7 @@ export default function FestPage() {
       <section className="container-content mb-12">
         <div className="border border-[#cfc9bc] bg-[#ede7da] p-8 md:p-12 relative overflow-hidden">
           <div className="absolute -top-12 -right-12 w-64 h-64 bg-[#c94030]/10 rounded-full blur-3xl pointer-events-none" />
-          <div className="max-w-3xl relative z-10">
+          <div className="motion-intro max-w-3xl relative z-10">
             <div className="inline-flex items-center gap-2 px-3 py-1 bg-[#c94030]/10 border border-[#c94030]/20 rounded-full mb-4">
               <Flame className="w-4 h-4 text-[#c94030]" aria-hidden />
               <span className="font-mono text-xs uppercase tracking-wider font-bold text-[#c94030]">
@@ -304,7 +304,7 @@ export default function FestPage() {
       </section>
 
       {!festConfig.isLaunched ? (
-        <section className="container-content mb-12">
+        <section className="motion-rise container-content mb-12">
           <div className="border border-amber-300 bg-amber-50 p-8 text-center text-amber-950 sm:p-12">
             <Clock className="mx-auto mb-4 h-10 w-10 text-amber-700" aria-hidden />
             <h2 className="text-2xl font-bold">Fest Portal Coming Soon</h2>
@@ -321,7 +321,7 @@ export default function FestPage() {
       ) : (
         <>
       {!festConfig.registrationOpen && (
-        <section className="container-content mb-8">
+        <section className="motion-rise container-content mb-8">
           <div className="border border-[#c72c2c]/30 bg-[#c72c2c]/10 p-4 flex items-center gap-3 text-[#c72c2c] font-mono text-xs">
             <ShieldAlert className="w-5 h-5 text-[#c72c2c] shrink-0" />
             <div>
@@ -333,7 +333,7 @@ export default function FestPage() {
 
       {/* ═══ LIVE NOTICES / TICKER (IF ANY) ═══ */}
       {announcements.length > 0 && (
-        <section className="container-content mb-8">
+        <section className="motion-rise container-content mb-8">
           <div className="border border-[#c94030]/30 bg-[#c94030]/5 p-4 flex items-center gap-3">
             <Bell className="w-5 h-5 text-[#c94030] shrink-0 animate-pulse" />
             <div className="text-sm font-mono overflow-hidden whitespace-nowrap text-ellipsis">
@@ -345,7 +345,7 @@ export default function FestPage() {
       )}
 
       {/* ═══ NAVIGATION TABS ═══ */}
-      <section className="container-content mb-8">
+      <section className="motion-rise container-content mb-8">
         <div className="flex border-b border-[#cfc9bc] gap-2 overflow-x-auto">
           <button
             onClick={() => setActiveTab('segments')}
@@ -392,7 +392,7 @@ export default function FestPage() {
 
       {/* ═══ TAB CONTENT: SEGMENTS ═══ */}
       {activeTab === 'segments' && (
-        <section className="container-content">
+        <section className="motion-rise container-content">
           {loading ? (
             <div className="flex justify-center py-20">
               <Loader2 className="w-8 h-8 animate-spin text-[#c94030]" />
@@ -538,7 +538,7 @@ export default function FestPage() {
 
       {/* ═══ TAB CONTENT: GUIDELINES ═══ */}
       {activeTab === 'guidelines' && (
-        <section className="container-content">
+        <section className="motion-rise container-content">
           <div className="bg-[#ede7da] border border-[#cfc9bc] p-6 sm:p-8 rounded space-y-8 max-w-4xl mx-auto">
             <div>
               <span className="font-mono text-xs uppercase font-bold text-[#c94030] tracking-wider block">
@@ -608,7 +608,7 @@ export default function FestPage() {
 
       {/* ═══ TAB CONTENT: SCHEDULE ═══ */}
       {activeTab === 'schedule' && (
-        <section className="container-content">
+        <section className="motion-rise container-content">
           {schedule.length === 0 ? (
             <div className="p-12 text-center border border-dashed border-[#cfc9bc] bg-[#ede7da]">
               <Clock className="w-8 h-8 mx-auto text-[#c94030] mb-3" />
@@ -647,7 +647,7 @@ export default function FestPage() {
 
       {/* ═══ TAB CONTENT: ANNOUNCEMENTS ═══ */}
       {activeTab === 'announcements' && (
-        <section className="container-content">
+        <section className="motion-rise container-content">
           {announcements.length === 0 ? (
             <div className="p-12 text-center border border-dashed border-[#cfc9bc] bg-[#ede7da]">
               <p className="font-mono text-sm text-[#6b6258]">No announcements posted yet. Check back during the fest!</p>

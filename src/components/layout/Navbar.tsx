@@ -98,7 +98,7 @@ export function Navbar({
 
   return (
     <header
-      className="fixed left-0 right-0 z-50 px-4 pt-4 sm:px-6 sm:pt-5"
+      className="site-header fixed left-0 right-0 z-50 px-4 pt-4 sm:px-6 sm:pt-5"
       style={{ top: `${topOffset}px`, "--nav-offset": `${topOffset}px` } as React.CSSProperties}
     >
       <nav
@@ -138,7 +138,7 @@ export function Navbar({
             <a
               key={link.href}
               href={link.href}
-              className="whitespace-nowrap text-xs font-mono font-bold tracking-widest text-ink hover:text-accent transition-colors duration-200 uppercase"
+              className="nav-sweep whitespace-nowrap text-xs font-mono font-bold tracking-widest text-ink hover:text-accent transition-colors duration-200 uppercase"
             >
               {link.label}
             </a>

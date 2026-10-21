@@ -895,3 +895,132 @@ html.cv-measure .cv-auto {
 @media (prefers-reduced-motion: reduce) {
   .success-rise { animation: none; }
 }
+
+/* ═══ Motion system (site-wide) ═══════════════════════════════════════════
+   Everything here animates transform and opacity only, so the browser runs it
+   on the compositor: no JavaScript per frame, nothing for phones to lag on.
+   Browsers without a feature simply show the content, unanimated. */
+
+/* ─── Page transitions ───
+   Navigation between pages is a full page load, so the browser's own
+   cross-document View Transitions animate it: the old page fades back and
+   away, the new one rises in. The header keeps its own name, so it stays put
+   instead of animating with the page. */
+@media (prefers-reduced-motion: no-preference) {
+  @view-transition {
+    navigation: auto;
+  }
+}
+.site-header {
+  view-transition-name: site-header;
+}
+::view-transition-old(root) {
+  animation: vt-out 260ms cubic-bezier(0.4, 0, 1, 1) both;
+}
+::view-transition-new(root) {
+  animation: vt-in 520ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+::view-transition-group(site-header) {
+  animation-duration: 0s;
+}
+@keyframes vt-out {
+  to { opacity: 0; transform: translateY(-14px) scale(0.985); }
+}
+@keyframes vt-in {
+  from { opacity: 0; transform: translateY(26px); }
+}
+
+/* ─── Entrance reveals ───
+   `motion-rise` blocks, the children of `motion-stagger` and Instagram posts in
+   a `motion-feed` rise in once as they enter (fx/autoReveal.ts, using the
+   .fx-rise transition). `motion-zoom` settles an image from a gentle zoom
+   on load. */
+@media (prefers-reduced-motion: no-preference) {
+  .motion-zoom img {
+    animation: motion-zoom 1.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+}
+@keyframes motion-zoom {
+  from { transform: scale(1.1); }
+  to { transform: none; }
+}
+
+/* ─── Intro for short pages (error pages, details) ───
+   A one-time staggered rise on load, for pages whose content is all on the
+   first screen. */
+@media (prefers-reduced-motion: no-preference) {
+  .motion-intro > * {
+    animation: motion-intro 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+    animation-delay: calc(var(--intro-i, 0) * 70ms + 80ms);
+  }
+  .motion-intro > :nth-child(1) { --intro-i: 0; }
+  .motion-intro > :nth-child(2) { --intro-i: 1; }
+  .motion-intro > :nth-child(3) { --intro-i: 2; }
+  .motion-intro > :nth-child(4) { --intro-i: 3; }
+  .motion-intro > :nth-child(5) { --intro-i: 4; }
+  .motion-intro > :nth-child(6) { --intro-i: 5; }
+  .motion-intro > :nth-child(n + 7) { --intro-i: 6; }
+}
+@keyframes motion-intro {
+  from { opacity: 0; transform: translateY(28px); }
+  to { opacity: 1; transform: none; }
+}
+
+/* ─── Micro-interactions (mouse only) ─── */
+@media (hover: hover) and (pointer: fine) {
+  /* Nav links: an underline sweeps in from the left. */
+  .nav-sweep {
+    position: relative;
+  }
+  .nav-sweep::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -6px;
+    height: 2px;
+    background: var(--color-accent);
+    transform: scaleX(0);
+    transform-origin: right;
+    transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .nav-sweep:hover::after {
+    transform: scaleX(1);
+    transform-origin: left;
+  }
+
+  /* Primary buttons: a light sheen sweeps across on hover. */
+  .btn-sheen {
+    position: relative;
+    overflow: hidden;
+    isolation: isolate;
+  }
+  .btn-sheen::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: linear-gradient(105deg, transparent 30%, rgba(255, 255, 255, 0.28) 50%, transparent 70%);
+    transform: translateX(-120%);
+    transition: transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+    pointer-events: none;
+  }
+  .btn-sheen:hover::before {
+    transform: translateX(120%);
+  }
+}
+
+/* Lenis smooth scrolling (fx/smoothScroll.ts, desktop only). */
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+.lenis.lenis-stopped {
+  overflow: hidden;
+}

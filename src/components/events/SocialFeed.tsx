@@ -85,7 +85,7 @@ function InstagramGrid({ count, paged }: { count: number; paged: boolean }) {
   const [ref, near] = useNearViewport<HTMLDivElement>();
   return (
     /* Reserve space so the page doesn't jump when the posts arrive. */
-    <div ref={ref} className="social-feed min-h-[420px]">
+    <div ref={ref} className="social-feed motion-feed min-h-[420px]">
       {near ? (
         <ul
           className="juicer-feed"
@@ -155,7 +155,7 @@ export function SocialFeed() {
 export function InstagramPage() {
   return (
     <div className="min-h-screen bg-primary pt-32">
-      <div className="container-content py-12 md:py-16">
+      <div className="motion-intro container-content py-12 md:py-16">
         <p className="mono-label mb-4 flex items-center gap-3 text-accent">
           <span className="inline-block h-px w-10 bg-accent" aria-hidden />
           INSTAGRAM
