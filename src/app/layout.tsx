@@ -35,10 +35,16 @@ export const metadata: Metadata = {
   description:
     "Build what's next with ACCRC \u2014 the student robotics club at Adamjee Cantonment College, Dhaka.",
   generator: "ACCRC",
-  // favicon.ico is picked up from src/app automatically. The light/dark PNG
-  // and SVG icons previously listed here never existed and 404'd on every load.
+  // The club logo, from public/. Named files (not src/app/favicon.ico) so a
+  // new icon gets a new URL: browsers and Vercel's build cache both kept
+  // serving the old /favicon.ico after it changed.
   icons: {
-    apple: "/apple-icon.png",
+    icon: [
+      { url: "/accrc-favicon.ico", sizes: "48x48" },
+      { url: "/accrc-icon-512.png", type: "image/png", sizes: "512x512" },
+    ],
+    shortcut: "/accrc-favicon.ico",
+    apple: "/accrc-apple-icon.png",
   },
   openGraph: {
     title: "ACCRC \u2014 Adamjee Cantonment College Robotics Club",
