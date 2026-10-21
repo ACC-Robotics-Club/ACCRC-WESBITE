@@ -13,17 +13,18 @@ import type { Registration } from './firestore';
  * at once can never get the same number.
  *
  * Email goes through EmailJS (emailjs.com), sent from the admin's browser
- * through the club's connected Gmail. It needs three public values:
- * NEXT_PUBLIC_EMAILJS_SERVICE_ID, NEXT_PUBLIC_EMAILJS_TEMPLATE_ID and
- * NEXT_PUBLIC_EMAILJS_PUBLIC_KEY. The EmailJS template only has to pass
+ * through the club's connected mailbox. The club's three EmailJS values are
+ * built in below; they are public by design (EmailJS only accepts them from
+ * the allowed origins set in its dashboard). The NEXT_PUBLIC_EMAILJS_*
+ * variables can override them. The EmailJS template only has to pass
  * through {{to_email}}, {{subject}} and {{{message_html}}}; the email itself is
  * written here.
  */
 
 const EMAILJS = {
-  serviceId: process.env.NEXT_PUBLIC_EMAILJS_SERVICE_ID?.trim() || '',
-  templateId: process.env.NEXT_PUBLIC_EMAILJS_TEMPLATE_ID?.trim() || '',
-  publicKey: process.env.NEXT_PUBLIC_EMAILJS_PUBLIC_KEY?.trim() || '',
+  serviceId: process.env.NEXT_PUBLIC_EMAILJS_SERVICE_ID?.trim() || 'service_lr2nwbb',
+  templateId: process.env.NEXT_PUBLIC_EMAILJS_TEMPLATE_ID?.trim() || 'template_xwvt34m',
+  publicKey: process.env.NEXT_PUBLIC_EMAILJS_PUBLIC_KEY?.trim() || 'E1sdmb3CYhQKFPP4b',
 };
 
 export const acceptanceEmailReady = Boolean(EMAILJS.serviceId && EMAILJS.templateId && EMAILJS.publicKey);
