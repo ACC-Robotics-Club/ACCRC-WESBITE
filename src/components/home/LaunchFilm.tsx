@@ -1,40 +1,25 @@
 'use client';
 
-import { useEffect, useRef, useState, type CSSProperties } from 'react';
-import { Pause, Play } from 'lucide-react';
+import { useEffect, useRef, type CSSProperties } from 'react';
 import { track } from '@/components/fx/scrollEngine';
 
 const FILM_SRC = '/media/accrc-launch-film.mp4';
+/* The film's own first frame, so the frame isn't an empty black box while the
+   video loads and playback starts without a visible jump. */
+const FILM_POSTER = '/media/accrc-launch-film-poster.jpg';
 
 /**
- * Phones, data-saver browsers and reduced-motion visitors don't auto-play: the
- * film waits behind a play button, so 25 MB of mobile data is spent only when
- * someone asks for it.
- */
-function shouldAutoplay() {
-  const connection = (navigator as Navigator & { connection?: { saveData?: boolean } }).connection;
-  return (
-    window.matchMedia('(hover: hover) and (pointer: fine)').matches &&
-    !window.matchMedia('(prefers-reduced-motion: reduce)').matches &&
-    !connection?.saveData
-  );
-}
-
-/**
- * The launch film as a design element: a silent, looping frame that grows from
- * an inset card to near full-bleed as it scrolls into view. It only fetches
- * and plays while on screen, so the 25 MB file never costs a visitor who
- * doesn't scroll this far.
+ * The launch film as a design element: a silent, looping frame that always
+ * plays and can't be clicked, paused or opened full screen. On desktop it
+ * grows from an inset card to near full-bleed as it scrolls into view.
  *
- * The grow effect runs on the shared scroll engine (one `--p` progress value,
- * transforms only), so the home page doesn't need an animation library.
+ * It starts loading just before it comes into view and plays only while on
+ * screen (paused off screen, so it costs no battery or CPU there). The video is
+ * fetched only by visitors who scroll this far.
  */
 export function LaunchFilm() {
   const sectionRef = useRef<HTMLElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
-  const [playing, setPlaying] = useState(false);
-  // Once the viewer pauses, scrolling back into view must not restart it.
-  const userPaused = useRef(false);
 
   useEffect(() => {
     if (!sectionRef.current) return;
@@ -43,33 +28,46 @@ export function LaunchFilm() {
 
   useEffect(() => {
     const video = videoRef.current;
-    if (!video || !shouldAutoplay()) return;
+    if (!video) return;
 
-    const observer = new IntersectionObserver(
+    /* Browsers can pause a muted inline video on their own (iOS Low Power
+       Mode, a tab coming back from the background). Try again whenever it's
+       on screen. */
+    let onScreen = false;
+    const play = () => {
+      if (onScreen && video.paused) void video.play().catch(() => undefined);
+    };
+
+    const nearby = new IntersectionObserver(
       ([entry]) => {
-        if (entry.isIntersecting) {
-          if (!userPaused.current) video.play().catch(() => setPlaying(false));
-        } else {
-          video.pause();
+        if (entry.isIntersecting && video.preload !== 'auto') {
+          video.preload = 'auto';
+          video.load();
         }
       },
-      { threshold: 0.35 },
+      { rootMargin: '25% 0px' },
     );
-    observer.observe(video);
-    return () => observer.disconnect();
+    const visible = new IntersectionObserver(
+      ([entry]) => {
+        onScreen = entry.isIntersecting;
+        if (onScreen) play();
+        else video.pause();
+      },
+      { threshold: 0.2 },
+    );
+    nearby.observe(video);
+    visible.observe(video);
+    video.addEventListener('canplay', play);
+    video.addEventListener('pause', play);
+    document.addEventListener('visibilitychange', play);
+    return () => {
+      nearby.disconnect();
+      visible.disconnect();
+      video.removeEventListener('canplay', play);
+      video.removeEventListener('pause', play);
+      document.removeEventListener('visibilitychange', play);
+    };
   }, []);
-
-  const togglePlay = () => {
-    const video = videoRef.current;
-    if (!video) return;
-    if (video.paused) {
-      userPaused.current = false;
-      video.play().catch(() => setPlaying(false));
-    } else {
-      userPaused.current = true;
-      video.pause();
-    }
-  };
 
   return (
     <section
@@ -100,53 +98,30 @@ export function LaunchFilm() {
 
       <div className="relative px-4 sm:px-6">
         <div
-          className="relative mx-auto aspect-video max-w-[1600px] overflow-hidden rounded-3xl border border-white/10 bg-black shadow-[0_40px_120px_-40px_rgba(255,122,89,0.3)] will-change-transform"
-          style={{ transform: 'scale(calc(0.82 + 0.18 * var(--p, 1)))' } as CSSProperties}
+          className="film-frame pointer-events-none relative mx-auto aspect-video max-w-[1600px] select-none overflow-hidden rounded-3xl border border-white/10 bg-black shadow-[0_40px_120px_-40px_rgba(255,122,89,0.3)]"
+          style={{ '--film-scale': 'calc(0.82 + 0.18 * var(--p, 1))' } as CSSProperties}
         >
           <video
             ref={videoRef}
-            className="h-full w-full object-cover"
+            className="pointer-events-none h-full w-full select-none object-cover"
             src={FILM_SRC}
+            poster={FILM_POSTER}
             muted
             loop
             playsInline
             preload="none"
             controls={false}
-            onPlay={() => setPlaying(true)}
-            onPause={() => setPlaying(false)}
-            aria-label="ACCRC launch film"
+            disablePictureInPicture
+            disableRemotePlayback
+            controlsList="nodownload nofullscreen noremoteplayback"
+            tabIndex={-1}
+            aria-hidden="true"
           />
 
-          {/* Shade so the controls stay legible over bright frames. */}
-          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-black/60 to-transparent" aria-hidden />
-
-          {!playing && (
-            <button
-              type="button"
-              onClick={togglePlay}
-              className="absolute inset-0 grid place-items-center"
-              aria-label="Play launch film"
-            >
-              <span className="grid h-20 w-20 place-items-center rounded-full bg-glow text-ink shadow-[0_0_0_10px_rgba(255,122,89,0.2)] transition-transform duration-300 hover:scale-110 sm:h-24 sm:w-24">
-                <Play size={34} className="translate-x-0.5" aria-hidden />
-              </span>
-            </button>
-          )}
-
-          <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between gap-3 sm:bottom-6 sm:left-6 sm:right-6">
+          <div className="pointer-events-none absolute bottom-4 left-4 sm:bottom-6 sm:left-6" aria-hidden>
             <span className="mono-label hidden rounded-full border border-white/20 bg-black/40 px-4 py-2 text-white/80 sm:inline">
               ACCRC &mdash; Launch Film
             </span>
-            <div className="ml-auto flex gap-2">
-              <button
-                type="button"
-                onClick={togglePlay}
-                className="grid h-11 w-11 place-items-center rounded-full border border-white/25 bg-black/40 text-white transition-colors hover:bg-glow hover:text-ink"
-                aria-label={playing ? 'Pause film' : 'Play film'}
-              >
-                {playing ? <Pause size={18} aria-hidden /> : <Play size={18} aria-hidden />}
-              </button>
-            </div>
           </div>
         </div>
       </div>
