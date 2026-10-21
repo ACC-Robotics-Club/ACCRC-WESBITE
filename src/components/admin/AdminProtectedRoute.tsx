@@ -6,6 +6,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { onAuthStateChanged, signOut, type User } from 'firebase/auth';
 import { auth, adminSessionReady } from '@/lib/firebaseAuth';
 import { adminCheckFailedMessage, isApprovedAdmin, NOT_APPROVED_MESSAGE } from '@/lib/adminAccess';
+import { ErrorScreen, ErrorLink } from '@/components/ErrorScreen';
 import { Loader2, LogOut, Flame, Calendar, Trophy, Newspaper, Users, ShieldCheck, LayoutDashboard } from 'lucide-react';
 
 interface AdminProtectedRouteProps {
@@ -198,6 +199,25 @@ export default function AdminProtectedRoute({ children, showHeader = true }: Adm
           Verifying Admin Credentials...
         </p>
       </div>
+    );
+  }
+
+  if (error === NOT_APPROVED_MESSAGE) {
+    return (
+      <ErrorScreen
+        code="401"
+        label="ACCESS DENIED"
+        title="This account isn't an admin."
+        message={<p>{NOT_APPROVED_MESSAGE}</p>}
+        actions={
+          <>
+            <ErrorLink href="/admin/login/">Sign in with another account</ErrorLink>
+            <ErrorLink href="/" variant="outline">
+              Back to home
+            </ErrorLink>
+          </>
+        }
+      />
     );
   }
 
