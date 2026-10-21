@@ -1,12 +1,50 @@
 'use client';
 
 import dynamic from 'next/dynamic';
-import { useEffect, useRef, useState } from 'react';
+import { Component, useEffect, useRef, useState, type ReactNode } from 'react';
 import { HAND_CONFIG, startStill } from './handConfig';
 import type { HandWorkerReply } from './hand.worker';
 
 /* Only downloaded where WebGL can't run in a worker. */
 const RobotSceneR3F = dynamic(() => import('./RobotSceneR3F'), { ssr: false });
+
+/**
+ * Whether this browser can create a WebGL context at all. A broken graphics
+ * driver or a crashed GPU process makes context creation fail; without this
+ * check the main-thread fallback threw during render and took the whole page
+ * down ("Application error: a client-side exception has occurred").
+ */
+let webglChecked: boolean | null = null;
+function webglAvailable() {
+  if (webglChecked !== null) return webglChecked;
+  webglChecked = probeWebgl();
+  return webglChecked;
+}
+function probeWebgl() {
+  try {
+    const canvas = document.createElement('canvas');
+    const gl = (canvas.getContext('webgl2') || canvas.getContext('webgl')) as WebGLRenderingContext | null;
+    if (!gl) return false;
+    gl.getExtension('WEBGL_lose_context')?.loseContext();
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/** If the 3D scene fails in any way, show the hero without the hand. */
+class SceneBoundary extends Component<{ children: ReactNode }, { failed: boolean }> {
+  state = { failed: false };
+  static getDerivedStateFromError() {
+    return { failed: true };
+  }
+  componentDidCatch(error: unknown) {
+    console.warn('3D hand disabled:', error);
+  }
+  render() {
+    return this.state.failed ? null : this.props.children;
+  }
+}
 
 /**
  * The hero's 3D hand. Rendered by hand.worker.ts on an OffscreenCanvas, so its
@@ -112,6 +150,14 @@ export default function RobotScene({ paused = false }: { paused?: boolean }) {
     return () => document.removeEventListener('visibilitychange', sync);
   }, [paused, fallback]);
 
-  if (fallback) return <RobotSceneR3F paused={paused} />;
+  if (fallback) {
+    // No WebGL at all: the hero simply shows without the hand.
+    if (!webglAvailable()) return null;
+    return (
+      <SceneBoundary>
+        <RobotSceneR3F paused={paused} />
+      </SceneBoundary>
+    );
+  }
   return <canvas ref={canvasRef} aria-hidden="true" style={{ display: 'block', width: '100%', height: '100%' }} />;
 }
