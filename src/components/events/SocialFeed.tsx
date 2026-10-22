@@ -8,8 +8,10 @@ import { club } from '@/lib/club';
 /**
  * The club's Instagram posts, from a Juicer feed (juicer.io).
  *
- * Uses the club's feed (acc_robotics_club) unless NEXT_PUBLIC_JUICER_FEED_ID
- * names a different one, so posts show on any host without extra settings.
+ * The feed ID is built in (it's public: it appears in every visitor's page).
+ * It is deliberately not read from a Vercel setting: when the feed was
+ * recreated in Juicer, the old ID stayed in the hosting settings and the
+ * posts disappeared. To change feeds, change it here.
  * Only Instagram posts are shown, even if the feed also has other sources
  * (Juicer filters by network).
  *
@@ -17,7 +19,7 @@ import { club } from '@/lib/club';
  * into view, so they never compete with the hero or slow down scrolling near
  * the top of the page.
  */
-export const JUICER_FEED_ID = process.env.NEXT_PUBLIC_JUICER_FEED_ID?.trim() || 'acc_robotics_club';
+export const JUICER_FEED_ID = 'acc_robotics_club-3a1c2ce2-fb0c-464c-b30a-3267fbf77d62';
 const SCRIPT_SRC = 'https://assets.juicer.io/embed.js';
 const STYLE_HREF = 'https://assets.juicer.io/embed.css';
 /** The home page shows just one row of the latest posts. */
