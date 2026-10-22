@@ -206,7 +206,7 @@ const panels: Record<PanelKey, PanelData> = {
       },
       {
         name: 'Md. Shirajul Islam Raju',
-        designation: 'Moderator',
+        designation: 'Co-Moderator',
         imageUrl: '/leadership/moderator-md-shirajul-islam-raju.webp',
         imageFrame: 'portrait',
       },
