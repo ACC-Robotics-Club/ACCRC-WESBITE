@@ -34,7 +34,7 @@ export default function NewsPage() {
     <main className="pt-24 section-padding container-content min-h-screen">
       <EventBanner events={events} />
       <SectionReveal>
-        <div className="mb-12">
+        <div className="motion-intro mb-12">
           <p className="mono-label mb-4 flex items-center gap-3 text-accent">
             <span className="inline-block h-px w-10 bg-accent" aria-hidden />
             NEWS &amp; UPDATES
@@ -53,7 +53,7 @@ export default function NewsPage() {
         ) : news.length === 0 ? (
           <div className="text-text-secondary">No updates posted yet. Check back soon.</div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          <div className="motion-stagger grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
             {news.map((post) => (
               <NewsCard key={post.id} news={post} />
             ))}

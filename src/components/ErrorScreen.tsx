@@ -24,7 +24,7 @@ export function ErrorScreen({
     <main className="relative flex min-h-[100svh] items-center overflow-hidden bg-primary pb-20 pt-32">
       <div className="dot-grid absolute inset-0 opacity-40" aria-hidden />
       <div className="container-content relative">
-        <div className="mx-auto max-w-2xl text-center">
+        <div className="motion-intro mx-auto max-w-2xl text-center">
           <img
             src="/accrc-logo-128.png"
             alt=""

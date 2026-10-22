@@ -48,7 +48,7 @@ export function Footer() {
       </div>
 
       <div className="container-content py-16">
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-12 md:gap-8">
+        <div className="motion-stagger grid grid-cols-1 md:grid-cols-12 gap-12 md:gap-8">
           {/* Brand Column */}
           <div className="md:col-span-5">
             <div className="flex items-center gap-3 mb-5">

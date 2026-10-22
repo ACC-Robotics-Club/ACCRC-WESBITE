@@ -8,6 +8,8 @@ import { Footer } from '@/components/layout/Footer';
 import { PageLoader } from '@/components/fx/PageLoader';
 import { GlobalEventBanner } from '@/components/layout/GlobalEventBanner';
 import { pauseOffscreenLoops } from '@/components/fx/pauseOffscreenLoops';
+import { startSmoothScroll } from '@/components/fx/smoothScroll';
+import { startAutoReveal } from '@/components/fx/autoReveal';
 
 /* The site guide uses an animation library, so it is only downloaded the
    first time someone opens it — not on every page load. */
@@ -80,8 +82,10 @@ function useRecordSectionHeights() {
 
 export function SiteChrome({ children }: { children: ReactNode }) {
   useEffect(() => pauseOffscreenLoops(), []);
+  useEffect(() => startAutoReveal(), []);
   const pathname = usePathname();
   const isAdmin = pathname?.startsWith('/admin');
+  useEffect(() => (isAdmin ? undefined : startSmoothScroll()), [isAdmin]);
 
   /* Site guide: opened from the navbar's help button, or by any page firing
      the 'accrc:open-onboarding' event. Mounted on first open, then kept so its

@@ -55,7 +55,7 @@ function EventDetailContent() {
   else if (openAt && closeAt && now >= openAt && now < closeAt) status = 'open';
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="motion-intro max-w-4xl mx-auto">
       <Link href="/events" className="inline-flex items-center text-sm text-[#3a3530] hover:text-ink mb-8 transition-colors">
         <ArrowLeft className="w-4 h-4 mr-2" />
         Back to Events
@@ -81,7 +81,7 @@ function EventDetailContent() {
         <p className="whitespace-pre-wrap">{event.description}</p>
       </div>
 
-      <div className="border-t border-[#cfc9bc] pt-12">
+      <div className="motion-rise border-t border-[#cfc9bc] pt-12">
         {event.isLaunched === false ? (
           <div className="bg-[#ede7da] border border-[#cfc9bc] p-8 text-center max-w-xl mx-auto">
             <h3 className="text-xl font-bold text-[#3a3530] mb-2">Registrations Closed</h3>
