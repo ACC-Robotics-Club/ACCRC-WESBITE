@@ -202,7 +202,13 @@ const panels: Record<PanelKey, PanelData> = {
         name: 'Naimul Haque Naim',
         designation: 'Moderator',
         imageUrl: '/leadership/moderator-naimul-haque-naim.webp',
-        imageFrame: 'wide',
+        imageFrame: 'portrait',
+      },
+      {
+        name: 'Md. Shirajul Islam Raju',
+        designation: 'Moderator',
+        imageUrl: '/leadership/moderator-md-shirajul-islam-raju.webp',
+        imageFrame: 'portrait',
       },
       {
         name: 'Prof. Md. Abdul Halim',

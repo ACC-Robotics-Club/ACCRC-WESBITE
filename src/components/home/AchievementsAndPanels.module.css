@@ -377,7 +377,7 @@
 }
 
 .founderGrid { grid-template-columns: repeat(3, minmax(0, 1fr)); margin: 0 auto; max-width: 70rem; }
-.moderatorGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); margin: 0 auto; max-width: 46rem; }
+.moderatorGrid { grid-template-columns: repeat(3, minmax(0, 1fr)); margin: 0 auto; max-width: 62rem; }
 
 .memberCard {
   background: rgba(255, 255, 255, 0.035);
@@ -446,11 +446,9 @@
 .squareFrame { aspect-ratio: 1; }
 .wideFrame { aspect-ratio: 4 / 3; }
 
-/* Adviser artwork has mixed source ratios; letterbox it cleanly. */
-.moderatorGrid .avatar,
-.moderatorGrid .avatarFallback {
-  background: #141210;
-  object-fit: contain;
+/* Moderator photos are matching studio headshots, cropped like the rest. */
+.moderatorGrid .avatar {
+  object-position: 50% 20%;
 }
 
 .memberInfo {
@@ -540,6 +538,16 @@
   .founderGrid,
   .moderatorGrid,
   .wordmark { font-size: clamp(3.5rem, 16vw, 8rem); }
+}
+
+/* Narrow screens: moderators two per row, an odd last card centred below. */
+@media (max-width: 640px) {
+  .moderatorGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .moderatorGrid > :last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+    justify-self: center;
+    width: calc(50% - 0.5rem);
+  }
 }
 
 /* Phones keep two columns: one full-width portrait per person made the
