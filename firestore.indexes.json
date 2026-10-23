@@ -63,6 +63,23 @@
         { "fieldPath": "eventId", "mode": "ASCENDING" },
         { "fieldPath": "createdAt", "mode": "DESCENDING" }
       ]
+    },
+    {
+      "collectionGroup": "registrations",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "type", "mode": "ASCENDING" },
+        { "fieldPath": "eventId", "mode": "ASCENDING" },
+        { "fieldPath": "createdAt", "mode": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "events",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "isLaunched", "mode": "ASCENDING" },
+        { "fieldPath": "date", "mode": "DESCENDING" }
+      ]
     }
   ],
   "fieldOverrides": []

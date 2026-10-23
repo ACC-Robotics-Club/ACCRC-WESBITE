@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { signInWithEmailAndPassword, signOut } from 'firebase/auth';
 import { adminSessionReady, auth } from '@/lib/firebase';
+import { adminCheckFailedMessage, isApprovedAdmin, NOT_APPROVED_MESSAGE } from '@/lib/adminAccess';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Lock } from 'lucide-react';
@@ -50,9 +51,20 @@ export default function AdminLogin() {
       });
       const credential = await signInWithEmailAndPassword(auth, email.trim(), password);
       const token = await credential.user.getIdTokenResult(true);
-      if (token.claims.admin !== true) {
-        await signOut(auth);
-        setError('This account is not authorized to access the administration portal.');
+      let approved: boolean;
+      try {
+        approved = token.claims.admin === true || (await isApprovedAdmin(credential.user));
+      } catch (checkErr) {
+        console.error('Admin check failed.', checkErr);
+        await signOut(auth).catch(() => undefined);
+        setError(adminCheckFailedMessage(checkErr));
+        return;
+      }
+      if (!approved) {
+        await signOut(auth).catch(() => undefined);
+        setError(NOT_APPROVED_MESSAGE);
+        return;
+      }
         return;
       }
       router.push('/admin');

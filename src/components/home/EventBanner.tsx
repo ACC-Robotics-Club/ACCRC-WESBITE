@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { X, CalendarDays, ArrowRight } from 'lucide-react';
-import { type FirestoreEvent } from '@/lib/firestore';
+import { type FirestoreEvent } from '@/lib/publicData';
 
 interface EventBannerProps {
   events: FirestoreEvent[];

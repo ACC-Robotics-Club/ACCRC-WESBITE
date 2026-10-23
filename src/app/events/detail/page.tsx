@@ -2,7 +2,7 @@
 
 import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { subscribeToEvent, type FirestoreEvent } from '@/lib/firestore';
+import { subscribeToEvent, type FirestoreEvent } from '@/lib/publicData';
 import { EventStatus } from '@/components/events/EventStatus';
 import { EventRegistrationForm } from '@/components/events/EventRegistrationForm';
 import { Countdown } from '@/components/events/Countdown';
@@ -28,7 +28,8 @@ function EventDetailContent() {
       return;
     }
     const unsubscribe = subscribeToEvent(id, (data) => {
-      if (data) {
+      // Hidden events are not public, even with a direct link.
+      if (data && data.isLaunched !== false) {
         setEvent(data);
       } else {
         setError(true);
@@ -54,8 +55,8 @@ function EventDetailContent() {
   else if (openAt && closeAt && now >= openAt && now < closeAt) status = 'open';
 
   return (
-    <div className="max-w-4xl mx-auto">
-      <Link href="/events" className="inline-flex items-center text-sm text-[#3a3530] hover:text-primary mb-8 transition-colors">
+    <div className="motion-intro max-w-4xl mx-auto">
+      <Link href="/events" className="inline-flex items-center text-sm text-[#3a3530] hover:text-ink mb-8 transition-colors">
         <ArrowLeft className="w-4 h-4 mr-2" />
         Back to Events
       </Link>
@@ -76,11 +77,11 @@ function EventDetailContent() {
         <EventStatus registrationOpensAt={openAt} registrationClosesAt={closeAt} />
       </div>
 
-      <div className="prose prose-invert max-w-none mb-16 text-[#3a3530]">
+      <div className="max-w-none mb-16 text-[#3a3530]">
         <p className="whitespace-pre-wrap">{event.description}</p>
       </div>
 
-      <div className="border-t border-[#cfc9bc] pt-12">
+      <div className="motion-rise border-t border-[#cfc9bc] pt-12">
         {event.isLaunched === false ? (
           <div className="bg-[#ede7da] border border-[#cfc9bc] p-8 text-center max-w-xl mx-auto">
             <h3 className="text-xl font-bold text-[#3a3530] mb-2">Registrations Closed</h3>
@@ -123,7 +124,7 @@ function EventDetailContent() {
 
 export default function EventDetailPage() {
   return (
-    <div className="pt-24 min-h-screen bg-[#f6f0e7] px-4 sm:px-6 lg:px-8 pb-20">
+    <div className="pt-32 min-h-screen bg-[#f6f0e7] px-4 sm:px-6 lg:px-8 pb-20">
       <Suspense fallback={<div className="text-[#3a3530] max-w-4xl mx-auto pt-10">Loading...</div>}>
         <EventDetailContent />
       </Suspense>

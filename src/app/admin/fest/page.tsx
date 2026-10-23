@@ -544,66 +544,66 @@ export default function AdminFest() {
         )}
 
         {/* ═══ TABS ═══ */}
-        <div className="flex border-b border-[#cfc9bc] mb-6 overflow-x-auto gap-1">
+        <div className="flex border-b border-[#cfc9bc] mb-6 overflow-x-auto gap-0.5 pb-0">
           <button
             onClick={() => setActiveTab('registrations')}
-            className={`px-4 py-2.5 font-mono text-xs uppercase tracking-wider font-bold transition-all border-b-2 flex items-center gap-1.5 ${
+            className={`shrink-0 whitespace-nowrap px-3 py-2.5 font-mono text-xs uppercase tracking-wider font-bold transition-all border-b-2 flex items-center gap-1.5 ${
               activeTab === 'registrations'
                 ? 'border-[#c94030] text-[#c94030] bg-[#ede7da]'
                 : 'border-transparent text-[#6b6258] hover:text-[#141210]'
             }`}
           >
-            <Users size={14} /> Team Registrations ({registrations.length})
+            <Users size={13} /> Registrations ({registrations.length})
           </button>
           <button
             onClick={() => setActiveTab('launcher')}
-            className={`px-4 py-2.5 font-mono text-xs uppercase tracking-wider font-bold transition-all border-b-2 flex items-center gap-1.5 ${
+            className={`shrink-0 whitespace-nowrap px-3 py-2.5 font-mono text-xs uppercase tracking-wider font-bold transition-all border-b-2 flex items-center gap-1.5 ${
               activeTab === 'launcher'
                 ? 'border-[#c94030] text-[#c94030] bg-[#ede7da]'
                 : 'border-transparent text-[#6b6258] hover:text-[#141210]'
             }`}
           >
-            <Settings size={14} /> Fest Status & Payment Settings
+            <Settings size={13} /> Settings
           </button>
           <button
             onClick={() => setActiveTab('scanner')}
-            className={`px-4 py-2.5 font-mono text-xs uppercase tracking-wider font-bold transition-all border-b-2 flex items-center gap-1.5 ${
+            className={`shrink-0 whitespace-nowrap px-3 py-2.5 font-mono text-xs uppercase tracking-wider font-bold transition-all border-b-2 flex items-center gap-1.5 ${
               activeTab === 'scanner'
                 ? 'border-[#c94030] text-[#c94030] bg-[#ede7da]'
                 : 'border-transparent text-[#6b6258] hover:text-[#141210]'
             }`}
           >
-            <QrCode size={14} /> Gate Check-In
+            <QrCode size={13} /> Gate Check-In
           </button>
           <button
             onClick={() => setActiveTab('segments')}
-            className={`px-4 py-2.5 font-mono text-xs uppercase tracking-wider font-bold transition-all border-b-2 flex items-center gap-1.5 ${
+            className={`shrink-0 whitespace-nowrap px-3 py-2.5 font-mono text-xs uppercase tracking-wider font-bold transition-all border-b-2 flex items-center gap-1.5 ${
               activeTab === 'segments'
                 ? 'border-[#c94030] text-[#c94030] bg-[#ede7da]'
                 : 'border-transparent text-[#6b6258] hover:text-[#141210]'
             }`}
           >
-            <Flame size={14} /> Segments & Rules ({segments.length})
+            <Flame size={13} /> Segments ({segments.length})
           </button>
           <button
             onClick={() => setActiveTab('schedule')}
-            className={`px-4 py-2.5 font-mono text-xs uppercase tracking-wider font-bold transition-all border-b-2 flex items-center gap-1.5 ${
+            className={`shrink-0 whitespace-nowrap px-3 py-2.5 font-mono text-xs uppercase tracking-wider font-bold transition-all border-b-2 flex items-center gap-1.5 ${
               activeTab === 'schedule'
                 ? 'border-[#c94030] text-[#c94030] bg-[#ede7da]'
                 : 'border-transparent text-[#6b6258] hover:text-[#141210]'
             }`}
           >
-            <Calendar size={14} /> Timetable ({schedule.length})
+            <Calendar size={13} /> Timetable ({schedule.length})
           </button>
           <button
             onClick={() => setActiveTab('announcements')}
-            className={`px-4 py-2.5 font-mono text-xs uppercase tracking-wider font-bold transition-all border-b-2 flex items-center gap-1.5 ${
+            className={`shrink-0 whitespace-nowrap px-3 py-2.5 font-mono text-xs uppercase tracking-wider font-bold transition-all border-b-2 flex items-center gap-1.5 ${
               activeTab === 'announcements'
                 ? 'border-[#c94030] text-[#c94030] bg-[#ede7da]'
                 : 'border-transparent text-[#6b6258] hover:text-[#141210]'
             }`}
           >
-            <Bell size={14} /> Notices ({announcements.length})
+            <Bell size={13} /> Notices ({announcements.length})
           </button>
         </div>
 

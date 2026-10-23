@@ -4,7 +4,9 @@ import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { onAuthStateChanged, signOut, type User } from 'firebase/auth';
-import { auth, adminSessionReady } from '@/lib/firebase';
+import { auth, adminSessionReady } from '@/lib/firebaseAuth';
+import { adminCheckFailedMessage, isApprovedAdmin, NOT_APPROVED_MESSAGE } from '@/lib/adminAccess';
+import { ErrorScreen } from '@/components/ErrorScreen';
 import { Loader2, LogOut, Flame, Calendar, Trophy, Newspaper, Users, ShieldCheck, LayoutDashboard } from 'lucide-react';
 
 interface AdminProtectedRouteProps {
@@ -133,7 +135,9 @@ export default function AdminProtectedRoute({ children, showHeader = true }: Adm
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!auth) {
+    // Captured so the callbacks below keep the non-null type.
+    const firebaseAuth = auth;
+    if (!firebaseAuth) {
       setError('Firebase Auth is not initialized');
       setLoading(false);
       return;
@@ -145,8 +149,28 @@ export default function AdminProtectedRoute({ children, showHeader = true }: Adm
       .then(() => {
         unsubscribe = onAuthStateChanged(
           auth,
-          (currentUser) => {
-            if (!currentUser) {
+          async (currentUser) => {
+            if (currentUser) {
+              const token = await currentUser.getIdTokenResult(true);
+              let approved: boolean;
+              try {
+                approved = token.claims.admin === true || (await isApprovedAdmin(currentUser));
+              } catch (checkErr) {
+                setUser(null);
+                setError(adminCheckFailedMessage(checkErr));
+                setLoading(false);
+                return;
+              }
+              if (!approved) {
+                await signOut(auth).catch(() => undefined);
+                setUser(null);
+                setError(NOT_APPROVED_MESSAGE);
+                setLoading(false);
+                return;
+              }
+              setUser(currentUser);
+              setLoading(false);
+            } else {
               setUser(null);
               setLoading(false);
               router.replace('/admin/login');
@@ -195,11 +219,22 @@ export default function AdminProtectedRoute({ children, showHeader = true }: Adm
     );
   }
 
+  if (error === NOT_APPROVED_MESSAGE) {
+    return (
+      <ErrorScreen
+        code="401"
+        label="ACCESS DENIED"
+        title="This account isn't an admin."
+        message={<p>{NOT_APPROVED_MESSAGE}</p>}
+      />
+    );
+  }
+
   if (error) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#f6f0e7] p-4">
         <div className="bg-[#ede7da] border border-[#c72c2c] p-6 max-w-md w-full rounded text-center">
-          <p className="text-sm font-bold text-[#c72c2c] mb-2">Authentication Error</p>
+          <p className="text-sm font-bold text-[#c72c2c] mb-2">Access denied</p>
           <p className="text-xs text-[#3a3530] font-mono mb-4">{error}</p>
           <button
             onClick={() => router.push('/admin/login')}

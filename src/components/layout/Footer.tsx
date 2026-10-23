@@ -1,21 +1,20 @@
-
 "use client";
 
 import { useEffect, useState } from "react";
-import { MapPin, Mail } from "lucide-react";
+import { MapPin, Mail, ArrowUpRight } from "lucide-react";
 import { FaFacebook, FaInstagram } from "react-icons/fa";
 import {
   subscribeToFestConfig,
   subscribeToPortalConfig,
   type FestConfig,
   type PortalConfig,
-} from "@/lib/firestore";
+} from "@/lib/publicData";
 import { club } from "@/lib/club";
+import { Marquee } from "@/components/fx/Marquee";
 
 export function Footer() {
-  const [currentYear, setCurrentYear] = useState<number | null>(null);
-  const [festConfig, setFestConfig] = useState<FestConfig | null>(null);
   const [portalConfig, setPortalConfig] = useState<PortalConfig | null>(null);
+  const [festConfig, setFestConfig] = useState<FestConfig | null>(null);
 
   useEffect(() => {
     const unsubscribeFest = subscribeToFestConfig(setFestConfig, (error) => {
@@ -27,26 +26,50 @@ export function Footer() {
       unsubscribePortal();
     };
   }, []);
-  useEffect(() => { setCurrentYear(new Date().getFullYear()); }, []);
 
   const leadershipApplicationsOpen = Boolean(
     portalConfig?.execOpen || portalConfig?.prefectOpen || portalConfig?.subExecOpen
   );
 
   return (
-    <footer className="site-footer bg-[#ede7da] border-t border-[#cfc9bc]">
+    <footer className="site-footer cv-auto bg-ink text-[#F7F5EE]">
+      {/* Tagline marquee */}
+      <div className="border-b border-white/10 py-6">
+        <Marquee speed={26}>
+          {["BUILD", "LEARN", "COMPETE", "REPEAT"].map((word) => (
+            <span key={word} className="mx-6 flex items-center gap-6">
+              <span className="font-display text-display-sm font-extrabold tracking-display text-glow">
+                {word}
+              </span>
+              <span className="h-2.5 w-2.5 rounded-full bg-glow/60" aria-hidden />
+            </span>
+          ))}
+        </Marquee>
+      </div>
+
       <div className="container-content py-16">
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-12 md:gap-8">
-          {/* Brand */}
+        <div className="motion-stagger grid grid-cols-1 md:grid-cols-12 gap-12 md:gap-8">
+          {/* Brand Column */}
           <div className="md:col-span-5">
             <div className="flex items-center gap-3 mb-5">
-              <img src="/accrc-logo.png" alt="Adamjee Cantonment College Robotics Club Logo" className="h-10 w-10 rounded-full object-cover border-[1.5px] border-[#c94030]" />
+              <img
+                src="/accrc-logo-sm.webp"
+                width={48}
+                height={48}
+                decoding="async"
+                alt="ACCRC Logo"
+                className="h-12 w-12 rounded-full object-cover border border-glow/60"
+              />
               <div>
-                <h3 className="font-extrabold text-[#141210] text-[16px] tracking-[0.1em]">ACCRC</h3>
-                <p className="font-mono text-[9px] text-[#6b6258] tracking-[0.06em] uppercase m-0 mt-[3px]">{club.name}</p>
+                <h3 className="font-display text-xl font-extrabold tracking-display">
+                  ACCRC
+                </h3>
+                <p className="font-mono text-mono-sm text-white/50 tracking-widest uppercase">
+                  {club.name} · Adamjee Cantonment College
+                </p>
               </div>
             </div>
-            <p className="text-[#3a3530] text-[0.9375rem] leading-relaxed max-w-sm m-0">
+            <p className="text-white/65 text-body-sm leading-relaxed max-w-sm">
               A student-led robotics community where we build, learn, and compete
               together through robotics, electronics, and computational thinking.
             </p>
@@ -54,20 +77,30 @@ export function Footer() {
 
           {/* Quick Links */}
           <div className="md:col-span-3">
-            <h4 className="text-[0.7rem] font-bold tracking-[0.14em] uppercase text-[#6b6258] mb-4 font-mono">Navigation</h4>
-            <ul className="flex flex-col gap-2.5">
+            <h4 className="mono-label mb-4 text-glow">Navigation</h4>
+            <ul className="flex flex-col md:gap-2.5">
               {[
                 { href: "/events/", label: "Events" },
-                ...(festConfig?.isLaunched === true ? [{ href: "/fest/", label: "Fest" }] : []),
                 { href: "/#achievements", label: "Achievements" },
+                { href: "/panels/", label: "Panels" },
+                { href: "/social/", label: "Posts" },
                 { href: "/membership/", label: "Membership" },
                 { href: "/news/", label: "News" },
                 { href: "/about/", label: "About" },
+                ...(festConfig?.isLaunched === true ? [{ href: "/fest/", label: "Fest" }] : []),
                 ...(leadershipApplicationsOpen ? [{ href: "/portal/", label: "Leadership" }] : []),
               ].map((link) => (
                 <li key={link.href}>
-                  <a href={link.href} className="text-[0.9375rem] text-[#6b6258] hover:text-[#c94030] transition-colors duration-150">
+                  <a
+                    href={link.href}
+                    className="group inline-flex min-h-11 items-center gap-1.5 text-body-sm text-white/65 hover:text-glow transition-colors duration-200 md:min-h-0"
+                  >
                     {link.label}
+                    <ArrowUpRight
+                      size={13}
+                      className="opacity-0 -translate-x-1 transition-all duration-200 group-hover:opacity-100 group-hover:translate-x-0"
+                      aria-hidden
+                    />
                   </a>
                 </li>
               ))}
@@ -76,28 +109,38 @@ export function Footer() {
 
           {/* Contact */}
           <div className="md:col-span-4">
-            <h4 className="text-[0.7rem] font-bold tracking-[0.14em] uppercase text-[#6b6258] mb-4 font-mono">Contact</h4>
+            <h4 className="mono-label mb-4 text-glow">Contact</h4>
             <ul className="flex flex-col gap-3">
-              <li className="flex items-start gap-2.5 text-[0.9375rem] text-[#6b6258]">
-                <MapPin size={15} className="mt-0.5 text-[#9a9088] shrink-0" />
+              <li className="flex items-start gap-2.5 text-body-sm text-white/65">
+                <MapPin size={16} className="mt-0.5 text-glow/70 shrink-0" />
                 <span>{club.location}</span>
               </li>
-              <li className="flex items-center gap-2.5 text-[0.9375rem] text-[#6b6258]">
-                <Mail size={15} className="text-[#9a9088] shrink-0" />
-                <a href={`mailto:${club.officialEmail}`} className="hover:text-[#c94030] transition-colors break-all">
+              <li className="flex items-center gap-2.5 text-body-sm text-white/65">
+                <Mail size={16} className="text-glow/70 shrink-0" aria-hidden />
+                <a
+                  href={`mailto:${club.officialEmail}`}
+                  className="inline-flex min-h-11 items-center break-all hover:text-glow transition-colors md:min-h-0"
+                >
                   {club.officialEmail}
                 </a>
               </li>
-              <li className="text-[0.9375rem] text-[#6b6258]">
-                <a href={club.socials.instagram} target="_blank" rel="noopener noreferrer" className="hover:text-[#c94030] transition-colors">
-                  Message on Instagram
+              <li className="text-body-sm text-white/65">
+                <a
+                  href={club.socials.instagram}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex min-h-11 items-center hover:text-glow transition-colors md:min-h-0"
+                >
+                  Message {club.name} on Instagram
                 </a>
               </li>
             </ul>
+
+            {/* Socials */}
             <div className="flex items-center gap-3 mt-6">
               {[
-                { icon: FaFacebook, href: club.socials.facebook, label: `Adamjee Cantonment College Robotics Club on Facebook` },
-                { icon: FaInstagram, href: club.socials.instagram, label: `Adamjee Cantonment College Robotics Club on Instagram` },
+                { icon: FaFacebook, href: club.socials.facebook, label: `${club.name} on Facebook` },
+                { icon: FaInstagram, href: club.socials.instagram, label: `${club.name} on Instagram` },
               ].map((social) => (
                 <a
                   key={social.label}
@@ -105,22 +148,29 @@ export function Footer() {
                   aria-label={social.label}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="p-2.5 text-[#6b6258] hover:text-[#c94030] border border-[#cfc9bc] hover:border-[#c94030] rounded transition-all duration-200"
+                  className="grid h-11 w-11 place-items-center text-white/60 border border-white/15 rounded-full transition-all duration-200 hover:text-glow hover:border-glow/50 hover:-translate-y-0.5"
                 >
-                  <social.icon size={17} />
+                  <social.icon size={18} />
                 </a>
               ))}
             </div>
           </div>
         </div>
 
-        {/* Bottom */}
-        <div className="border-t border-[#cfc9bc] mt-12 pt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="font-mono text-[0.7rem] text-[#9a9088] tracking-[0.06em] uppercase m-0">
-            © {currentYear ? `${currentYear} ` : ''}{club.fullName}. All rights reserved.
+        {/* Giant wordmark */}
+        <div className="mt-14 select-none" aria-hidden="true">
+          <p className="font-display text-display-xl font-black tracking-display leading-none text-transparent [-webkit-text-stroke:1.5px_rgba(247,245,238,0.2)]">
+            ACCRC
           </p>
-          <p className="font-mono text-[0.7rem] text-[#9a9088] tracking-[0.06em] uppercase m-0">
-            Dhaka, Bangladesh
+        </div>
+
+        {/* Bottom bar */}
+        <div className="border-t border-white/10 mt-8 pt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <p className="font-mono text-mono-sm text-white/40">
+            © 2019 {club.shortName} — {club.name}
+          </p>
+          <p className="font-mono text-mono-sm text-white/40">
+            Dhaka, Bangladesh · Built by the club
           </p>
         </div>
       </div>

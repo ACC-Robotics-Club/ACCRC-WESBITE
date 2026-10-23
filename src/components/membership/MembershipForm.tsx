@@ -3,16 +3,17 @@
 import { useState } from 'react';
 import { Input, Textarea } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
-import { submitRegistration } from '@/lib/firestore';
-import { CheckCircle } from 'lucide-react';
+import { registerMember, type RegistrationResult } from '@/lib/registerMember';
+import { RegistrationSuccess } from '@/components/membership/RegistrationSuccess';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 
 export function MembershipForm() {
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
-    name: '', email: '', whatsapp: '', classSection: '', collegeId: '', motivation: ''
+    name: '', email: '', whatsapp: '', classSection: '', collegeId: '', motivation: '', website: ''
   });
+  const [result, setResult] = useState<RegistrationResult | null>(null);
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [errorMsg, setErrorMsg] = useState('');
 
@@ -31,7 +32,7 @@ export function MembershipForm() {
     
     setStatus('loading');
     try {
-      await submitRegistration({ type: 'membership', ...formData });
+      setResult(await registerMember(formData));
       setStatus('success');
     } catch (err: any) {
       setStatus('error');
@@ -39,28 +40,14 @@ export function MembershipForm() {
     }
   };
 
-  if (status === 'success') {
+  if (status === 'success' && result) {
     return (
-      <motion.div 
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        className="flex flex-col items-center justify-center p-12 border border-[#cfc9bc] bg-[#ede7da] text-center"
-      >
-        <motion.div
-          initial={{ scale: 0 }}
-          animate={{ scale: 1 }}
-          transition={{ type: 'spring', stiffness: 200, damping: 15 }}
-        >
-          <CheckCircle className="w-16 h-16 text-[#c94030] mb-6" />
-        </motion.div>
-        <h3 className="text-2xl font-bold text-[#141210] mb-3">Application Submitted</h3>
-        <p className="text-[#3a3530] mb-8 max-w-md">
-          Thank you for applying to ACCRC. We will review your application and contact you soon via email.
-        </p>
-        <Link href="/">
+      <div className="flex flex-col gap-6">
+        <RegistrationSuccess result={result} email={formData.email.trim().toLowerCase()} />
+        <Link href="/" className="self-start">
           <Button>Return Home</Button>
         </Link>
-      </motion.div>
+      </div>
     );
   }
 
@@ -73,7 +60,7 @@ export function MembershipForm() {
           <div key={num} className="relative z-10 flex flex-col items-center gap-2">
             <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-mono transition-all duration-300
               ${step > num ? 'bg-[#c94030] text-[#141210] border-[#c94030]' : 
-                step === num ? 'bg-primary text-[#c94030] border-[#c94030] shadow-[0_0_10px_rgba(10,132,255,0.5)]' : 
+                step === num ? 'bg-ink text-[#c94030] border-[#c94030] shadow-[0_0_10px_rgba(10,132,255,0.5)]' : 
                 'bg-[#ede7da] text-[#6b6258] border-[#cfc9bc]'} border`}
             >
               {num}
@@ -86,6 +73,8 @@ export function MembershipForm() {
       </div>
 
       <form onSubmit={handleSubmit} className="mt-12">
+        {/* Honeypot for bots; hidden from people and assistive tech. */}
+        <input type="text" name="website" tabIndex={-1} autoComplete="off" aria-hidden className="hidden" value={formData.website} onChange={e => setFormData({...formData, website: e.target.value})} />
         <AnimatePresence mode="wait">
           {step === 1 && (
             <motion.div key="step1" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-4">
@@ -127,7 +116,7 @@ export function MembershipForm() {
             <Button type="button" onClick={handleNext} disabled={status === 'loading'}>Next Step</Button>
           ) : (
             <Button type="submit" loading={status === 'loading'} className="min-w-[140px]">
-              {status === 'loading' ? 'Submitting...' : 'Submit Application'}
+              {status === 'loading' ? 'Registering...' : 'Register'}
             </Button>
           )}
         </div>

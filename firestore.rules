@@ -4,9 +4,21 @@ service cloud.firestore {
     /*
      * Authentication alone is not authorization. Grant this custom claim only
      * from a trusted Admin SDK environment; never from this web application.
+     * The "admins" collection is a secondary allow-list kept in Firestore.
      */
     function isAdmin() {
-      return request.auth != null && request.auth.token.admin == true;
+      return request.auth != null && (
+        request.auth.token.admin == true ||
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+      );
+    }
+
+    // Admin list: each account may check only its own entry. Admins are added
+    // and removed in the Firebase console, never from the website.
+    match /admins/{uid} {
+      allow read: if request.auth != null && request.auth.uid == uid;
+      allow write: if false;
+    }
     }
 
     function isShortText(value, maximum) {
@@ -132,6 +144,59 @@ service cloud.firestore {
 
     match /events/{eventId} {
       allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    // News & Announcements: Public read, Admin write
+    match /news/{newsId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    // Achievements: Public read, Admin write
+    match /achievements/{achievementId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    // Membership, event, and fest registrations. Fest entries are public only
+    // for participant lookup; administrative mutations still require sign-in.
+    match /registrations/{regId} {
+      // New entries start unreviewed (fest teams send 'pending'); only admins
+      // can mark one verified, accepted or rejected.
+      allow create: if !('status' in request.resource.data) ||
+        request.resource.data.status == 'pending';
+      allow read: if isAdmin() || resource.data.type == 'fest';
+      allow update, delete: if isAdmin();
+    }
+
+    // Leadership Applications (Executive, Prefect, Sub-Executive)
+    match /applications/{appId} {
+      // Applications arrive as 'pending'; only admins can accept or reject.
+      allow create: if (!('status' in request.resource.data) ||
+          request.resource.data.status == 'pending') &&
+        exists(/databases/$(database)/documents/config/portal) && (
+        (request.resource.data.type == 'executive' &&
+          get(/databases/$(database)/documents/config/portal).data.execOpen == true) ||
+        (request.resource.data.type == 'prefect' &&
+          get(/databases/$(database)/documents/config/portal).data.prefectOpen == true) ||
+        (request.resource.data.type == 'sub-executive' &&
+          get(/databases/$(database)/documents/config/portal).data.subExecOpen == true)
+      );
+      allow read, update, delete: if isAdmin();
+    }
+
+    // Club-ID counters for member registration. Advanced by admins when they
+    // accept a membership request (src/lib/memberAcceptance.ts).
+    match /counters/{counterId} {
+      allow read, write: if isAdmin();
+    }
+
+    // Portal Config: Public read, Admin write
+    match /config/{configId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
       allow write: if isAdmin();
     }
 

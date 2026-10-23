@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Input, Textarea, Select } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
-import { submitRegistration } from '@/lib/firestore';
+import { submitRegistration } from '@/lib/publicData';
 import { CheckCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
 

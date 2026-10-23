@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import AdminGuard from '@/components/admin/AdminGuard';
-import { getEvents, createEvent, updateEvent, deleteEvent, getRegistrations, deleteRegistration, FirestoreEvent, Registration } from '@/lib/firestore';
+import { getAllEvents, createEvent, updateEvent, deleteEvent, getRegistrations, deleteRegistration, FirestoreEvent, Registration } from '@/lib/firestore';
 import { getEventStatus } from '@/lib/utils';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -43,7 +43,7 @@ export default function AdminEvents() {
   async function fetchEvents() {
     try {
       setLoading(true);
-      const data = await getEvents();
+      const data = await getAllEvents();
       setEvents(data);
     } catch (err: any) {
       setError(err.message || 'Failed to fetch events');
@@ -170,7 +170,7 @@ export default function AdminEvents() {
         setToastMessage('Event updated successfully!');
       } else {
         await createEvent(payload);
-        setToastMessage('New event created and announced live successfully!');
+        setToastMessage('Event created and published on the site.');
       }
       setTimeout(() => setToastMessage(null), 4000);
       await fetchEvents();
@@ -184,9 +184,12 @@ export default function AdminEvents() {
 
   const handleToggleEventLaunch = async (event: FirestoreEvent) => {
     try {
-      const nextVal = event.isLaunched === false ? true : false;
+      // isLaunched defaults to true when undefined, so we explicitly check the stored value.
+      // A new event has isLaunched === undefined (treated as launched), so toggling it
+      // correctly sets it to false (unlaunched).
+      const nextVal = !event.isLaunched;
       await updateEvent(event.id, { isLaunched: nextVal });
-      setToastMessage(`Event ${nextVal ? 'launched and published live' : 'set to unlaunched'}`);
+      setToastMessage(nextVal ? 'Event is now public on the site.' : 'Event is now hidden from the site.');
       setTimeout(() => setToastMessage(null), 3500);
       await fetchEvents();
     } catch (err: unknown) {
@@ -216,15 +219,18 @@ export default function AdminEvents() {
 
   return (
     <AdminGuard>
-      <div className="pt-24 container-content min-h-screen pb-16 text-[#141210]">
+      <div className="pt-8 container-content min-h-screen pb-16 text-[#141210]">
         <div className="mb-6">
           <Link href="/admin" className="text-[#6b6258] hover:text-[#c94030] font-mono text-sm flex items-center inline-flex">
             <ChevronLeft className="w-4 h-4 mr-1" /> Back to Dashboard
           </Link>
         </div>
 
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-sans font-bold text-[#141210]">Manage Events</h1>
+        <div className="flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-start mb-8">
+          <div>
+            <h1 className="text-3xl font-sans font-bold text-[#141210]">Manage Events</h1>
+            <p className="mt-2 max-w-2xl text-sm text-[#3a3530]">Public events with a future date appear under Upcoming Events on the home page and the Events page. Hidden events stay off the site.</p>
+          </div>
           <Button onClick={() => setIsFormOpen(!isFormOpen)} variant={isFormOpen ? 'secondary' : 'primary'}>
             {isFormOpen ? 'Cancel' : <><Plus className="w-4 h-4 mr-2" /> Create New Event</>}
           </Button>
@@ -305,7 +311,7 @@ export default function AdminEvents() {
               <div className="text-center py-14 border border-dashed border-[#cfc9bc] bg-[#ede7da] rounded px-6">
                 <Calendar className="mx-auto h-9 w-9 text-[#c94030] mb-3" aria-hidden />
                 <h3 className="font-bold text-lg text-[#141210]">No events published yet</h3>
-                <p className="mt-1 text-sm text-[#3a3530]">Click "Create New Event" above to publish your first club event.</p>
+                <p className="mt-1 text-sm text-[#3a3530]">Use the Create New Event button above to publish your first club event.</p>
               </div>
             ) : (
               events.map((event) => {
@@ -317,13 +323,34 @@ export default function AdminEvents() {
                   <div key={event.id} className="border border-[#cfc9bc] bg-[#ede7da] overflow-hidden">
                     <div className="p-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                       <div>
-                        <h3 className="text-lg font-sans font-bold text-[#c94030]">{event.name}</h3>
+                        <div className="flex flex-wrap items-center gap-2 mb-1">
+                          <h3 className="text-lg font-sans font-bold text-[#c94030]">{event.name}</h3>
+                          <span className={`font-mono text-[10px] font-bold px-2 py-0.5 rounded border ${
+                            event.isLaunched !== false
+                              ? 'bg-emerald-50 text-emerald-700 border-emerald-300'
+                              : 'bg-amber-50 text-amber-700 border-amber-300'
+                          }`}>
+                            {event.isLaunched !== false ? '● Public' : '○ Hidden'}
+                          </span>
+                          {event.date.getTime() < Date.now() && (
+                            <span className="font-mono text-[10px] font-bold px-2 py-0.5 rounded border bg-[#f6f0e7] text-[#6b6258] border-[#cfc9bc]">Past</span>
+                          )}
+                        </div>
                         <div className="text-sm text-[#3a3530] font-mono mt-1 space-x-4">
                           <span>Date: <strong className="text-[#141210]">{new Date(event.date).toLocaleDateString()}</strong></span>
-                          <span>Status: <span className="font-semibold text-[#141210]">{statusInfo.label}</span></span>
+                          <span>Reg: <span className="font-semibold text-[#141210]">{statusInfo.label}</span></span>
                         </div>
                       </div>
-                      <div className="flex items-center space-x-2">
+                      <div className="flex items-center flex-wrap gap-2">
+                        <Button
+                          variant={event.isLaunched !== false ? 'secondary' : 'primary'}
+                          size="sm"
+                          onClick={() => handleToggleEventLaunch(event)}
+                          className="font-mono text-xs"
+                          title={event.isLaunched !== false ? 'Hide this event from the public site' : 'Show this event on the public site'}
+                        >
+                          {event.isLaunched !== false ? 'Hide from site' : 'Publish'}
+                        </Button>
                         <Button
                           variant="outline"
                           size="sm"
@@ -331,7 +358,7 @@ export default function AdminEvents() {
                           className="font-mono text-xs"
                           title="Toggle registration open/closed"
                         >
-                          {statusInfo.status === 'open' ? 'Close Reg' : 'Open Reg'}
+                          {statusInfo.status === 'open' ? 'Close registration' : 'Open registration'}
                         </Button>
                         <Button variant="secondary" size="sm" onClick={() => loadRegistrations(event.id)}>
                           {isExpanded ? <ChevronUp className="w-4 h-4 mr-1" /> : <ChevronDown className="w-4 h-4 mr-1" />}

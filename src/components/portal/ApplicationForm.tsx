@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Input, Textarea, Select } from '@/components/ui/Input';
-import { submitApplication } from '@/lib/firestore';
+import { submitApplication } from '@/lib/publicData';
 
 interface ApplicationFormProps {
   type: 'sub-executive' | 'executive' | 'prefect';
@@ -31,6 +31,8 @@ export function ApplicationForm({ type, roles, onSuccess }: ApplicationFormProps
       roleApplyingFor: formData.get('role') as string,
       pastExperience: formData.get('experience') as string,
       visionStatement: formData.get('vision') as string,
+      status: 'pending' as const,
+      submittedAt: new Date(),
     };
 
     try {

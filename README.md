@@ -27,6 +27,26 @@ FACEBOOK_GRAPH_API_VERSION=v24.0
 
 The access token is used only by `functions/api/facebook-events.ts`; it is never sent to a browser. The Facebook Graph API must authorize the token to read the official page's events. If it is not configured or Facebook is unavailable, the manual Firebase events and timeline continue to work.
 
+## Member registration (club ID + Gmail confirmation)
+
+The Join forms (home page and `/membership/`) post to `functions/api/register.ts`. That function issues the next club ID (`ACCRC-26-0001`, `ACCRC-26-0002`, …) inside a Firestore transaction, saves the registration under that ID, and emails the member a confirmation with their ID **from the club's Gmail account**. Registering again with the same email re-sends the existing ID instead of issuing a new one.
+
+**It runs on Cloudflare Pages only.** On Vercel (accrcbd.vercel.app) `/api/register` does not exist, so the forms fall back to saving the registration straight to Firestore, without a club ID or email — exactly how sign-up worked before. Nothing breaks either way.
+
+To turn it on, host the site on Cloudflare Pages and add these environment variables (Production and Preview; mark the last two **encrypted**):
+
+```text
+GMAIL_USER=yourclub@gmail.com
+GMAIL_APP_PASSWORD=abcd efgh ijkl mnop
+FIREBASE_SERVICE_ACCOUNT={"type":"service_account","project_id":"...", ...}
+```
+
+1. **Gmail App Password:** turn on 2-Step Verification for the Gmail account, then create an App Password at <https://myaccount.google.com/apppasswords>. Use that 16-character password, not your normal one. Gmail allows about 500 sent emails a day.
+2. **Firebase service account:** Firebase console → Project settings → Service accounts → *Generate new private key*. Paste the whole JSON file as the value.
+3. Optional: `GMAIL_FROM_NAME` sets the sender name (default "ACC Robotics Club").
+
+Club IDs appear in **Admin → Applications → Membership** and in its CSV export.
+
 ## Firebase security rule update
 
 Deploy the repository's Firestore and Storage rules with `firebase deploy --only firestore:rules,storage --project <firebase-project-id>`. Only Firebase accounts with the `admin: true` custom claim can manage content or read submitted personal data. Public visitors can read public club content and submit narrowly validated forms, while Executive, Prefect, and Sub-Executive submissions are rejected when their respective portal toggle is off.

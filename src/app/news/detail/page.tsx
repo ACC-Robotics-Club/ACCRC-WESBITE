@@ -3,7 +3,7 @@
 import React, { useEffect, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { getNewsPost, type FirestoreNews } from '@/lib/firestore';
+import { getNewsPost, type FirestoreNews } from '@/lib/publicData';
 import { SectionReveal } from '@/components/ui/SectionReveal';
 
 function NewsDetailContent() {
@@ -58,7 +58,7 @@ function NewsDetailContent() {
   const dateStr = post.publishedAt?.toLocaleDateString() || '';
 
   return (
-    <div className="max-w-[720px] mx-auto">
+    <div className="motion-intro max-w-[720px] mx-auto">
       <Link href="/news" className="inline-block text-[#c94030] text-[0.9375rem] mb-8 hover:underline">
         &larr; Back to News
       </Link>
@@ -72,7 +72,7 @@ function NewsDetailContent() {
       </h1>
       
       {post.imageUrl && (
-        <div className="w-full mb-8">
+        <div className="motion-zoom w-full mb-8 overflow-hidden rounded-md">
           <img 
             src={post.imageUrl} 
             alt={post.title} 

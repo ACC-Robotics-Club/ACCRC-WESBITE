@@ -1,27 +1,32 @@
 import type { Metadata } from "next";
-import { Hind_Siliguri, Inter, JetBrains_Mono } from "next/font/google";
+import { Hind_Siliguri, Nunito, Space_Mono } from "next/font/google";
 import "./globals.css";
 import { SiteChrome } from '@/components/layout/SiteChrome';
+import { CustomCursor } from '@/components/fx/CustomCursor';
+import { ScrollProgress } from '@/components/fx/ScrollProgress';
 
+const nunito = Nunito({
+  subsets: ['latin'],
+  variable: '--font-nunito',
+  display: 'swap',
+});
+
+/* Bangla text (names, announcements) falls back to Hind Siliguri, which covers
+   the Bengali script that Nunito lacks. Not preloaded: it downloads only when
+   a page actually shows Bangla characters. */
 const hindSiliguri = Hind_Siliguri({
-  subsets: ["bengali", "latin"],
-  weight: ["300", "400", "500", "600", "700"],
-  variable: "--font-hind-siliguri",
-  display: "swap",
+  subsets: ['bengali', 'latin'],
+  weight: ['400', '600', '700'],
+  variable: '--font-hind-siliguri',
+  display: 'swap',
+  preload: false,
 });
 
-const inter = Inter({
-  subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700", "800"],
-  variable: "--font-inter",
-  display: "swap",
-});
-
-const jetbrainsMono = JetBrains_Mono({
-  subsets: ["latin"],
-  weight: ["400", "500", "700"],
-  variable: "--font-jetbrains-mono",
-  display: "swap",
+const spaceMono = Space_Mono({
+  subsets: ['latin'],
+  weight: ['400', '700'],
+  variable: '--font-spacemono',
+  display: 'swap',
 });
 
 export const metadata: Metadata = {
@@ -30,13 +35,16 @@ export const metadata: Metadata = {
   description:
     "Build what's next with ACCRC \u2014 the student robotics club at Adamjee Cantonment College, Dhaka.",
   generator: "ACCRC",
+  // The club logo, from public/. Named files (not src/app/favicon.ico) so a
+  // new icon gets a new URL: browsers and Vercel's build cache both kept
+  // serving the old /favicon.ico after it changed.
   icons: {
     icon: [
-      { url: "/icon-light-32x32.png", media: "(prefers-color-scheme: light)" },
-      { url: "/icon-dark-32x32.png", media: "(prefers-color-scheme: dark)" },
-      { url: "/icon.svg", type: "image/svg+xml" },
+      { url: "/accrc-favicon.ico", sizes: "48x48" },
+      { url: "/accrc-icon-512.png", type: "image/png", sizes: "512x512" },
     ],
-    apple: "/apple-icon.png",
+    shortcut: "/accrc-favicon.ico",
+    apple: "/accrc-apple-icon.png",
   },
   openGraph: {
     title: "ACCRC \u2014 Adamjee Cantonment College Robotics Club",
@@ -51,7 +59,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary",
     title: "ACCRC \u2014 Adamjee Cantonment College Robotics Club",
-    description: "Build what's next with ACCRC — the student robotics club at Adamjee Cantonment College, Dhaka.",
+    description: "Build what's next with ACCRC \u2014 the student robotics club at Adamjee Cantonment College, Dhaka.",
     images: ["/accrc-logo.png"],
   },
   robots: { index: true, follow: true },
@@ -61,13 +69,23 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className="bg-background">
+    <html lang="en" className={`${nunito.variable} ${spaceMono.variable} ${hindSiliguri.variable} cv-measure`}>
       <head>
-        <meta name="theme-color" content="white" media="(prefers-color-scheme: light)" />
-        <meta name="theme-color" content="black" media="(prefers-color-scheme: dark)" />
+        <meta name="theme-color" content="#F7F5EE" media="(prefers-color-scheme: light)" />
+        <meta name="theme-color" content="#1C1917" media="(prefers-color-scheme: dark)" />
         <meta name="color-scheme" content="light" />
+        {/* Skip laying out offscreen sections from the first paint, unless the
+            page was opened on a #link — then lay everything out so the jump
+            lands exactly (see SiteChrome). Runs before the body renders. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: "if(!location.hash)document.documentElement.classList.remove('cv-measure')",
+          }}
+        />
       </head>
-      <body className={`${hindSiliguri.variable} ${inter.variable} ${jetbrainsMono.variable} font-sans antialiased`}>
+      <body className="antialiased">
+        <ScrollProgress />
+        <CustomCursor />
         <SiteChrome>{children}</SiteChrome>
       </body>
     </html>

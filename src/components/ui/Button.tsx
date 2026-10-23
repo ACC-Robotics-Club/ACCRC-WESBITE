@@ -26,7 +26,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
 
   const variants: Record<string, string> = {
     primary:
-      "bg-[#c94030] text-white border border-[#c94030] hover:bg-[#a83228] hover:border-[#a83228] active:scale-[0.98] shadow-[0_2px_8px_rgba(201,64,48,0.2)] hover:shadow-[0_6px_20px_rgba(201,64,48,0.3)]",
+      "btn-sheen bg-[#c94030] text-white border border-[#c94030] hover:bg-[#a83228] hover:border-[#a83228] active:scale-[0.98] shadow-[0_2px_8px_rgba(201,64,48,0.2)] hover:shadow-[0_6px_20px_rgba(201,64,48,0.3)]",
     secondary:
       "bg-transparent text-[#141210] border border-[#cfc9bc] hover:border-[#b8b2a6] hover:bg-[#e6dfd1] active:scale-[0.98]",
     ghost:

@@ -66,6 +66,8 @@ export interface Registration {
   id?: string;
   type: "membership" | "event";
   eventId?: string;
+  /** Issued by /api/register for membership registrations. */
+  clubId?: string;
   name: string;
   email: string;
   whatsapp?: string;
@@ -76,8 +78,14 @@ export interface Registration {
   rollNumber?: string;
   areaOfInterest?: string;
   bloodGroup?: string;
+  /** Set by admins while reviewing; missing means not reviewed yet. */
+  status?: ReviewStatus;
+  /** When the "you're accepted" email with the club ID went out. */
+  acceptanceEmailSentAt?: unknown;
   createdAt?: Date;
 }
+
+export type ReviewStatus = "pending" | "accepted" | "rejected";
 
 export interface Application {
   id?: string;
@@ -90,6 +98,8 @@ export interface Application {
   pastExperience: string;
   visionStatement: string;
   roleApplyingFor: string;
+  /** Set by admins while reviewing; missing means not reviewed yet. */
+  status?: ReviewStatus;
   createdAt?: Date;
 }
 
@@ -191,6 +201,16 @@ export async function getEvents(): Promise<FirestoreEvent[]> {
     .filter((e) => e.isLaunched !== false);
 }
 
+/**
+ * Admin-only: Returns ALL events regardless of isLaunched status,
+ * so the admin portal can see and manage unlaunched events too.
+ */
+export async function getAllEvents(): Promise<FirestoreEvent[]> {
+  const q = query(collection(db, "events"), orderBy("date", "desc"));
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map((d) => parseEvent(d.id, d.data()));
+}
+
 export async function getEvent(id: string): Promise<FirestoreEvent | null> {
   const docRef = doc(db, "events", id);
   const snapshot = await getDoc(docRef);
@@ -208,6 +228,19 @@ export function subscribeToEvents(
       .map((d) => parseEvent(d.id, d.data()))
       .filter((e) => e.isLaunched !== false);
     callback(events);
+  }, onError);
+}
+
+/**
+ * Admin-only realtime subscription: Returns ALL events regardless of isLaunched.
+ */
+export function subscribeToAllEvents(
+  callback: (events: FirestoreEvent[]) => void,
+  onError?: (error: Error) => void
+): Unsubscribe {
+  const q = query(collection(db, "events"), orderBy("date", "desc"));
+  return onSnapshot(q, (snapshot) => {
+    callback(snapshot.docs.map((d) => parseEvent(d.id, d.data())));
   }, onError);
 }
 
@@ -346,12 +379,33 @@ export async function submitRegistration(data: Omit<Registration, "id" | "create
 }
 
 export async function getRegistrations(filters?: { type?: string; eventId?: string }): Promise<Registration[]> {
-  const constraints: QueryConstraint[] = [orderBy("createdAt", "desc")];
-  if (filters?.type) constraints.unshift(where("type", "==", filters.type));
-  if (filters?.eventId) constraints.unshift(where("eventId", "==", filters.eventId));
-  const q = query(collection(db, "registrations"), ...constraints);
-  const snapshot = await getDocs(q);
-  return snapshot.docs.map((d) => ({ id: d.id, ...d.data(), createdAt: toDate(d.data().createdAt) } as Registration));
+  // Attempt the indexed query first. If the composite index is missing or
+  // Firestore returns an error, we fall back to fetching all registrations
+  // and filtering client-side so the admin portal never silently returns empty.
+  try {
+    const constraints: QueryConstraint[] = [orderBy("createdAt", "desc")];
+    if (filters?.type) constraints.unshift(where("type", "==", filters.type));
+    if (filters?.eventId) constraints.unshift(where("eventId", "==", filters.eventId));
+    const q = query(collection(db, "registrations"), ...constraints);
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map((d) => ({ id: d.id, ...d.data(), createdAt: toDate(d.data().createdAt) } as Registration));
+  } catch (indexError) {
+    // Fallback: fetch all and filter in-memory (works even without composite indexes)
+    console.warn("getRegistrations: falling back to client-side filtering.", indexError);
+    const snapshot = await getDocs(collection(db, "registrations"));
+    return snapshot.docs
+      .map((d) => ({ id: d.id, ...d.data(), createdAt: toDate(d.data().createdAt) } as Registration))
+      .filter((r) => {
+        if (filters?.type && r.type !== filters.type) return false;
+        if (filters?.eventId && r.eventId !== filters.eventId) return false;
+        return true;
+      })
+      .sort((a, b) => (b.createdAt?.getTime?.() ?? 0) - (a.createdAt?.getTime?.() ?? 0));
+  }
+}
+
+export async function updateRegistrationStatus(id: string, status: ReviewStatus): Promise<void> {
+  await updateDoc(doc(db, "registrations", id), { status, reviewedAt: Timestamp.now() });
 }
 
 export async function deleteRegistration(id: string): Promise<void> {
@@ -374,6 +428,10 @@ export async function getApplications(type?: Application["type"]): Promise<Appli
   const q = query(collection(db, "applications"), ...constraints);
   const snapshot = await getDocs(q);
   return snapshot.docs.map((d) => ({ id: d.id, ...d.data(), createdAt: toDate(d.data().createdAt) } as Application));
+}
+
+export async function updateApplicationStatus(id: string, status: ReviewStatus): Promise<void> {
+  await updateDoc(doc(db, "applications", id), { status, reviewedAt: Timestamp.now() });
 }
 
 export async function deleteApplication(id: string): Promise<void> {
@@ -435,7 +493,9 @@ export interface FestConfig {
 }
 
 export const DEFAULT_FEST_CONFIG: FestConfig = {
-  isLaunched: true,
+  /* Never public by default: if the real settings can't be read, the site
+     must not advertise a fest that may not be launched. */
+  isLaunched: false,
   registrationOpen: true,
   festTitle: 'National Robotics & Tech Fest 2026',
   festSubtitle: 'Ignite the Future. Build & Compete.',
@@ -747,6 +807,10 @@ export function subscribeToFestConfig(
     docRef,
     (snapshot) => {
       if (!snapshot.exists()) {
+        /* A missing document from the local cache only means the server
+           hasn't answered yet (slow or offline): wait instead of falling
+           back to defaults. */
+        if (snapshot.metadata.fromCache) return;
         callback(DEFAULT_FEST_CONFIG);
         return;
       }
