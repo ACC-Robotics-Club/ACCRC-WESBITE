@@ -148,21 +148,20 @@ export default function AdminProtectedRoute({ children, showHeader = true }: Adm
     void adminSessionReady
       .then(() => {
         unsubscribe = onAuthStateChanged(
-          auth,
+          firebaseAuth,
           async (currentUser) => {
-            if (currentUser) {
-              const token = await currentUser.getIdTokenResult(true);
-              let approved: boolean;
-              try {
-                approved = token.claims.admin === true || (await isApprovedAdmin(currentUser));
-              } catch (checkErr) {
-                setUser(null);
-                setError(adminCheckFailedMessage(checkErr));
-                setLoading(false);
-                return;
-              }
+            if (!currentUser) {
+              setUser(null);
+              setLoading(false);
+              router.replace('/admin/login');
+              return;
+            }
+
+            try {
+              const approved = (await currentUser.getIdTokenResult(true)).claims.admin === true ||
+                (await isApprovedAdmin(currentUser));
               if (!approved) {
-                await signOut(auth).catch(() => undefined);
+                await signOut(firebaseAuth).catch(() => undefined);
                 setUser(null);
                 setError(NOT_APPROVED_MESSAGE);
                 setLoading(false);
@@ -170,29 +169,11 @@ export default function AdminProtectedRoute({ children, showHeader = true }: Adm
               }
               setUser(currentUser);
               setLoading(false);
-            } else {
+            } catch (checkErr) {
               setUser(null);
+              setError(adminCheckFailedMessage(checkErr));
               setLoading(false);
-              router.replace('/admin/login');
-              return;
             }
-
-            void currentUser.getIdTokenResult(true).then((token) => {
-              if (token.claims.admin === true) {
-                setUser(currentUser);
-                setLoading(false);
-                return;
-              }
-
-              void signOut(auth);
-              setUser(null);
-              setError('This account is not authorized to access the administration portal.');
-              setLoading(false);
-              router.replace('/admin/login');
-            }).catch((claimError: unknown) => {
-              setError(claimError instanceof Error ? claimError.message : 'Unable to verify administrator authorization.');
-              setLoading(false);
-            });
           },
           (err) => {
             setError(err.message);

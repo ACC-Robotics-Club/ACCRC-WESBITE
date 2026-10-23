@@ -1,5 +1,8 @@
 import type { MetadataRoute } from "next";
 
+// Required for this metadata route when the site is statically exported.
+export const dynamic = 'force-static';
+
 const BASE_URL = "https://accrcbd.com";
 
 export default function robots(): MetadataRoute.Robots {

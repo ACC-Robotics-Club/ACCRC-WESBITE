@@ -1,24 +1,10 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    /*
-     * Authentication alone is not authorization. Grant this custom claim only
-     * from a trusted Admin SDK environment; never from this web application.
-     * The "admins" collection is a secondary allow-list kept in Firestore.
-     */
+    // Authentication is not authorization. This claim is set only through the
+    // Firebase Admin SDK in a trusted environment, never by the website.
     function isAdmin() {
-      return request.auth != null && (
-        request.auth.token.admin == true ||
-        exists(/databases/$(database)/documents/admins/$(request.auth.uid))
-      );
-    }
-
-    // Admin list: each account may check only its own entry. Admins are added
-    // and removed in the Firebase console, never from the website.
-    match /admins/{uid} {
-      allow read: if request.auth != null && request.auth.uid == uid;
-      allow write: if false;
-    }
+      return request.auth != null && request.auth.token.admin == true;
     }
 
     function isShortText(value, maximum) {
@@ -34,7 +20,7 @@ service cloud.firestore {
         value.matches('^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$');
     }
 
-    function isHttpUrl(value) {
+    function isHttpsUrl(value) {
       return value is string && value.size() <= 2048 &&
         value.matches('^https://[^\\s]+$');
     }
@@ -66,7 +52,7 @@ service cloud.firestore {
         'type', 'eventId', 'name', 'email', 'phone', 'classSection',
         'rollNumber', 'areaOfInterest', 'motivation', 'createdAt'
       ]) &&
-        data.type == 'event' && data.eventId is string &&
+        data.type == 'event' && isShortText(data.eventId, 120) &&
         exists(/databases/$(database)/documents/events/$(data.eventId)) &&
         isShortText(data.name, 100) && isEmail(data.email) &&
         isShortText(data.phone, 32) && isShortText(data.classSection, 80) &&
@@ -98,7 +84,7 @@ service cloud.firestore {
         data.paymentMethod in ['bKash', 'Nagad', 'Rocket', 'Free'] &&
         data.amountPaid is number && data.amountPaid >= 0 && data.amountPaid <= 100000 &&
         data.status == 'pending' && isOptionalShortText(data.submissionLink, 2048) &&
-        (data.submissionLink == '' || isHttpUrl(data.submissionLink)) &&
+        (data.submissionLink == '' || isHttpsUrl(data.submissionLink)) &&
         data.checkInStatus == false && data.checkedIn == false &&
         data.checkedInAt == null && data.createdAt is timestamp;
     }
@@ -116,7 +102,22 @@ service cloud.firestore {
         data.createdAt is timestamp;
     }
 
-    // Public content; modifications require an explicit admin claim.
+    // Content displayed publicly. Only an explicit admin claim may change it.
+    match /events/{eventId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /news/{newsId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /achievements/{achievementId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
     match /fest_settings/{settingId} {
       allow read: if true;
       allow write: if isAdmin();
@@ -137,82 +138,9 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
-    // Legacy team records can contain personal data. Keep them staff-only.
-    match /fest_registrations/{regId} {
-      allow read, write: if isAdmin();
-    }
-
-    match /events/{eventId} {
-      allow read: if true;
-      allow create, update, delete: if isAdmin();
-    }
-
-    // News & Announcements: Public read, Admin write
-    match /news/{newsId} {
-      allow read: if true;
-      allow create, update, delete: if isAdmin();
-    }
-
-    // Achievements: Public read, Admin write
-    match /achievements/{achievementId} {
-      allow read: if true;
-      allow create, update, delete: if isAdmin();
-    }
-
-    // Membership, event, and fest registrations. Fest entries are public only
-    // for participant lookup; administrative mutations still require sign-in.
-    match /registrations/{regId} {
-      // New entries start unreviewed (fest teams send 'pending'); only admins
-      // can mark one verified, accepted or rejected.
-      allow create: if !('status' in request.resource.data) ||
-        request.resource.data.status == 'pending';
-      allow read: if isAdmin() || resource.data.type == 'fest';
-      allow update, delete: if isAdmin();
-    }
-
-    // Leadership Applications (Executive, Prefect, Sub-Executive)
-    match /applications/{appId} {
-      // Applications arrive as 'pending'; only admins can accept or reject.
-      allow create: if (!('status' in request.resource.data) ||
-          request.resource.data.status == 'pending') &&
-        exists(/databases/$(database)/documents/config/portal) && (
-        (request.resource.data.type == 'executive' &&
-          get(/databases/$(database)/documents/config/portal).data.execOpen == true) ||
-        (request.resource.data.type == 'prefect' &&
-          get(/databases/$(database)/documents/config/portal).data.prefectOpen == true) ||
-        (request.resource.data.type == 'sub-executive' &&
-          get(/databases/$(database)/documents/config/portal).data.subExecOpen == true)
-      );
-      allow read, update, delete: if isAdmin();
-    }
-
-    // Club-ID counters for member registration. Advanced by admins when they
-    // accept a membership request (src/lib/memberAcceptance.ts).
-    match /counters/{counterId} {
-      allow read, write: if isAdmin();
-    }
-
-    // Portal Config: Public read, Admin write
-    match /config/{configId} {
-      allow read: if true;
-      allow write: if isAdmin();
-    }
-      allow write: if isAdmin();
-    }
-
-    match /news/{newsId} {
-      allow read: if true;
-      allow write: if isAdmin();
-    }
-
-    match /achievements/{achievementId} {
-      allow read: if true;
-      allow write: if isAdmin();
-    }
-
-    // Public forms may create only their own narrow, validated payloads.
-    // All reads and every mutation of submitted personal data are staff-only.
-    match /registrations/{regId} {
+    // Forms contain personal data. Visitors may create only a narrow
+    // validated payload; only admins can read or review it.
+    match /registrations/{registrationId} {
       allow create: if validMembership(request.resource.data) ||
         validEventRegistration(request.resource.data) ||
         validFestRegistration(request.resource.data);
@@ -235,13 +163,26 @@ service cloud.firestore {
       allow read, update, delete: if isAdmin();
     }
 
-    // The portal document contains only public availability and role choices.
+    // Only availability/role choices are public; other configuration is staff-only.
     match /config/portal {
       allow read: if true;
       allow write: if isAdmin();
     }
 
-    // Deny every collection not explicitly listed above.
+    match /config/{configId} {
+      allow read, write: if isAdmin();
+    }
+
+    // Legacy data and counters can contain private information.
+    match /fest_registrations/{registrationId} {
+      allow read, write: if isAdmin();
+    }
+
+    match /counters/{counterId} {
+      allow read, write: if isAdmin();
+    }
+
+    // Deny every collection that was not deliberately opened above.
     match /{document=**} {
       allow read, write: if false;
     }

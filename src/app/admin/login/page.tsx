@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { signInWithEmailAndPassword, signOut } from 'firebase/auth';
-import { adminSessionReady, auth } from '@/lib/firebase';
+import { adminSessionReady, auth } from '@/lib/firebaseAuth';
 import { adminCheckFailedMessage, isApprovedAdmin, NOT_APPROVED_MESSAGE } from '@/lib/adminAccess';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -46,7 +46,7 @@ export default function AdminLogin() {
     setLoading(true);
     setError(null);
     try {
-      await adminSessionReady.catch((initErr) => {
+      await adminSessionReady.catch((initErr: unknown) => {
         console.warn('adminSessionReady notice:', initErr);
       });
       const credential = await signInWithEmailAndPassword(auth, email.trim(), password);

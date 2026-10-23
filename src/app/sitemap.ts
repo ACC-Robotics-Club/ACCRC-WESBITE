@@ -1,6 +1,9 @@
 import type { MetadataRoute } from "next";
 import { getEvents, getNewsPosts } from "@/lib/firestore";
 
+// Required for metadata routes when the site uses `output: 'export'`.
+export const dynamic = 'force-static';
+
 const BASE_URL = "https://accrcbd.com";
 
 /** Static routes with their crawl priority and change frequency. */

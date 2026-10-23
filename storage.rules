@@ -1,21 +1,12 @@
 rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
-    // Same admin list as firestore.rules: the "admins" Firestore collection.
+    // Assigned only with the Firebase Admin SDK from a trusted environment.
     function isAdmin() {
-      return request.auth != null &&
-        (request.auth.token.admin == true ||
-          firestore.exists(/databases/(default)/documents/admins/$(request.auth.uid)));
+      return request.auth != null && request.auth.token.admin == true;
     }
 
-    // Team submissions: Maximum 50MB file size, admins only
-    match /fests/{festId}/teams/{teamId}/{filename} {
-      allow read: if true;
-      allow write: if isAdmin() && request.resource.size < 50 * 1024 * 1024;
-      allow delete: if isAdmin();
-    }
-
-    // General assets
+    // Team submissions and all other uploads may contain private data.
     match /{allPaths=**} {
       allow read, write: if isAdmin();
     }
