@@ -65,8 +65,6 @@ export default function AdminLogin() {
         setError(NOT_APPROVED_MESSAGE);
         return;
       }
-        return;
-      }
       router.push('/admin');
     } catch (err: unknown) {
       setError(getFriendlyErrorMessage(err));

@@ -142,5 +142,3 @@ export function PastEventRow({ item }: { item: ScheduleItem }) {
     </a>
   );
 }
-  );
-}

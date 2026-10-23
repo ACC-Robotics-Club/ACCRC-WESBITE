@@ -259,7 +259,9 @@ export default function RobotSceneR3F({ paused = false }: { paused?: boolean }) 
      ~12fps that way does it become a still hand. Steps never go back up on
      their own: each change can cause a visible hitch. */
   const dprRef = useRef(dpr);
-  dprRef.current = dpr;
+  useEffect(() => {
+    dprRef.current = dpr;
+  }, [dpr]);
   const onFullDecline = () => {
     if (dprRef.current > 1) setDpr(1);
     else setMode('half');
