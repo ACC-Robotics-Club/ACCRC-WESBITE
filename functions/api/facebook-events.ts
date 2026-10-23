@@ -34,6 +34,9 @@ function json(body: unknown, init?: ResponseInit) {
     ...init,
     headers: {
       "Cache-Control": "public, max-age=300, s-maxage=900",
+      "Content-Type": "application/json; charset=utf-8",
+      "Referrer-Policy": "no-referrer",
+      "X-Content-Type-Options": "nosniff",
       ...(init?.headers ?? {}),
     },
   });
@@ -49,8 +52,10 @@ export const onRequestGet = async ({ env }: PagesContext): Promise<Response> => 
     return json({ events: [], configured: false });
   }
 
-  const version = env.FACEBOOK_GRAPH_API_VERSION || "v24.0";
-  const url = new URL(`https://graph.facebook.com/${version}/${env.FACEBOOK_PAGE_ID}/events`);
+  const configuredVersion = env.FACEBOOK_GRAPH_API_VERSION || "v24.0";
+  const version = /^v\d+\.\d+$/.test(configuredVersion) ? configuredVersion : "v24.0";
+  const pageId = encodeURIComponent(env.FACEBOOK_PAGE_ID);
+  const url = new URL(`https://graph.facebook.com/${version}/${pageId}/events`);
   url.searchParams.set(
     "fields",
     "id,name,description,start_time,end_time,place,cover,permalink_url"

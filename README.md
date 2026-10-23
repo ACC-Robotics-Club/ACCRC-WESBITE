@@ -29,7 +29,9 @@ The access token is used only by `functions/api/facebook-events.ts`; it is never
 
 ## Firebase security rule update
 
-Deploy the repository's Firestore rules with `firebase deploy --only firestore:rules --project <firebase-project-id>`. The signed-in admin account can update fest settings; unauthenticated visitors can still read the public fest configuration. The rules also keep membership registration public while rejecting Executive, Prefect, and Sub-Executive submissions when their respective portal toggle is off.
+Deploy the repository's Firestore and Storage rules with `firebase deploy --only firestore:rules,storage --project <firebase-project-id>`. Only Firebase accounts with the `admin: true` custom claim can manage content or read submitted personal data. Public visitors can read public club content and submit narrowly validated forms, while Executive, Prefect, and Sub-Executive submissions are rejected when their respective portal toggle is off.
+
+Read [SECURITY.md](SECURITY.md) before production deployment. It covers administrator custom claims, App Check, credential rotation, rate limiting, and the Cloudflare/Vercel hosting differences.
 
 ## Deploy to Cloudflare Pages
 

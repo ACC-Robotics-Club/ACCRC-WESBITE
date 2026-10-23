@@ -1,23 +1,15 @@
 rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
-
-    // Helper functions
     function isAdmin() {
-      return request.auth != null;
+      return request.auth != null && request.auth.token.admin == true;
     }
 
-    // Team submissions: Maximum 50MB file size, require authentication
-    match /fests/{festId}/teams/{teamId}/{filename} {
-      allow read: if true;
-      allow write: if request.auth != null && request.resource.size < 50 * 1024 * 1024;
-      allow delete: if isAdmin();
-    }
-
-    // General assets
+    // Uploaded files can carry malware and personal data. Only explicitly
+    // authorized staff can manage them; public delivery is intentionally not
+    // enabled until a reviewed, separate public-assets path is needed.
     match /{allPaths=**} {
-      allow read: if true;
-      allow write: if isAdmin();
+      allow read, write: if isAdmin();
     }
   }
 }

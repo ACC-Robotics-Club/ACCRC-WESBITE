@@ -30,6 +30,7 @@ import { QrCheckInScanner } from '@/components/fest/QrCheckInScanner';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { DeleteModal } from '@/components/admin/DeleteModal';
+import { isSafeHttpsUrl } from '@/lib/safeUrl';
 import {
   ChevronLeft,
   Plus,
@@ -737,7 +738,7 @@ export default function AdminFest() {
                         </td>
                         <td className="p-3">
                           <div className="flex flex-col gap-1.5 items-start">
-                            {reg.submissionLink ? (
+                            {isSafeHttpsUrl(reg.submissionLink) ? (
                               <a
                                 href={reg.submissionLink}
                                 target="_blank"

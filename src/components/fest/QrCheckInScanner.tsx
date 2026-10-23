@@ -9,6 +9,7 @@ import {
   type FestRegistration,
 } from '@/lib/firestore';
 import { Button } from '@/components/ui/Button';
+import { isSafeHttpsUrl } from '@/lib/safeUrl';
 import {
   Camera,
   CameraOff,
@@ -369,7 +370,7 @@ export function QrCheckInScanner({ onCheckInSuccess }: { onCheckInSuccess?: () =
               </div>
             )}
 
-            {scannedTeam.submissionLink && (
+            {isSafeHttpsUrl(scannedTeam.submissionLink) && (
               <div className="sm:col-span-2 bg-[#ede7da] p-3 border border-[#cfc9bc] rounded">
                 <span className="text-[#6b6258] block uppercase text-[10px] mb-1">
                   Project / Presentation Link

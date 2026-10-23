@@ -2,6 +2,7 @@ import { MapPin, ExternalLink } from 'lucide-react';
 import { EventStatus } from './EventStatus';
 import { Button } from '@/components/ui/Button';
 import Link from 'next/link';
+import { isSafeHttpsUrl } from '@/lib/safeUrl';
 
 export interface PublicEvent {
   id: string;
@@ -25,7 +26,7 @@ export function EventCard({ event }: { event: PublicEvent }) {
 
   return (
     <article className="border border-[#cfc9bc] bg-[#ede7da] hover:border-[#c94030]/50 transition-colors duration-300 flex flex-col h-full rounded overflow-hidden">
-      {event.imageUrl && (
+      {isSafeHttpsUrl(event.imageUrl) && (
         <img
           src={event.imageUrl}
           alt={`${event.name} event`}
@@ -57,7 +58,7 @@ export function EventCard({ event }: { event: PublicEvent }) {
           {event.description?.substring(0, 150)}{event.description?.length > 150 ? '...' : ''}
         </p>
         <div className="mt-auto pt-5 border-t border-[#cfc9bc]">
-          {event.source === 'facebook' && event.permalinkUrl ? (
+          {event.source === 'facebook' && isSafeHttpsUrl(event.permalinkUrl) ? (
             <a
               href={event.permalinkUrl}
               target="_blank"

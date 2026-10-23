@@ -4,11 +4,11 @@ import { useEffect, useState, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import {
-  findFestRegistration,
   type FestRegistration,
 } from '@/lib/firestore';
 import { Button } from '@/components/ui/Button';
 import { AlertCircle, ChevronLeft, ExternalLink, Link2, Loader2, Search, Users } from 'lucide-react';
+import { isSafeHttpsUrl } from '@/lib/safeUrl';
 
 function TeamRegistrationContent() {
   const searchParams = useSearchParams();
@@ -29,14 +29,10 @@ function TeamRegistrationContent() {
     setError(null);
 
     try {
-      const found = await findFestRegistration(idToSearch);
-
-      if (!found) {
-        setTeam(null);
-        setError(`No registration matched "${idToSearch}". Check the Participant ID, team name, or payment transaction ID and try again.`);
-      } else {
-        setTeam(found);
-      }
+      // Registration records include personal and payment data. They are not
+      // queried from an anonymous browser; organizers can verify a pass after
+      // authenticating with an administrator account.
+      setError('For privacy, online registration lookup is unavailable. Please contact an ACCRC organizer with your Participant ID.');
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Unable to look up this registration.');
     } finally {
@@ -54,7 +50,7 @@ function TeamRegistrationContent() {
         <span className="font-mono text-xs uppercase tracking-widest text-[#c94030] font-bold block mb-1">ACCRC Fest</span>
         <h1 className="text-[clamp(1.75rem,7vw,2.5rem)] font-extrabold text-[#141210] break-words">Team Registration Lookup</h1>
         <p className="text-sm leading-relaxed text-[#3a3530] mt-2 max-w-2xl">
-          Paste your Participant ID, team name, or payment transaction ID to check your registration and verification status.
+          Keep your Participant ID private and contact an ACCRC organizer for registration verification.
         </p>
       </div>
 
@@ -66,7 +62,7 @@ function TeamRegistrationContent() {
         className="mb-8 bg-[#ede7da] p-4 sm:p-5 border border-[#cfc9bc] rounded"
       >
         <label className="block text-xs font-mono font-bold uppercase text-[#141210] mb-2" htmlFor="registration-search">
-          Participant ID, team name, or payment transaction ID
+          Participant ID
         </label>
         <div className="flex flex-col sm:flex-row gap-2">
           <div className="relative flex-1">
@@ -74,7 +70,7 @@ function TeamRegistrationContent() {
             <input
               id="registration-search"
               type="text"
-              placeholder="Paste your ID, team name, or TrxID"
+              placeholder="Your Participant ID"
               value={inputValue}
               onChange={(event) => setInputValue(event.target.value)}
               autoComplete="off"
@@ -85,7 +81,7 @@ function TeamRegistrationContent() {
           </div>
           <Button type="submit" disabled={loading || !inputValue.trim()} className="w-full sm:w-auto font-mono text-xs uppercase tracking-wider shrink-0">
             {loading ? <Loader2 size={16} className="animate-spin mr-1" /> : <Search size={16} className="mr-1" />}
-            Find Team
+            Get help
           </Button>
         </div>
       </form>
@@ -141,7 +137,7 @@ function TeamRegistrationContent() {
               <Link2 className="w-5 h-5 shrink-0 text-[#c94030] mt-0.5" />
               <div className="min-w-0">
                 <h3 className="font-bold text-[#141210]">Project / Presentation Link</h3>
-                {team.submissionLink ? (
+                {isSafeHttpsUrl(team.submissionLink) ? (
                   <a href={team.submissionLink} target="_blank" rel="noopener noreferrer" className="mt-2 inline-flex items-center gap-1.5 break-all text-sm font-mono font-bold text-[#c94030] hover:underline">
                     Open submitted link <ExternalLink size={14} />
                   </a>

@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { signInWithEmailAndPassword } from 'firebase/auth';
+import { signInWithEmailAndPassword, signOut } from 'firebase/auth';
 import { adminSessionReady, auth } from '@/lib/firebase';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -48,7 +48,13 @@ export default function AdminLogin() {
       await adminSessionReady.catch((initErr) => {
         console.warn('adminSessionReady notice:', initErr);
       });
-      await signInWithEmailAndPassword(auth, email.trim(), password);
+      const credential = await signInWithEmailAndPassword(auth, email.trim(), password);
+      const token = await credential.user.getIdTokenResult(true);
+      if (token.claims.admin !== true) {
+        await signOut(auth);
+        setError('This account is not authorized to access the administration portal.');
+        return;
+      }
       router.push('/admin');
     } catch (err: unknown) {
       setError(getFriendlyErrorMessage(err));

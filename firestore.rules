@@ -1,91 +1,184 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    // Helper functions
+    /*
+     * Authentication alone is not authorization. Grant this custom claim only
+     * from a trusted Admin SDK environment; never from this web application.
+     */
     function isAdmin() {
-      return request.auth != null;
+      return request.auth != null && request.auth.token.admin == true;
     }
 
-    // Fest Global Settings & Launcher Toggles: Public read, Admin write
+    function isShortText(value, maximum) {
+      return value is string && value.size() > 0 && value.size() <= maximum;
+    }
+
+    function isOptionalShortText(value, maximum) {
+      return value == null || (value is string && value.size() <= maximum);
+    }
+
+    function isEmail(value) {
+      return value is string && value.size() <= 254 &&
+        value.matches('^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$');
+    }
+
+    function isHttpUrl(value) {
+      return value is string && value.size() <= 2048 &&
+        value.matches('^https://[^\\s]+$');
+    }
+
+    function portal() {
+      return get(/databases/$(database)/documents/config/portal);
+    }
+
+    function festIsOpen() {
+      return exists(/databases/$(database)/documents/fest_settings/global_config) &&
+        get(/databases/$(database)/documents/fest_settings/global_config).data.isLaunched == true &&
+        get(/databases/$(database)/documents/fest_settings/global_config).data.registrationOpen == true;
+    }
+
+    function validMembership(data) {
+      return data.keys().hasOnly([
+        'type', 'name', 'email', 'whatsapp', 'classSection', 'collegeId',
+        'motivation', 'createdAt'
+      ]) &&
+        data.type == 'membership' &&
+        isShortText(data.name, 100) && isEmail(data.email) &&
+        isShortText(data.whatsapp, 32) && isShortText(data.classSection, 80) &&
+        isShortText(data.collegeId, 80) && isShortText(data.motivation, 2000) &&
+        data.createdAt is timestamp;
+    }
+
+    function validEventRegistration(data) {
+      return data.keys().hasOnly([
+        'type', 'eventId', 'name', 'email', 'phone', 'classSection',
+        'rollNumber', 'areaOfInterest', 'motivation', 'createdAt'
+      ]) &&
+        data.type == 'event' && data.eventId is string &&
+        exists(/databases/$(database)/documents/events/$(data.eventId)) &&
+        isShortText(data.name, 100) && isEmail(data.email) &&
+        isShortText(data.phone, 32) && isShortText(data.classSection, 80) &&
+        isShortText(data.rollNumber, 80) && isShortText(data.areaOfInterest, 200) &&
+        isShortText(data.motivation, 2000) && data.createdAt is timestamp;
+    }
+
+    function validFestRegistration(data) {
+      return data.keys().hasOnly([
+        'participantId', 'verificationHash', 'eventId', 'segmentId',
+        'segmentTitle', 'teamName', 'teamNameSearch', 'institution',
+        'leaderName', 'leaderEmail', 'leaderPhone', 'leaderWhatsapp',
+        'members', 'transactionId', 'paymentTrxId', 'paymentMethod',
+        'amountPaid', 'status', 'submissionLink', 'checkInStatus',
+        'checkedIn', 'checkedInAt', 'type', 'createdAt'
+      ]) &&
+        data.type == 'fest' && festIsOpen() &&
+        data.segmentId is string && data.eventId == data.segmentId &&
+        exists(/databases/$(database)/documents/fest_segments/$(data.segmentId)) &&
+        get(/databases/$(database)/documents/fest_segments/$(data.segmentId)).data.isOpen == true &&
+        isShortText(data.participantId, 80) && isShortText(data.verificationHash, 80) &&
+        isShortText(data.segmentTitle, 160) && isShortText(data.teamName, 160) &&
+        isShortText(data.teamNameSearch, 160) && isShortText(data.institution, 200) &&
+        isShortText(data.leaderName, 100) && isEmail(data.leaderEmail) &&
+        isShortText(data.leaderPhone, 32) && isShortText(data.leaderWhatsapp, 32) &&
+        data.members is list && data.members.size() <= 9 &&
+        isOptionalShortText(data.transactionId, 100) &&
+        isOptionalShortText(data.paymentTrxId, 100) &&
+        data.paymentMethod in ['bKash', 'Nagad', 'Rocket', 'Free'] &&
+        data.amountPaid is number && data.amountPaid >= 0 && data.amountPaid <= 100000 &&
+        data.status == 'pending' && isOptionalShortText(data.submissionLink, 2048) &&
+        (data.submissionLink == '' || isHttpUrl(data.submissionLink)) &&
+        data.checkInStatus == false && data.checkedIn == false &&
+        data.checkedInAt == null && data.createdAt is timestamp;
+    }
+
+    function validApplication(data) {
+      return data.keys().hasOnly([
+        'type', 'name', 'email', 'whatsapp', 'idNumber', 'section',
+        'pastExperience', 'visionStatement', 'roleApplyingFor', 'createdAt'
+      ]) &&
+        data.type in ['executive', 'prefect', 'sub-executive'] &&
+        isShortText(data.name, 100) && isEmail(data.email) &&
+        isShortText(data.whatsapp, 32) && isShortText(data.idNumber, 80) &&
+        isShortText(data.section, 80) && isShortText(data.pastExperience, 3000) &&
+        isShortText(data.visionStatement, 3000) && isShortText(data.roleApplyingFor, 100) &&
+        data.createdAt is timestamp;
+    }
+
+    // Public content; modifications require an explicit admin claim.
     match /fest_settings/{settingId} {
       allow read: if true;
-      allow create, update: if isAdmin();
+      allow write: if isAdmin();
     }
 
-    // Fest Segments & Competitions: Public read, Admin write
     match /fest_segments/{segmentId} {
       allow read: if true;
       allow write: if isAdmin();
     }
 
-    // Fest Schedules: Public read, Admin write
     match /fest_schedule/{scheduleId} {
       allow read: if true;
       allow write: if isAdmin();
     }
 
-    // Fest Announcements & Match Results: Public read, Admin write
     match /fest_announcements/{announcementId} {
       allow read: if true;
       allow write: if isAdmin();
     }
 
-    // Fest Registrations & Teams:
-    // Anyone can create a team registration.
-    // Public read so teams can retrieve their own pass by ID.
-    // Kept readable for legacy registrations created before the canonical
-    // registrations collection was introduced.
+    // Legacy team records can contain personal data. Keep them staff-only.
     match /fest_registrations/{regId} {
-      allow read: if true;
-      allow create: if true;
-      allow update: if isAdmin();
-      allow delete: if isAdmin();
+      allow read, write: if isAdmin();
     }
 
-    // Regular Club Events: Public read, Admin write
     match /events/{eventId} {
       allow read: if true;
-      allow create, update, delete: if isAdmin();
+      allow write: if isAdmin();
     }
 
-    // News & Announcements: Public read, Admin write
     match /news/{newsId} {
       allow read: if true;
-      allow create, update, delete: if isAdmin();
+      allow write: if isAdmin();
     }
 
-    // Achievements: Public read, Admin write
     match /achievements/{achievementId} {
       allow read: if true;
-      allow create, update, delete: if isAdmin();
+      allow write: if isAdmin();
     }
 
-    // Membership, event, and fest registrations. Fest entries are public only
-    // for participant lookup; administrative mutations still require sign-in.
+    // Public forms may create only their own narrow, validated payloads.
+    // All reads and every mutation of submitted personal data are staff-only.
     match /registrations/{regId} {
-      allow create: if true;
-      allow read: if isAdmin() || resource.data.type == 'fest';
-      allow update, delete: if isAdmin();
-    }
-
-    // Leadership Applications (Executive, Prefect, Sub-Executive)
-    match /applications/{appId} {
-      allow create: if exists(/databases/$(database)/documents/config/portal) && (
-        (request.resource.data.type == 'executive' &&
-          get(/databases/$(database)/documents/config/portal).data.execOpen == true) ||
-        (request.resource.data.type == 'prefect' &&
-          get(/databases/$(database)/documents/config/portal).data.prefectOpen == true) ||
-        (request.resource.data.type == 'sub-executive' &&
-          get(/databases/$(database)/documents/config/portal).data.subExecOpen == true)
-      );
+      allow create: if validMembership(request.resource.data) ||
+        validEventRegistration(request.resource.data) ||
+        validFestRegistration(request.resource.data);
       allow read, update, delete: if isAdmin();
     }
 
-    // Portal Config: Public read, Admin write
-    match /config/{configId} {
+    match /applications/{applicationId} {
+      allow create: if validApplication(request.resource.data) &&
+        exists(/databases/$(database)/documents/config/portal) && (
+          (request.resource.data.type == 'executive' &&
+            portal().data.execOpen == true &&
+            portal().data.execRoles.hasAny([request.resource.data.roleApplyingFor])) ||
+          (request.resource.data.type == 'prefect' &&
+            portal().data.prefectOpen == true &&
+            portal().data.prefectRoles.hasAny([request.resource.data.roleApplyingFor])) ||
+          (request.resource.data.type == 'sub-executive' &&
+            portal().data.subExecOpen == true &&
+            portal().data.subExecRoles.hasAny([request.resource.data.roleApplyingFor]))
+        );
+      allow read, update, delete: if isAdmin();
+    }
+
+    // The portal document contains only public availability and role choices.
+    match /config/portal {
       allow read: if true;
       allow write: if isAdmin();
+    }
+
+    // Deny every collection not explicitly listed above.
+    match /{document=**} {
+      allow read, write: if false;
     }
   }
 }

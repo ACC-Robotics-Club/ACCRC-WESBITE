@@ -45,6 +45,7 @@ import {
 import { ErrorBoundary } from '@/components/ui/ErrorBoundary';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
+import { isSafeHttpsUrl } from '@/lib/safeUrl';
 
 const DEFAULT_GUIDELINES = [
   {
@@ -188,6 +189,11 @@ export default function FestPage() {
       return;
     }
 
+    if (submissionLink.trim() && !isSafeHttpsUrl(submissionLink.trim())) {
+      setRegError('The project link must be a valid HTTPS URL.');
+      return;
+    }
+
     setRegSubmitting(true);
     setRegError(null);
 
@@ -282,12 +288,7 @@ export default function FestPage() {
 
             {festConfig.isLaunched && (
               <div className="flex flex-wrap items-center gap-3">
-                <Link href="/fest/pass">
-                  <Button className="font-mono text-xs uppercase tracking-wider inline-flex items-center gap-2">
-                    <FileText size={15} /> Find a Team Registration
-                  </Button>
-                </Link>
-                {festConfig.rulesUrl && (
+                {isSafeHttpsUrl(festConfig.rulesUrl) && (
                   <a
                     href={festConfig.rulesUrl}
                     target="_blank"
@@ -487,7 +488,7 @@ export default function FestPage() {
                                 </p>
                               </div>
                             ))}
-                            {segment.rulesUrl && (
+                            {isSafeHttpsUrl(segment.rulesUrl) && (
                               <div className="pt-2 border-t border-[#cfc9bc]">
                                 <a
                                   href={segment.rulesUrl}
@@ -505,7 +506,7 @@ export default function FestPage() {
                     </div>
 
                     <div className="mt-6 pt-4 border-t border-[#cfc9bc] flex items-center justify-between gap-3">
-                      {segment.rulesUrl ? (
+                      {isSafeHttpsUrl(segment.rulesUrl) ? (
                         <a
                           href={segment.rulesUrl}
                           target="_blank"
@@ -590,7 +591,7 @@ export default function FestPage() {
               </p>
             </div>
 
-            {festConfig.rulesUrl && (
+            {isSafeHttpsUrl(festConfig.rulesUrl) && (
               <div className="pt-2 flex justify-center">
                 <a
                   href={festConfig.rulesUrl}
@@ -720,7 +721,7 @@ export default function FestPage() {
                   <strong className="mt-1 block break-all font-mono text-lg text-[#c94030]">
                     {registeredTeam.participantId}
                   </strong>
-                  {registeredTeam.submissionLink && (
+                  {isSafeHttpsUrl(registeredTeam.submissionLink) && (
                     <a
                       href={registeredTeam.submissionLink}
                       target="_blank"
@@ -732,13 +733,7 @@ export default function FestPage() {
                   )}
                 </div>
 
-                <div className="pt-4 flex justify-between items-center border-t border-[#cfc9bc]">
-                  <Link
-                    href={`/fest/pass?pid=${registeredTeam.participantId}`}
-                    className="text-xs font-mono font-bold text-[#c94030] hover:underline"
-                  >
-                    Permlink: /fest/pass?pid={registeredTeam.participantId}
-                  </Link>
+                <div className="pt-4 flex justify-end items-center border-t border-[#cfc9bc]">
                   <Button onClick={() => setSelectedSegment(null)}>Done</Button>
                 </div>
               </div>
