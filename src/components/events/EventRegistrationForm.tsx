@@ -68,12 +68,12 @@ export function EventRegistrationForm({
         /* Keep the shared columns populated when the admin kept standard
            questions, so the events portal's table works out of the box. */
         name: name || 'Event registration',
-        email: (findValue('std-email', 'email') || (emailField ? (answers[emailField.id] || '') : '')).trim(),
-        phone: (findValue('std-phone', 'phone', 'mobile') || (phoneField ? (answers[phoneField.id] || '') : '')).trim(),
-        classSection: findValue('std-class', 'class', 'section'),
-        rollNumber: findValue('std-roll', 'roll'),
-        areaOfInterest: findValue('std-interest', 'interest', 'area'),
-        motivation: findValue('std-motivation', 'motivation', 'why'),
+        email: (findValue('std-email', 'email') || (emailField ? (answers[emailField.id] || '') : '')).trim() || '',
+        phone: (findValue('std-phone', 'phone', 'mobile') || (phoneField ? (answers[phoneField.id] || '') : '')).trim() || '',
+        classSection: findValue('std-class', 'class', 'section') || '',
+        rollNumber: findValue('std-roll', 'roll') || '',
+        areaOfInterest: findValue('std-interest', 'interest', 'area') || '',
+        motivation: findValue('std-motivation', 'motivation', 'why') || '',
         /* Every answer, including the ones above plus custom questions. */
         answers: fields.map((f) => ({ id: f.id, label: f.label, value: answers[f.id] || '' })),
       } as Parameters<typeof submitRegistration>[0]);
