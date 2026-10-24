@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/Input';
 import { ChevronLeft, X, Loader2, Search, Trash2, Download } from 'lucide-react';
 import { DeleteModal } from '@/components/admin/DeleteModal';
 import { acceptMembership, acceptanceEmailReady, sendAcceptanceEmail, type AcceptResult } from '@/lib/memberAcceptance';
+import { sendApplicationAcceptedEmail } from '@/lib/verifiedNotification';
 
 type StatusFilter = 'all' | ReviewStatus;
 
@@ -244,6 +245,23 @@ export default function AdminPortal() {
       if (type === 'application') {
         await updateApplicationStatus(id, status);
         setApplications((prev) => prev.map((application) => application.id === id ? { ...application, status } : application));
+        // Applying the same decision by email: the confirmation is sent from
+        // the admin's browser through the club's EmailJS mailbox, and a
+        // failed send reports here without undoing the acceptance.
+        if (status === 'accepted') {
+          const application = applications.find((a) => a.id === id);
+          if (application) {
+            const mail = await sendApplicationAcceptedEmail(application);
+            setApplications((prev) => prev.map((a) => a.id === id
+              ? { ...a, ...(mail.sent ? { verifiedEmailSentAt: new Date() } : {}) }
+              : a));
+            if (mail.sent) {
+              setNotice(`${application.name}'s application is accepted. The confirmation email was sent to ${application.email}.`);
+            } else {
+              setError(`${application.name}'s application is accepted, but the confirmation email was not sent: ${mail.problem} Switch their status back to pending and accept again to retry.`);
+            }
+          }
+        }
       } else if (status === 'accepted') {
         // Accepting gives the member a club ID and emails it to them.
         const member = memberships.find((membership) => membership.id === id);

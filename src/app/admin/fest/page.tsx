@@ -31,6 +31,7 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { DeleteModal } from '@/components/admin/DeleteModal';
 import { isSafeHttpsUrl } from '@/lib/safeUrl';
+import { sendFestRegistrationVerifiedEmail } from '@/lib/verifiedNotification';
 import {
   ChevronLeft,
   Plus,
@@ -390,9 +391,26 @@ export default function AdminFest() {
   const handleUpdateRegStatus = async (id: string, status: FestRegistration['status']) => {
     try {
       await updateFestRegistrationStatus(id, status);
+      const target = registrations.find((r) => r.id === id);
       setRegistrations((prev) =>
         prev.map((r) => (r.id === id ? { ...r, status } : r))
       );
+      // Verification also emails the team leader the good news. The send is
+      // best-effort from this browser; a failure reports here without
+      // undoing the verification.
+      if (status === 'verified' && target) {
+        const mail = await sendFestRegistrationVerifiedEmail(target);
+        setRegistrations((prev) =>
+          prev.map((r) => (r.id === id && mail.sent ? { ...r, verifiedEmailSentAt: new Date() } : r))
+        );
+        setSaveSuccess(
+          mail.sent
+            ? `${target.teamName} verified. The confirmation email was sent to ${target.leaderEmail}.`
+            : `${target.teamName} verified, but the confirmation email was not sent: ${mail.problem} Set the team back to pending and verify again to retry.`
+        );
+        if (!mail.sent) setError(`Confirmation email failed for ${target.teamName}: ${mail.problem}`);
+        setTimeout(() => setSaveSuccess(null), 5000);
+      }
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Failed to update registration status');
     }
