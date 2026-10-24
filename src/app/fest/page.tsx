@@ -144,7 +144,13 @@ export default function FestPage() {
     setLeaderWhatsapp('');
     setTransactionId('');
     setSubmissionLink('');
-    setPaymentMethod(festConfig.bkashAccountType === 'Nagad' ? 'Nagad' : festConfig.bkashAccountType === 'Rocket' ? 'Rocket' : 'bKash');
+    /* Payments must be sent through the account mode the organizers
+       configured for this segment (or the main fest account) — a visitor
+       choosing a different app than the configured number can't send to it. */
+    const mode = segment.customBkashNumber
+      ? (segment.customBkashType || festConfig.bkashAccountType)
+      : festConfig.bkashAccountType;
+    setPaymentMethod(mode === 'Nagad' ? 'Nagad' : mode === 'Rocket' ? 'Rocket' : 'bKash');
     setMembers([]);
     setRegisteredTeam(null);
     setRegError(null);
@@ -182,8 +188,22 @@ export default function FestPage() {
       return;
     }
 
-    if (selectedSegment.registrationFee > 0 && !transactionId.trim()) {
-      setRegError('Please provide your bKash / Payment Transaction ID (TrxID) for verification.');
+    /* The rules layer rejects invalid emails with a generic error; catch the
+       common typo here with a clear, specific message. */
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(leaderEmail.trim())) {
+      setRegError('Please enter a valid email address for the team leader.');
+      return;
+    }
+
+    /* Capped to the maximum lengths the security rules accept, so the form
+       explains the limit instead of Firestore rejecting the submission. */
+    if (teamName.trim().length > 160 || institution.trim().length > 200) {
+      setRegError('Team name and institution must stay under 200 characters.');
+      return;
+    }
+
+    if (selectedSegment.registrationFee > 0 && paymentConfigured && !transactionId.trim()) {
+      setRegError(`Please provide your ${activePaymentMethod} Transaction ID (TrxID) for verification.`);
       return;
     }
 
@@ -239,9 +259,17 @@ export default function FestPage() {
     }
   };
 
-  // Dynamic bKash number per segment or global
-  const activeBkashNumber = selectedSegment?.customBkashNumber || festConfig.bkashNumber || '01712345678';
-  const activeBkashType = selectedSegment?.customBkashType || festConfig.bkashAccountType || 'Personal';
+  // Dynamic payment number per segment or global. The demo placeholder is
+  // never shown to visitors — until a real number is saved, the form is
+  // honest that payment details are pending instead of advertising a fake
+  // number someone could send money to.
+  const activeBkashNumber = selectedSegment?.customBkashNumber || festConfig.bkashNumber || '';
+  const activeBkashType =
+    (selectedSegment?.customBkashNumber ? selectedSegment?.customBkashType : undefined) ||
+    festConfig.bkashAccountType ||
+    'Personal';
+  const activePaymentMethod = activeBkashType === 'Nagad' ? 'Nagad' : activeBkashType === 'Rocket' ? 'Rocket' : 'bKash';
+  const paymentConfigured = activeBkashNumber.trim() !== '' && activeBkashNumber.trim() !== '01712345678';
 
   return (
     <div className="min-h-screen flex flex-col flex-grow bg-[#f6f0e7] pt-24 pb-20 text-[#141210]">
@@ -895,34 +923,41 @@ export default function FestPage() {
                     </div>
                   )}
 
-                  {/* Payment Verification with DYNAMIC bKash number */}
-                  {selectedSegment.registrationFee > 0 && (
+                  {/* Payment Verification with DYNAMIC payment number */}
+                  {selectedSegment.registrationFee > 0 && !paymentConfigured && (
+                    <div className="border-t border-[#cfc9bc] pt-3 bg-[#f6f0e7] p-4 border border-dashed rounded space-y-2">
+                      <h4 className="font-mono text-xs uppercase font-bold text-[#c94030]">
+                        Payment details coming soon
+                      </h4>
+                      <p className="text-xs text-[#3a3530] leading-relaxed">
+                        The organizers have not published the payment number for this segment yet. You can complete your registration now and hand the Transaction ID to an organizer afterwards.
+                      </p>
+                    </div>
+                  )}
+                  {selectedSegment.registrationFee > 0 && paymentConfigured && (
                     <div className="border-t border-[#cfc9bc] pt-3 bg-[#f6f0e7] p-4 border border-dashed rounded space-y-3">
                       <h4 className="font-mono text-xs uppercase font-bold text-[#c94030]">
                         Payment Verification ({paymentMethod})
                       </h4>
                       <p className="text-xs text-[#3a3530] leading-relaxed">
                         Send registration fee <strong>৳ {selectedSegment.registrationFee}</strong> to our{' '}
-                        <strong className="text-[#141210]">{activeBkashType}</strong> number:{' '}
+                        <strong className="text-[#141210]">{activePaymentMethod}</strong> number ({activeBkashType === 'Merchant' ? 'Payment' : 'Send Money'}):{' '}
                         <strong className="text-[#c94030] font-mono text-sm bg-white px-2 py-0.5 border border-[#cfc9bc] rounded inline-block">
                           {activeBkashNumber}
                         </strong>{' '}
-                        ({activeBkashType === 'Merchant' ? 'Payment' : 'Send Money'}) and enter the Transaction ID below:
+                        and enter the Transaction ID below:
                       </p>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
                           <label className="text-[11px] font-mono uppercase text-[#6b6258] block mb-1">
                             Payment Method
                           </label>
-                          <select
-                            value={paymentMethod}
-                            onChange={(e) => setPaymentMethod(e.target.value as 'bKash' | 'Nagad' | 'Rocket')}
-                            className="w-full h-10 px-3 border border-[#cfc9bc] bg-white text-xs font-mono text-[#141210] rounded"
-                          >
-                            <option value="bKash">bKash</option>
-                            <option value="Nagad">Nagad</option>
-                            <option value="Rocket">Rocket</option>
-                          </select>
+                          {/* Fixed display: payments must go through the account
+                              mode the organizers configured — a visitor picking a
+                              different provider couldn't send to this number. */}
+                          <div className="w-full h-10 px-3 flex items-center border border-[#cfc9bc] bg-[#f6f0e7] text-xs font-mono text-[#141210] rounded">
+                            {activePaymentMethod} · {activeBkashType === 'Merchant' ? 'Payment' : 'Send Money'}
+                          </div>
                         </div>
                         <div>
                           <label className="text-[11px] font-mono uppercase text-[#6b6258] block mb-1">

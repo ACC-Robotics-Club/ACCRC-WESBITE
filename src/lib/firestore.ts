@@ -590,7 +590,8 @@ export interface FestSegment {
   venue?: string;
   scheduleTime?: string;
   customBkashNumber?: string;
-  customBkashType?: 'Merchant' | 'Personal' | 'Rocket' | 'Nagad';
+  /** Empty string means "use the main fest payment setting". */
+  customBkashType?: 'Merchant' | 'Personal' | 'Rocket' | 'Nagad' | '';
   guidelines?: string[];
   registrationDeadline?: string;
   requiresSubmissionLink?: boolean;
@@ -747,7 +748,13 @@ function parseFestSegment(id: string, data: DocumentData): FestSegment {
     venue: data.venue || '',
     scheduleTime: data.scheduleTime || '',
     customBkashNumber: data.customBkashNumber || '',
-    customBkashType: data.customBkashType || 'Personal',
+    /* Only a real account mode is an override; anything else lets the fest
+       page fall back to the main fest payment setting. */
+    customBkashType:
+      data.customBkashType === 'Personal' || data.customBkashType === 'Merchant' ||
+      data.customBkashType === 'Rocket' || data.customBkashType === 'Nagad'
+        ? data.customBkashType
+        : undefined,
     guidelines: Array.isArray(data.guidelines) ? data.guidelines : [],
     registrationDeadline: data.registrationDeadline || '',
     requiresSubmissionLink: data.requiresSubmissionLink === true,

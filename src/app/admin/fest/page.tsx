@@ -125,6 +125,7 @@ export default function AdminFest() {
     venue: '',
     scheduleTime: '',
     customBkashNumber: '',
+    customBkashType: '' as '' | 'Personal' | 'Merchant' | 'Rocket' | 'Nagad',
     requiresSubmissionLink: false,
     isOpen: true,
   });
@@ -296,9 +297,23 @@ export default function AdminFest() {
         venue: segmentFormData.venue.trim(),
         scheduleTime: segmentFormData.scheduleTime.trim(),
         customBkashNumber: segmentFormData.customBkashNumber.trim(),
+        customBkashType: segmentFormData.customBkashNumber.trim() ? segmentFormData.customBkashType : '',
         requiresSubmissionLink: segmentFormData.requiresSubmissionLink,
         isOpen: segmentFormData.isOpen,
       };
+
+      /* These mirrors of the Firestore security rules keep misconfigured
+         segments from being saved: rules cap fees at 0-100,000 and member
+         counts at 9 (plus the leader), so a segment outside those bounds
+         would accept admin edits but reject every public registration. */
+      if (payload.teamMin < 1 || payload.teamMax < payload.teamMin || payload.teamMax > 10) {
+        setError('Team size limits must allow 1-10 members (rules cap registrations at 9 teammates plus the leader).');
+        return;
+      }
+      if (payload.registrationFee < 0 || payload.registrationFee > 100000) {
+        setError('Registration fee must be between 0 and 100,000.');
+        return;
+      }
 
       if (editingSegmentId) {
         await updateFestSegment(editingSegmentId, payload);
@@ -326,6 +341,7 @@ export default function AdminFest() {
       venue: seg.venue || '',
       scheduleTime: seg.scheduleTime || '',
       customBkashNumber: seg.customBkashNumber || '',
+      customBkashType: seg.customBkashType || '',
       requiresSubmissionLink: seg.requiresSubmissionLink === true,
       isOpen: seg.isOpen,
     });
@@ -1115,6 +1131,7 @@ export default function AdminFest() {
                     venue: '',
                     scheduleTime: '',
                     customBkashNumber: '',
+                    customBkashType: '',
                     requiresSubmissionLink: false,
                     isOpen: true,
                   });
@@ -1287,6 +1304,8 @@ export default function AdminFest() {
                     <label className="font-mono font-bold block mb-1">Registration Fee (৳)</label>
                     <Input
                       type="number"
+                      min={0}
+                      max={100000}
                       value={segmentFormData.registrationFee}
                       onChange={(e) => setSegmentFormData({ ...segmentFormData, registrationFee: e.target.value })}
                       className="bg-[#f6f0e7] text-[#141210]"
@@ -1298,6 +1317,8 @@ export default function AdminFest() {
                     <label className="font-mono font-bold block mb-1">Min Members</label>
                     <Input
                       type="number"
+                      min={1}
+                      max={10}
                       value={segmentFormData.teamMin}
                       onChange={(e) => setSegmentFormData({ ...segmentFormData, teamMin: e.target.value })}
                       className="bg-[#f6f0e7] text-[#141210]"
@@ -1307,6 +1328,8 @@ export default function AdminFest() {
                     <label className="font-mono font-bold block mb-1">Max Members</label>
                     <Input
                       type="number"
+                      min={1}
+                      max={10}
                       value={segmentFormData.teamMax}
                       onChange={(e) => setSegmentFormData({ ...segmentFormData, teamMax: e.target.value })}
                       className="bg-[#f6f0e7] text-[#141210]"
@@ -1332,13 +1355,29 @@ export default function AdminFest() {
                   />
                 </div>
                 <div>
-                  <label className="font-mono font-bold block mb-1">Custom Segment bKash (optional override)</label>
+                  <label className="font-mono font-bold block mb-1">Custom Segment Payment Number (optional override)</label>
                   <Input
                     value={segmentFormData.customBkashNumber}
                     onChange={(e) => setSegmentFormData({ ...segmentFormData, customBkashNumber: e.target.value })}
-                    placeholder="Leave blank to use main fest bKash number"
+                    placeholder="Leave blank to use main fest payment number"
                     className="bg-[#f6f0e7] text-[#141210]"
                   />
+                  {segmentFormData.customBkashNumber.trim() !== '' && (
+                    <>
+                      <label className="font-mono font-bold block mb-1 mt-3">Account mode for this number</label>
+                      <select
+                        value={segmentFormData.customBkashType}
+                        onChange={(e) => setSegmentFormData({ ...segmentFormData, customBkashType: e.target.value as typeof segmentFormData.customBkashType })}
+                        className="w-full h-10 px-3 border border-[#cfc9bc] bg-[#f6f0e7] text-xs font-mono text-[#141210] rounded"
+                      >
+                        <option value="">Same as main fest payment setting</option>
+                        <option value="Personal">Personal (Send Money)</option>
+                        <option value="Merchant">Merchant (Payment)</option>
+                        <option value="Rocket">Rocket</option>
+                        <option value="Nagad">Nagad</option>
+                      </select>
+                    </>
+                  )}
                 </div>
                 <div>
                   <label className="font-mono font-bold block mb-1">Rulebook PDF URL</label>
