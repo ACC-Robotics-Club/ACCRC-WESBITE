@@ -42,6 +42,7 @@ import {
   type FestConfig,
   DEFAULT_FEST_CONFIG,
 } from '@/lib/firestore';
+import { useFestConfig } from '@/components/fest/FestFlagsProvider';
 import { ErrorBoundary } from '@/components/ui/ErrorBoundary';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -68,6 +69,8 @@ const DEFAULT_GUIDELINES = [
 
 export default function FestPage() {
   const [festConfig, setFestConfig] = useState<FestConfig>(DEFAULT_FEST_CONFIG);
+  /* Master module switch + granular festival flags, shared site-wide. */
+  const { flags: festFlags } = useFestConfig();
   const [segments, setSegments] = useState<FestSegment[]>([]);
   const [schedule, setSchedule] = useState<FestScheduleItem[]>([]);
   const [announcements, setAnnouncements] = useState<FestAnnouncement[]>([]);
@@ -304,13 +307,15 @@ export default function FestPage() {
         </div>
       </section>
 
-      {!festConfig.isLaunched ? (
+      {!festConfig.isLaunched || festFlags.module === 'off' ? (
         <section className="motion-rise container-content mb-12">
           <div className="border border-amber-300 bg-amber-50 p-8 text-center text-amber-950 sm:p-12">
             <Clock className="mx-auto mb-4 h-10 w-10 text-amber-700" aria-hidden />
             <h2 className="text-2xl font-bold">Fest Portal Coming Soon</h2>
             <p className="mx-auto mt-3 max-w-xl text-sm leading-relaxed">
-              {festConfig.festTitle} has not launched yet. Please check back for competition details, announcements, and registration.
+              {festFlags.module === 'off'
+                ? 'The festival portal is switched off for now. Club activities continue as usual — check back when the next festival season is announced.'
+                : `${festConfig.festTitle} has not launched yet. Please check back for competition details, announcements, and registration.`}
             </p>
             {festConfig.festDates && (
               <p className="mt-4 font-mono text-xs font-bold uppercase tracking-wider text-amber-900">

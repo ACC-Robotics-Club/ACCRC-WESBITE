@@ -3,11 +3,10 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Menu, X, ArrowUpRight, HelpCircle } from "lucide-react";
 import {
-  subscribeToFestConfig,
   subscribeToPortalConfig,
-  type FestConfig,
   type PortalConfig,
 } from "@/lib/publicData";
+import { useFestConfig } from "@/components/fest/FestFlagsProvider";
 import { Magnetic } from "@/components/fx/Magnetic";
 
 const navLinks = [
@@ -38,7 +37,9 @@ export function Navbar({
   }, [isOpen]);
   const [scrolled, setScrolled] = useState(false);
   const [portalConfig, setPortalConfig] = useState<PortalConfig | null>(null);
-  const [festConfig, setFestConfig] = useState<FestConfig | null>(null);
+  /* Shared festival state comes from the provider above this component in
+     SiteChrome; no separate Firestore listener here. */
+  const { config: festConfig } = useFestConfig();
 
   /* Only wakes React when the "scrolled" state actually flips, not on every
      scroll event. */
@@ -77,12 +78,8 @@ export function Navbar({
   }, [isOpen]);
 
   useEffect(() => {
-    const unsubscribeFest = subscribeToFestConfig(setFestConfig, (error) => {
-      console.warn('Unable to read fest visibility for site navigation:', error);
-    });
     const unsubscribePortal = subscribeToPortalConfig(setPortalConfig);
     return () => {
-      unsubscribeFest();
       unsubscribePortal();
     };
   }, []);

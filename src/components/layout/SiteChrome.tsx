@@ -6,6 +6,7 @@ import { useEffect, useState, type CSSProperties, type ReactNode } from 'react';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { GlobalEventBanner } from '@/components/layout/GlobalEventBanner';
+import { FestFlagsProvider } from '@/components/fest/FestFlagsProvider';
 import { pauseOffscreenLoops } from '@/components/fx/pauseOffscreenLoops';
 import { startSmoothScroll } from '@/components/fx/smoothScroll';
 import { startAutoReveal } from '@/components/fx/autoReveal';
@@ -127,15 +128,19 @@ export function SiteChrome({ children }: { children: ReactNode }) {
   // Admin pages: no site chrome at all.
   if (isAdmin) return <>{children}</>;
 
+  /* The festival feature-flag provider shares one realtime listener with the
+     navbar, footer, banner and every fest-aware page below. */
   return (
-    <div style={{ '--site-banner-height': `${bannerHeight}px` } as CSSProperties}>
-      <GlobalEventBanner onHeightChange={setBannerHeight} />
-      <Navbar topOffset={bannerHeight} onHelpClick={openGuide} />
-      <div style={bannerHeight > 0 ? { paddingTop: `${bannerHeight}px` } : undefined}>{children}</div>
-      <Footer />
-      {guideLoaded && (
-        <GuideModal isOpen={isGuideOpen} setIsOpen={setIsGuideOpen} onClose={() => setIsGuideOpen(false)} />
-      )}
-    </div>
+    <FestFlagsProvider>
+      <div style={{ '--site-banner-height': `${bannerHeight}px` } as CSSProperties}>
+        <GlobalEventBanner onHeightChange={setBannerHeight} />
+        <Navbar topOffset={bannerHeight} onHelpClick={openGuide} />
+        <div style={bannerHeight > 0 ? { paddingTop: `${bannerHeight}px` } : undefined}>{children}</div>
+        <Footer />
+        {guideLoaded && (
+          <GuideModal isOpen={isGuideOpen} setIsOpen={setIsGuideOpen} onClose={() => setIsGuideOpen(false)} />
+        )}
+      </div>
+    </FestFlagsProvider>
   );
 }

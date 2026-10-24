@@ -4,25 +4,21 @@ import { useEffect, useState } from "react";
 import { MapPin, Mail, ArrowUpRight } from "lucide-react";
 import { FaFacebook, FaInstagram } from "react-icons/fa";
 import {
-  subscribeToFestConfig,
   subscribeToPortalConfig,
-  type FestConfig,
   type PortalConfig,
 } from "@/lib/publicData";
+import { useFestConfig } from "@/components/fest/FestFlagsProvider";
 import { club } from "@/lib/club";
 import { Marquee } from "@/components/fx/Marquee";
 
 export function Footer() {
   const [portalConfig, setPortalConfig] = useState<PortalConfig | null>(null);
-  const [festConfig, setFestConfig] = useState<FestConfig | null>(null);
+  /* Shared festival state from the provider in SiteChrome. */
+  const { config: festConfig } = useFestConfig();
 
   useEffect(() => {
-    const unsubscribeFest = subscribeToFestConfig(setFestConfig, (error) => {
-      console.warn('Unable to read fest visibility for footer navigation:', error);
-    });
     const unsubscribePortal = subscribeToPortalConfig(setPortalConfig);
     return () => {
-      unsubscribeFest();
       unsubscribePortal();
     };
   }, []);

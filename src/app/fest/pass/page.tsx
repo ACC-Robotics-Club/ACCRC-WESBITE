@@ -6,6 +6,7 @@ import { useSearchParams } from 'next/navigation';
 import {
   type FestRegistration,
 } from '@/lib/firestore';
+import { useFestConfig } from '@/components/fest/FestFlagsProvider';
 import { Button } from '@/components/ui/Button';
 import { AlertCircle, ChevronLeft, ExternalLink, Link2, Loader2, Search, Users } from 'lucide-react';
 import { isSafeHttpsUrl } from '@/lib/safeUrl';
@@ -21,6 +22,12 @@ function TeamRegistrationContent() {
   useEffect(() => {
     if (queryPid) void loadTeam(queryPid);
   }, [queryPid]);
+
+  /* Granular feature flags: when pass generation is switched off (or the
+     whole festival module is master-off), serve the friendly fallback
+     instead of the pass lookup. Ready-gated so it never flashes early. */
+  const { flags } = useFestConfig();
+  const passesOff = flags.ready && (flags.module === 'off' || flags.passes === 'disabled');
 
   const loadTeam = async (idToSearch: string) => {
     if (!idToSearch.trim()) return;
@@ -45,6 +52,20 @@ function TeamRegistrationContent() {
       <Link href="/fest" className="inline-flex w-fit items-center gap-1.5 text-xs font-mono font-bold uppercase text-[#6b6258] hover:text-[#c94030] transition-colors">
         <ChevronLeft size={16} /> Back to Fest Competitions
       </Link>
+
+      {passesOff && (
+        <div className="mt-8">
+          <div className="border border-amber-300 bg-amber-50 p-8 text-center text-amber-950">
+            <AlertCircle size={28} className="mx-auto mb-3 text-amber-700" aria-hidden />
+            <h2 className="text-xl font-bold">Passes are temporarily unavailable</h2>
+            <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed">
+              The festival team has switched off pass generation for now. Please contact an ACCRC organizer for help with your registration.
+            </p>
+          </div>
+        </div>
+      )}
+
+      <div className={passesOff ? 'hidden' : undefined}>
 
       <div className="mt-6 mb-8 border-b border-[#cfc9bc] pb-6">
         <span className="font-mono text-xs uppercase tracking-widest text-[#c94030] font-bold block mb-1">ACCRC Fest</span>
@@ -158,6 +179,7 @@ function TeamRegistrationContent() {
           )}
         </section>
       )}
+      </div>
     </div>
   );
 }

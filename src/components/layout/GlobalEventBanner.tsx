@@ -5,10 +5,9 @@ import Link from 'next/link';
 import { X, ArrowRight, CalendarDays, Sparkles } from 'lucide-react';
 import {
   subscribeToEvents,
-  subscribeToFestConfig,
   type FirestoreEvent,
-  type FestConfig,
 } from '@/lib/publicData';
+import { useFestConfig } from '@/components/fest/FestFlagsProvider';
 
 interface GlobalEventBannerProps {
   onHeightChange?: (height: number) => void;
@@ -16,7 +15,8 @@ interface GlobalEventBannerProps {
 
 export function GlobalEventBanner({ onHeightChange }: GlobalEventBannerProps) {
   const [events, setEvents] = useState<FirestoreEvent[]>([]);
-  const [festConfig, setFestConfig] = useState<FestConfig | null>(null);
+  /* Shared festival state from the provider in SiteChrome. */
+  const { config: festConfig } = useFestConfig();
   const [dismissedKey, setDismissedKey] = useState<string | null>(null);
   const bannerRef = useRef<HTMLDivElement>(null);
 
@@ -25,13 +25,8 @@ export function GlobalEventBanner({ onHeightChange }: GlobalEventBannerProps) {
       console.warn('Real-time events banner subscription notice:', err);
     });
 
-    const unsubFest = subscribeToFestConfig(setFestConfig, (err) => {
-      console.warn('Real-time fest config banner subscription notice:', err);
-    });
-
     return () => {
       unsubEvents();
-      unsubFest();
     };
   }, []);
 

@@ -12,12 +12,11 @@ import {
 } from 'lucide-react';
 import {
   subscribeToEvents,
-  subscribeToFestConfig,
   subscribeToPortalConfig,
-  type FestConfig,
   type FirestoreEvent,
   type PortalConfig,
 } from '@/lib/publicData';
+import { useFestConfig } from '@/components/fest/FestFlagsProvider';
 import { club } from '@/lib/club';
 import { eventToSchedule, festToSchedule, registrationLabel, splitSchedule, type ScheduleItem } from '@/lib/schedule';
 import { Hero } from '@/components/home/Hero';
@@ -92,16 +91,16 @@ export default function HomePage() {
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState('');
   const [events, setEvents] = useState<FirestoreEvent[]>([]);
-  const [festConfig, setFestConfig] = useState<FestConfig | null>(null);
+  /* Shared festival state from the provider in SiteChrome: one Firestore
+     listener per visit instead of one per component. */
+  const { config: festConfig, flags: festFlags } = useFestConfig();
   const [portalConfig, setPortalConfig] = useState<PortalConfig | null>(null);
 
   useEffect(() => {
     const unsubscribeEvents = subscribeToEvents(setEvents);
-    const unsubscribeFest = subscribeToFestConfig(setFestConfig);
     const unsubscribePortal = subscribeToPortalConfig(setPortalConfig);
     return () => {
       unsubscribeEvents();
-      unsubscribeFest();
       unsubscribePortal();
     };
   }, []);
@@ -153,6 +152,25 @@ export default function HomePage() {
       {/* Everything below the hero is one opaque "sheet" that slides up over the
           pinned hero as you scroll (depth-curtain scroll, see Hero.tsx). */}
       <div className="relative z-10 overflow-hidden rounded-t-[2rem] bg-primary shadow-[0_-28px_70px_-28px_rgba(28,25,23,0.2)] sm:rounded-t-[3rem]">
+
+      {/* ═══ FESTIVAL MODE STRIP — only while the fest is launched flag-on ═══ */}
+      {festFlags.festPublic && festConfig && (
+        <a
+          href="/fest/"
+          className="group flex flex-wrap items-center justify-center gap-x-3 gap-y-0.5 border-b-2 border-border-strong bg-secondary px-4 py-3 text-center"
+          aria-label={`Open the festival portal: ${festConfig.festTitle}`}
+        >
+          <span className="mono-label text-ink/80">FESTIVAL MODE</span>
+          <span className="font-display text-sm font-extrabold tracking-tight text-ink sm:text-base">
+            {festConfig.festTitle}
+          </span>
+          {festConfig.festDates && <span className="mono-label text-ink/60">{festConfig.festDates}</span>}
+          <span className="mono-label flex items-center gap-1 text-accent transition-transform duration-200 group-hover:translate-x-1">
+            ENTER THE FEST <ArrowRight size={13} aria-hidden />
+          </span>
+        </a>
+      )}
+
       <StatusStrip />
 
       {/* ═══ MARQUEE ═══ */}

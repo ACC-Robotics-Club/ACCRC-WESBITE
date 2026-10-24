@@ -548,6 +548,10 @@ export interface FestConfig {
   closedMessage: string;
   bannerNotice?: string;
   rulesUrl?: string;
+  /** Granular module toggles (feature flags). Absent in older documents —
+     default ON so existing live docs keep working. */
+  bulletinActive?: boolean;
+  passGeneration?: boolean;
   updatedAt?: Date;
 }
 
@@ -568,6 +572,8 @@ export const DEFAULT_FEST_CONFIG: FestConfig = {
   closedMessage: 'Registrations for National Robotics Fest are currently closed. Stay tuned for upcoming announcements.',
   bannerNotice: 'Registrations are open for college and university teams across Bangladesh!',
   rulesUrl: 'https://accrc.pages.dev/rules/fest-guide-2026.pdf',
+  bulletinActive: true,
+  passGeneration: true,
 };
 
 export interface FestSegment {
@@ -839,6 +845,12 @@ function parseFestConfig(data: DocumentData | undefined): FestConfig {
     registrationOpen: registrationOpen === undefined
       ? DEFAULT_FEST_CONFIG.registrationOpen
       : registrationOpen === true || (typeof registrationOpen === 'string' && registrationOpen.toLowerCase() === 'true'),
+    bulletinActive: data?.bulletinActive === undefined
+      ? DEFAULT_FEST_CONFIG.bulletinActive
+      : data.bulletinActive === true || (typeof data.bulletinActive === 'string' && data.bulletinActive.toLowerCase() === 'true'),
+    passGeneration: data?.passGeneration === undefined
+      ? DEFAULT_FEST_CONFIG.passGeneration
+      : data.passGeneration === true || (typeof data.passGeneration === 'string' && data.passGeneration.toLowerCase() === 'true'),
     updatedAt: data?.updatedAt ? toDate(data.updatedAt) : undefined,
   };
 }

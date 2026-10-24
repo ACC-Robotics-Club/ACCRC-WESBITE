@@ -215,6 +215,42 @@ export default function AdminFest() {
     }
   };
 
+  // Direct toggle bulletin feed (bulletinActive)
+  const handleToggleBulletin = async () => {
+    const nextVal = festConfig.bulletinActive === false;
+    setFestConfig((prev) => ({ ...prev, bulletinActive: nextVal }));
+    setError(null);
+    setConfigSaving(true);
+    try {
+      await updateFestConfig({ bulletinActive: nextVal });
+      setSaveSuccess(`Bulletin feed ${nextVal ? 'activated' : 'hidden'}`);
+      setTimeout(() => setSaveSuccess(null), 3500);
+    } catch (err: unknown) {
+      setError(getFestConfigWriteError(err, 'Failed to update bulletin status'));
+      setFestConfig((prev) => ({ ...prev, bulletinActive: !nextVal }));
+    } finally {
+      setConfigSaving(false);
+    }
+  };
+
+  // Direct toggle participant passes & gate check-in (passGeneration)
+  const handleTogglePasses = async () => {
+    const nextVal = festConfig.passGeneration === false;
+    setFestConfig((prev) => ({ ...prev, passGeneration: nextVal }));
+    setError(null);
+    setConfigSaving(true);
+    try {
+      await updateFestConfig({ passGeneration: nextVal });
+      setSaveSuccess(`Participant passes ${nextVal ? 'enabled' : 'disabled site-wide'}`);
+      setTimeout(() => setSaveSuccess(null), 3500);
+    } catch (err: unknown) {
+      setError(getFestConfigWriteError(err, 'Failed to update pass generation status'));
+      setFestConfig((prev) => ({ ...prev, passGeneration: !nextVal }));
+    } finally {
+      setConfigSaving(false);
+    }
+  };
+
   // Save Fest Launcher Settings
   const handleSaveFestConfig = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -854,6 +890,49 @@ export default function AdminFest() {
                   aria-label="Toggle registration window"
                 >
                   {festConfig.registrationOpen ? (
+                    <ToggleRight className="w-8 h-8 text-emerald-600" />
+                  ) : (
+                    <ToggleLeft className="w-8 h-8 text-[#9a9088]" />
+                  )}
+                </button>
+              </div>
+              {/* Granular feature flags: the bulletin feed and the pass module */}
+              <div className="flex items-center justify-between p-3 bg-[#ede7da] border border-[#cfc9bc] rounded">
+                <div>
+                  <span className="font-bold text-sm text-[#141210] block">Bulletin Feed</span>
+                  <span className="text-[11px] text-[#6b6258] font-mono">
+                    {festConfig.bulletinActive !== false ? 'Announcements visible on the fest page' : 'Announcements hidden'}
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleToggleBulletin}
+                  disabled={configSaving}
+                  className="p-1 text-[#c94030] disabled:opacity-50 transition-opacity"
+                  aria-label="Toggle bulletin feed"
+                >
+                  {festConfig.bulletinActive !== false ? (
+                    <ToggleRight className="w-8 h-8 text-emerald-600" />
+                  ) : (
+                    <ToggleLeft className="w-8 h-8 text-[#9a9088]" />
+                  )}
+                </button>
+              </div>
+              <div className="flex items-center justify-between p-3 bg-[#ede7da] border border-[#cfc9bc] rounded">
+                <div>
+                  <span className="font-bold text-sm text-[#141210] block">Participant Passes & Gate Check-in</span>
+                  <span className="text-[11px] text-[#6b6258] font-mono">
+                    {festConfig.passGeneration !== false ? 'Digital passes enabled' : 'Passes disabled site-wide'}
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleTogglePasses}
+                  disabled={configSaving}
+                  className="p-1 text-[#c94030] disabled:opacity-50 transition-opacity"
+                  aria-label="Toggle participant passes and gate check-in"
+                >
+                  {festConfig.passGeneration !== false ? (
                     <ToggleRight className="w-8 h-8 text-emerald-600" />
                   ) : (
                     <ToggleLeft className="w-8 h-8 text-[#9a9088]" />
