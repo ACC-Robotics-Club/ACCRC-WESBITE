@@ -15,9 +15,10 @@ import { useEffect, useState, type CSSProperties } from 'react';
  */
 
 const MARK = 'ACCRC';
-/* Kept short: on a phone every extra moment behind the overlay reads as lag. */
-const DURATION_MS = 1300;
-const EXIT_MS = 700;
+/* Kept short: on a phone every extra moment behind the overlay reads as lag.
+   Under a second in and out, so the intro is a flourish, not a wait. */
+const DURATION_MS = 650;
+const EXIT_MS = 450;
 
 /** Deterministic blueprint geometry — no randomness, so SSR and client match. */
 const NODES = [
@@ -52,7 +53,7 @@ export function PageLoader() {
        so in-app route changes never replay it — only real loads (first visit,
        reload, or a new tab) do. */
     const leaveTimer = window.setTimeout(() => setPhase('exiting'), DURATION_MS);
-    /* Hard failsafe: the exit animation is 0.8s, so unmount with headroom even
+    /* Hard failsafe: exit is 0.45s, so unmount with headroom even
        if the animation never fires (background tab, reduced-motion edge cases). */
     const removeTimer = window.setTimeout(() => setPhase('done'), DURATION_MS + EXIT_MS + 400);
 
@@ -62,16 +63,9 @@ export function PageLoader() {
     };
   }, []);
 
-  // Lock the page only while the overlay is actually on screen.
-  useEffect(() => {
-    if (phase === 'done' || reduceMotion) return;
-    const previous = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    return () => {
-      document.body.style.overflow = previous;
-    };
-  }, [phase, reduceMotion]);
-
+  /* The overlay sits above the page but never locks it: the page is already
+     rendered underneath, so visitors can start scrolling and reading — the
+     intro is a flourish, not a gate. */
   if (phase === 'done') return null;
 
   if (reduceMotion) {
@@ -90,7 +84,7 @@ export function PageLoader() {
 
   return (
     <div
-      className="loader fixed inset-0 z-[100] overflow-hidden bg-primary"
+      className="loader pointer-events-none fixed inset-0 z-[100] overflow-hidden bg-primary"
       data-phase={phase}
       style={{ '--exit': `${EXIT_MS}ms` } as CSSProperties}
       aria-hidden
