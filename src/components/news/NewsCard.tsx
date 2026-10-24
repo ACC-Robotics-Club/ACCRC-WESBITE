@@ -14,7 +14,7 @@ export function NewsCard({ news }: NewsCardProps) {
   const dateStr = news.publishedAt?.toLocaleDateString() || '';
 
   return (
-    <Link href={`/news/detail/?id=${news.id}`} className="block h-full">
+    <Link href={`/news/detail/?id=${news.id}`} prefetch={false} className="block h-full">
       <Card hover={true} className="h-full flex flex-col overflow-hidden">
         {news.imageUrl && (
           <div className="w-full aspect-video">

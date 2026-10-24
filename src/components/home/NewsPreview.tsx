@@ -57,7 +57,7 @@ export function NewsPreview() {
                     <p className="text-[0.9375rem] text-[#3a3530] line-clamp-3 mb-6 flex-grow">
                       {item.excerpt}
                     </p>
-                    <Link href={`/news/detail/?id=${item.id}`} className="text-[#c94030] text-[0.9375rem] hover:underline mt-auto inline-block">
+                    <Link href={`/news/detail/?id=${item.id}`} prefetch={false} className="text-[#c94030] text-[0.9375rem] hover:underline mt-auto inline-block">
                       Read more →
                     </Link>
                   </Card>

@@ -11,5 +11,11 @@
 /accrc-logo.png
   Cache-Control: public, max-age=31536000, immutable
 
+# Hashed build output: its filename changes when content changes, so an
+# aggressive immutable cache is safe. Repeat visits to the site are then
+# near-instant (no JS/CSS re-downloads).
+/_next/static/*
+  Cache-Control: public, max-age=31536000, immutable
+
 /media/*
   Cache-Control: public, max-age=604800

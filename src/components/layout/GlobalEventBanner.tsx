@@ -157,6 +157,10 @@ export function GlobalEventBanner({ onHeightChange }: GlobalEventBannerProps) {
         <div className="flex items-center gap-2 shrink-0 ml-auto">
           <Link
             href={bannerItem.url}
+            /* No prefetch: with `output: 'export'` Next emits one prefetch file
+               per *route*, not per query (?id=...), so prefetching this link
+               only produces a guaranteed 404 per page view. */
+            prefetch={false}
             className="inline-flex items-center gap-1 bg-[#c94030] hover:bg-[#a83228] text-white font-mono text-[10px] sm:text-xs font-bold uppercase tracking-wider px-2.5 py-1 rounded transition-colors"
           >
             <span>View Event</span>

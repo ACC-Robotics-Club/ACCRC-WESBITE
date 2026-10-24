@@ -5,7 +5,6 @@ import dynamic from 'next/dynamic';
 import { useEffect, useState, type CSSProperties, type ReactNode } from 'react';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
-import { PageLoader } from '@/components/fx/PageLoader';
 import { GlobalEventBanner } from '@/components/layout/GlobalEventBanner';
 import { pauseOffscreenLoops } from '@/components/fx/pauseOffscreenLoops';
 import { startSmoothScroll } from '@/components/fx/smoothScroll';
@@ -137,8 +136,6 @@ export function SiteChrome({ children }: { children: ReactNode }) {
       {guideLoaded && (
         <GuideModal isOpen={isGuideOpen} setIsOpen={setIsGuideOpen} onClose={() => setIsGuideOpen(false)} />
       )}
-      {/* Last, so the first-visit intro overlay sits above the banner. */}
-      <PageLoader />
     </div>
   );
 }
