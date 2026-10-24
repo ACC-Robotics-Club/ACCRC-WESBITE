@@ -13,7 +13,7 @@ import { firebaseConfig } from './firebaseConfig';
  *
  * `createdAt` is stamped by the server.
  */
-type FormValue =
+export type FormValue =
   | string
   | number
   | boolean

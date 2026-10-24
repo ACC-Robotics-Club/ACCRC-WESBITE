@@ -68,6 +68,8 @@ service cloud.firestore {
       ]) &&
         data.keys().hasAll(['type', 'eventId', 'name', 'createdAt']) &&
         data.type == 'event' && isShortText(data.eventId, 120) &&
+        // The event must actually exist, so junk ids cannot be registered.
+        exists(/databases/$(database)/documents/events/$(data.eventId)) &&
         isShortText(data.name, 100) &&
         (!data.keys().hasAny(['email']) || isOptionalEmail(data.email)) &&
         (!data.keys().hasAny(['phone']) || isOptionalText(data.phone, 32)) &&
