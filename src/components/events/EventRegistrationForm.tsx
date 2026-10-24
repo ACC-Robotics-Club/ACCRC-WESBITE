@@ -30,25 +30,50 @@ export function EventRegistrationForm({
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [errorMsg, setErrorMsg] = useState('');
 
-  const findValue = (needle: string): string => {
-    const field = fields.find((f) => f.label.toLowerCase().trim() === needle);
-    return field ? (answers[field.id] || '') : '';
+  /**
+   * The admin can rename, reorder or delete any question. Prefer the standard
+   * field id (which survives renaming), then fall back to matching the label,
+   * so the shared columns in the events portal stay populated whenever the
+   * club's standard questions are still present.
+   */
+  const findValue = (standardId: string, ...labelNeedles: string[]): string => {
+    const byStandardId = fields.find((f) => f.id === standardId);
+    const field = byStandardId ??
+      fields.find((f) => {
+        const label = f.label.toLowerCase();
+        return labelNeedles.some((needle) => label.includes(needle));
+      });
+    return field ? (answers[field.id] || '').trim() : '';
+  };
+
+  const firstAnsweredValue = (): string => {
+    for (const field of fields) {
+      const value = (answers[field.id] || '').trim();
+      if (value) return value;
+    }
+    return '';
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setStatus('loading');
     try {
+      const name = findValue('std-name', 'full name', 'name') || firstAnsweredValue();
+      const emailField = fields.find((f) => f.type === 'email');
+      const phoneField = fields.find((f) => f.type === 'tel');
+
       await submitRegistration({
         type: 'event',
         eventId,
         /* Keep the shared columns populated when the admin kept standard
            questions, so the events portal's table works out of the box. */
-        name: findValue('full name') || findValue('name') || '',
-        email: findValue('email') || findValue('email address') || '',
-        phone: findValue('phone number') || findValue('phone') || '',
-        classSection: findValue('class/section') || findValue('class') || '',
-        motivation: findValue('motivation') || '',
+        name: name || 'Event registration',
+        email: (findValue('std-email', 'email') || (emailField ? (answers[emailField.id] || '') : '')).trim(),
+        phone: (findValue('std-phone', 'phone', 'mobile') || (phoneField ? (answers[phoneField.id] || '') : '')).trim(),
+        classSection: findValue('std-class', 'class', 'section'),
+        rollNumber: findValue('std-roll', 'roll'),
+        areaOfInterest: findValue('std-interest', 'interest', 'area'),
+        motivation: findValue('std-motivation', 'motivation', 'why'),
         /* Every answer, including the ones above plus custom questions. */
         answers: fields.map((f) => ({ id: f.id, label: f.label, value: answers[f.id] || '' })),
       } as Parameters<typeof submitRegistration>[0]);

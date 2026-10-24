@@ -15,9 +15,20 @@ service cloud.firestore {
       return value == null || (value is string && value.size() <= maximum);
     }
 
+    /** A string that may be empty, but is never longer than `maximum`. */
+    function isOptionalText(value, maximum) {
+      return value is string && value.size() <= maximum;
+    }
+
     function isEmail(value) {
       return value is string && value.size() <= 254 &&
         value.matches('^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$');
+    }
+
+    /** Empty (question not asked) or a valid email address. */
+    function isOptionalEmail(value) {
+      return value is string && value.size() <= 254 &&
+        (value.size() == 0 || value.matches('^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$'));
     }
 
     function isHttpsUrl(value) {
@@ -48,16 +59,25 @@ service cloud.firestore {
     }
 
     function validEventRegistration(data) {
+      // The event form is built per event, so only the identifying columns are
+      // mandatory. Every other standard column may be empty or absent when the
+      // admin removed that question; custom answers are saved in `answers`.
       return data.keys().hasOnly([
         'type', 'eventId', 'name', 'email', 'phone', 'classSection',
-        'rollNumber', 'areaOfInterest', 'motivation', 'createdAt'
+        'rollNumber', 'areaOfInterest', 'motivation', 'answers', 'createdAt'
       ]) &&
+        data.keys().hasAll(['type', 'eventId', 'name', 'createdAt']) &&
         data.type == 'event' && isShortText(data.eventId, 120) &&
         exists(/databases/$(database)/documents/events/$(data.eventId)) &&
-        isShortText(data.name, 100) && isEmail(data.email) &&
-        isShortText(data.phone, 32) && isShortText(data.classSection, 80) &&
-        isShortText(data.rollNumber, 80) && isShortText(data.areaOfInterest, 200) &&
-        isShortText(data.motivation, 2000) && data.createdAt is timestamp;
+        isShortText(data.name, 100) &&
+        (!data.keys().hasAny(['email']) || isOptionalEmail(data.email)) &&
+        (!data.keys().hasAny(['phone']) || isOptionalText(data.phone, 32)) &&
+        (!data.keys().hasAny(['classSection']) || isOptionalText(data.classSection, 80)) &&
+        (!data.keys().hasAny(['rollNumber']) || isOptionalText(data.rollNumber, 80)) &&
+        (!data.keys().hasAny(['areaOfInterest']) || isOptionalText(data.areaOfInterest, 200)) &&
+        (!data.keys().hasAny(['motivation']) || isOptionalText(data.motivation, 2000)) &&
+        (!data.keys().hasAny(['answers']) || (data.answers is list && data.answers.size() <= 50)) &&
+        data.createdAt is timestamp;
     }
 
     function validFestRegistration(data) {

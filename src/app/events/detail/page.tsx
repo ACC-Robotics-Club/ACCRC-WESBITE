@@ -50,9 +50,15 @@ function EventDetailContent() {
   const openAt = event.registrationOpensAt ? new Date(event.registrationOpensAt) : undefined;
   const closeAt = event.registrationClosesAt ? new Date(event.registrationClosesAt) : undefined;
   const hasRegistrationWindow = Boolean(openAt && closeAt);
-  let status = 'closed';
-  if (openAt && closeAt && now < openAt) status = 'upcoming';
-  else if (openAt && closeAt && now >= openAt && now < closeAt) status = 'open';
+  let status = 'open';
+  if (hasRegistrationWindow) {
+    if (now < openAt!) status = 'upcoming';
+    else if (now >= openAt! && now < closeAt!) status = 'open';
+    else status = 'closed';
+  } else {
+    // If no window is set but the event is launched, allow registration by default
+    status = 'open';
+  }
 
   return (
     <div className="motion-intro max-w-4xl mx-auto">
