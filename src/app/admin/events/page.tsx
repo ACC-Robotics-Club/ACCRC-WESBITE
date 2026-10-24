@@ -1,13 +1,13 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Fragment } from 'react';
 import Link from 'next/link';
 import AdminGuard from '@/components/admin/AdminGuard';
-import { getAllEvents, createEvent, updateEvent, deleteEvent, getRegistrations, deleteRegistration, FirestoreEvent, Registration } from '@/lib/firestore';
+import { getAllEvents, createEvent, updateEvent, deleteEvent, getRegistrations, deleteRegistration, DEFAULT_EVENT_FORM_FIELDS, newFormFieldId, type FirestoreEvent, type FormField, type Registration } from '@/lib/firestore';
 import { getEventStatus } from '@/lib/utils';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
-import { ChevronLeft, Plus, Edit2, Trash2, ChevronDown, ChevronUp, Loader2, Calendar } from 'lucide-react';
+import { ChevronLeft, Plus, Edit2, Trash2, ChevronDown, ChevronUp, Loader2, Calendar, ListPlus } from 'lucide-react';
 import { DeleteModal } from '@/components/admin/DeleteModal';
 
 export default function AdminEvents() {
@@ -24,16 +24,27 @@ export default function AdminEvents() {
   const [deleteTarget, setDeleteTarget] = useState<FirestoreEvent | null>(null);
   const [registrationDeleteTarget, setRegistrationDeleteTarget] = useState<Registration | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [expandedRegId, setExpandedRegId] = useState<string | null>(null);
 
   // Form State
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{
+    name: string;
+    description: string;
+    date: string;
+    location: string;
+    registrationOpensAt: string;
+    registrationClosesAt: string;
+    imageUrl: string;
+    formFields: FormField[];
+  }>({
     name: '',
     description: '',
     date: '',
     location: '',
     registrationOpensAt: '',
     registrationClosesAt: '',
-    imageUrl: ''
+    imageUrl: '',
+    formFields: DEFAULT_EVENT_FORM_FIELDS.map((f) => ({ ...f })),
   });
 
   useEffect(() => {
@@ -72,6 +83,33 @@ export default function AdminEvents() {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
+  /* ─── Registration question builder helpers ─── */
+
+  const addField = () => {
+    setFormData((prev) => ({
+      ...prev,
+      formFields: [
+        ...prev.formFields,
+        { id: newFormFieldId(), label: 'Your question', type: 'text', required: false },
+      ],
+    }));
+  };
+
+  const updateField = (id: string, patch: Partial<FormField>) => {
+    setFormData((prev) => ({
+      ...prev,
+      formFields: prev.formFields.map((f) => (f.id === id ? { ...f, ...patch } : f)),
+    }));
+  };
+
+  const removeField = (id: string) => {
+    setFormData((prev) => ({ ...prev, formFields: prev.formFields.filter((f) => f.id !== id) }));
+  };
+
+  const resetFieldsToStandard = () => {
+    setFormData((prev) => ({ ...prev, formFields: DEFAULT_EVENT_FORM_FIELDS.map((f) => ({ ...f })) }));
+  };
+
   const resetForm = () => {
     setFormData({
       name: '',
@@ -80,7 +118,8 @@ export default function AdminEvents() {
       location: '',
       registrationOpensAt: '',
       registrationClosesAt: '',
-      imageUrl: ''
+      imageUrl: '',
+      formFields: DEFAULT_EVENT_FORM_FIELDS.map((f) => ({ ...f })),
     });
     setEditingId(null);
     setIsFormOpen(false);
@@ -92,6 +131,7 @@ export default function AdminEvents() {
   };
 
   const handleEdit = (event: FirestoreEvent) => {
+    const source = event.formFields && event.formFields.length > 0 ? event.formFields : DEFAULT_EVENT_FORM_FIELDS;
     setFormData({
       name: event.name,
       description: event.description,
@@ -99,7 +139,8 @@ export default function AdminEvents() {
       location: event.location,
       registrationOpensAt: event.registrationOpensAt ? toDatetimeLocal(event.registrationOpensAt) : '',
       registrationClosesAt: event.registrationClosesAt ? toDatetimeLocal(event.registrationClosesAt) : '',
-      imageUrl: event.imageUrl || ''
+      imageUrl: event.imageUrl || '',
+      formFields: source.map((f) => ({ ...f, options: f.options ? [...f.options] : undefined })),
     });
     setEditingId(event.id);
     setIsFormOpen(true);
@@ -156,6 +197,7 @@ export default function AdminEvents() {
         date,
         registrationOpensAt,
         registrationClosesAt,
+        formFields,
         ...eventDetails
       } = formData;
       const payload = {
@@ -163,6 +205,18 @@ export default function AdminEvents() {
         date: new Date(date),
         registrationOpensAt: registrationOpensAt ? new Date(registrationOpensAt) : undefined,
         registrationClosesAt: registrationClosesAt ? new Date(registrationClosesAt) : undefined,
+        /* Keep at least one question: an empty array would leave the public
+           event with no registration form at all. */
+        formFields: formFields.length > 0
+          ? formFields.map((f) => ({
+              id: f.id,
+              label: f.label.trim(),
+              type: f.type,
+              required: f.required,
+              placeholder: f.placeholder?.trim() || undefined,
+              options: f.type === 'select' ? (f.options || []).map((o) => o.trim()).filter(Boolean) : undefined,
+            }))
+          : undefined,
       };
 
       if (editingId) {
@@ -291,6 +345,115 @@ export default function AdminEvents() {
                   className="w-full h-32 bg-[#f6f0e7] border border-[#cfc9bc] p-3 text-[#141210] rounded focus:border-[#c94030] focus:outline-none transition-colors"
                 />
               </div>
+              {/* ── Registration question builder ── */}
+              <div className="border border-[#cfc9bc] bg-[#f6f0e7] rounded p-4">
+                <div className="flex flex-wrap items-start justify-between gap-3 mb-3">
+                  <div>
+                    <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-[#141210] flex items-center">
+                      <ListPlus className="w-4 h-4 mr-2 text-[#c94030]" /> Registration form questions
+                    </h3>
+                    <p className="text-xs text-[#6b6258] mt-1">
+                      Visitors answer exactly these questions for this event. Edit any question, delete any question, or add your own.
+                    </p>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button type="button" size="sm" variant="outline" onClick={resetFieldsToStandard} className="font-mono text-xs">
+                      Reset to standard
+                    </Button>
+                    <Button type="button" size="sm" variant="primary" onClick={addField} className="font-mono text-xs">
+                      <Plus className="w-3.5 h-3.5 mr-1" /> Add question
+                    </Button>
+                  </div>
+                </div>
+
+                {formData.formFields.length === 0 && (
+                  <p className="text-xs font-mono text-[#c72c2c] mb-2">
+                    No questions yet — visitors would have no registration form. Add one or reset to standard.
+                  </p>
+                )}
+
+                <div className="space-y-3">
+                  {formData.formFields.map((field, index) => (
+                    <div key={field.id} className="bg-[#ede7da] border border-[#cfc9bc] rounded p-3">
+                      <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+                        <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-[#6b6258]">
+                          Question {index + 1}
+                        </span>
+                        <div className="flex items-center gap-3">
+                          <label className="flex items-center gap-1.5 font-mono text-[10px] uppercase text-[#3a3530] cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={field.required}
+                              onChange={(e) => updateField(field.id, { required: e.target.checked })}
+                              className="accent-[#c94030]"
+                            />
+                            Required
+                          </label>
+                          <Button variant="danger" size="sm" aria-label={`Delete question ${index + 1}`} onClick={() => removeField(field.id)}>
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </Button>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 gap-3">
+                        <div className="space-y-1">
+                          <label className="text-[10px] font-mono text-[#6b6258] font-bold uppercase tracking-wider">Question text (visitors see this)</label>
+                          <Input
+                            value={field.label}
+                            onChange={(e) => updateField(field.id, { label: e.target.value })}
+                            placeholder="e.g. Team members, T-shirt size, Which competition…"
+                            className="w-full bg-[#f6f0e7] text-[#141210] border-[#cfc9bc]"
+                          />
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <div className="space-y-1">
+                            <label className="text-[10px] font-mono text-[#6b6258] font-bold uppercase tracking-wider">Answer type</label>
+                            <select
+                              value={field.type}
+                              onChange={(e) => updateField(field.id, {
+                                type: e.target.value as FormField['type'],
+                                options: e.target.value === 'select' ? (field.options || ['Option 1', 'Option 2']) : undefined,
+                              })}
+                              className="w-full bg-[#f6f0e7] border-[1.5px] border-[#cfc9bc] text-[#141210] rounded px-4 py-3 text-[0.9375rem] focus:outline-none focus:border-[#c94030]"
+                            >
+                              <option value="text">Short answer</option>
+                              <option value="textarea">Long answer</option>
+                              <option value="select">Choose from options</option>
+                              <option value="email">Email address</option>
+                              <option value="tel">Phone number</option>
+                              <option value="number">Number</option>
+                            </select>
+                          </div>
+                          {field.type !== 'select' && field.type !== 'textarea' && (
+                            <div className="space-y-1">
+                              <label className="text-[10px] font-mono text-[#6b6258] font-bold uppercase tracking-wider">Placeholder (optional)</label>
+                              <Input
+                                value={field.placeholder || ''}
+                                onChange={(e) => updateField(field.id, { placeholder: e.target.value })}
+                                className="w-full bg-[#ede7da] text-[#141210] border-[#cfc9bc] py-2.5"
+                              />
+                            </div>
+                          )}
+                        </div>
+
+                        {field.type === 'select' && (
+                          <div className="space-y-1">
+                            <label className="text-[10px] font-mono text-[#6b6258] font-bold uppercase tracking-wider">Choices (one per line)</label>
+                            <textarea
+                              className="w-full h-24 bg-[#f6f0e7] border border-[#cfc9bc] p-3 text-[#141210] rounded text-sm focus:border-[#c94030] focus:outline-none"
+                              value={(field.options || []).join('\n')}
+                              onChange={(e) => updateField(field.id, { options: e.target.value.split('\n') })}
+                              placeholder={'Option 1\nOption 2\nOption 3'}
+                            />
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
               <div className="flex justify-end pt-4">
                 <Button type="submit" disabled={formLoading}>
                   {formLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
@@ -392,7 +555,8 @@ export default function AdminEvents() {
                               </thead>
                               <tbody>
                                 {eventRegs.map((reg) => (
-                                  <tr key={reg.id} className="border-b border-[#cfc9bc]/50 hover:bg-[#e6dfd1]/60 font-mono text-xs transition-colors">
+                                  <Fragment key={reg.id}>
+                                  <tr className="border-b border-[#cfc9bc]/50 hover:bg-[#e6dfd1]/60 font-mono text-xs transition-colors">
                                     <td className="px-4 py-2 text-[#141210] font-bold">{reg.name}</td>
                                     <td className="px-4 py-2 text-[#3a3530]">{reg.email}</td>
                                     <td className="px-4 py-2 text-[#3a3530]">{reg.classSection || '-'}</td>
@@ -400,6 +564,17 @@ export default function AdminEvents() {
                                       {reg.createdAt ? new Date(reg.createdAt).toLocaleDateString() : 'N/A'}
                                     </td>
                                     <td className="px-4 py-2">
+                                      {reg.answers && reg.answers.length > 0 && (
+                                        <Button
+                                          variant="outline"
+                                          size="sm"
+                                          className="mr-1 font-mono text-[10px] px-2"
+                                          title="See every answer, including custom questions"
+                                          onClick={() => setExpandedRegId((current) => (current === reg.id ? null : (reg.id ?? "")))}
+                                        >
+                                          {expandedRegId === reg.id ? 'Hide answers' : 'Answers'}
+                                        </Button>
+                                      )}
                                       <Button
                                         variant="danger"
                                         size="sm"
@@ -408,8 +583,22 @@ export default function AdminEvents() {
                                       >
                                         <Trash2 className="w-3.5 h-3.5" aria-hidden />
                                       </Button>
-                                    </td>
-                                  </tr>
+                                    </td>                                    </tr>
+                                  {expandedRegId === reg.id && reg.answers && reg.answers.length > 0 && ( /* answers row */
+                                    <tr className="bg-[#f6f0e7]/60">
+                                      <td colSpan={5} className="px-4 py-3">
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 font-mono text-[11px]">
+                                          {reg.answers.map((a) => (
+                                            <div key={a.id} className="flex flex-col">
+                                              <span className="text-[#6b6258]">{a.label}</span>
+                                              <span className="text-[#141210]">{a.value ? a.value : <em className="text-[#6b6258]">(not answered)</em>}</span>
+                                            </div>
+                                          ))}
+                                        </div>
+                                      </td>
+                                    </tr>
+                                  )}
+                                  </Fragment>
                                 ))}
                               </tbody>
                             </table>

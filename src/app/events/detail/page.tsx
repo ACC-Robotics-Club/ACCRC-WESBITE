@@ -90,7 +90,7 @@ function EventDetailContent() {
         ) : (
           <>
             {status === 'open' && (
-              <EventRegistrationForm eventId={event.id} eventName={event.name} />
+              <EventRegistrationForm eventId={event.id} eventName={event.name} eventFields={event.formFields} />
             )}
 
             {status === 'upcoming' && openAt && (

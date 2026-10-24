@@ -22,6 +22,44 @@ import { db } from "./firebase";
 
 /* ─── Types ─── */
 
+/**
+ * One question of an event's registration form, chosen by the admin in the
+ * events portal. Admins can delete the standard questions, reorder freely and
+ * add their own; the public detail page renders exactly these.
+ */
+export interface FormField {
+  /** Stable id so saved answers stay attached to their question. */
+  id: string;
+  label: string;
+  type: "text" | "textarea" | "email" | "tel" | "number" | "select";
+  required: boolean;
+  placeholder?: string;
+  /** Only used when type is "select". */
+  options?: string[];
+}
+
+/** New uid-ish id for a builder field; fine for a form's lifetime. */
+export const newFormFieldId = () =>
+  "ff" + Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
+
+/** The standard set every existing event form presented. */
+export const DEFAULT_EVENT_FORM_FIELDS: FormField[] = [
+  { id: "std-name", label: "Full Name", type: "text", required: true, placeholder: "Full Name" },
+  { id: "std-email", label: "Email Address", type: "email", required: true, placeholder: "Email Address" },
+  { id: "std-phone", label: "Phone Number", type: "tel", required: true, placeholder: "Phone Number" },
+  { id: "std-class", label: "Class/Section", type: "text", required: true, placeholder: "Class/Section" },
+  { id: "std-roll", label: "Roll Number", type: "text", required: true, placeholder: "Roll Number" },
+  {
+    id: "std-interest",
+    label: "Area of Interest",
+    type: "select",
+    required: true,
+    placeholder: "Area of Interest",
+    options: ["Mechanical", "Electronics", "Programming", "Design"],
+  },
+  { id: "std-motivation", label: "Motivation (Why do you want to join?)", type: "textarea", required: true, placeholder: "Motivation (Why do you want to join?)" },
+];
+
 export interface FirestoreEvent {
   id: string;
   name: string;
@@ -39,6 +77,8 @@ export interface FirestoreEvent {
   registrationOpensAt?: Date;
   registrationClosesAt?: Date;
   imageUrl?: string;
+  /** Custom registration questions; undefined/empty keeps the standard set. */
+  formFields?: FormField[];
   createdAt: Date;
 }
 
@@ -78,6 +118,8 @@ export interface Registration {
   rollNumber?: string;
   areaOfInterest?: string;
   bloodGroup?: string;
+  /** Event registrations: one saved answer per question the admin defined. */
+  answers?: Array<{ id: string; label: string; value: string }>;
   /** Set by admins while reviewing; missing means not reviewed yet. */
   status?: ReviewStatus;
   /** When the "you're accepted" email with the club ID went out. */
@@ -161,6 +203,23 @@ function parseEvent(id: string, data: DocumentData): FirestoreEvent {
     registrationOpensAt: toOptionalDate(data.registrationOpensAt),
     registrationClosesAt: toOptionalDate(data.registrationClosesAt),
     imageUrl: data.imageUrl || undefined,
+    formFields: Array.isArray(data.formFields) && data.formFields.length > 0
+      ? data.formFields
+          .filter((f: unknown): f is Record<string, unknown> => !!f && typeof f === "object")
+          .map((f: Record<string, unknown>) => ({
+            id: String(f.id || newFormFieldId()),
+            label: String(f.label || ""),
+            type: (typeof f.type === "string" &&
+              (["text", "textarea", "email", "tel", "number", "select"] as const).includes(
+                f.type as FormField["type"]
+              )
+              ? (f.type as FormField["type"])
+              : "text"),
+            required: f.required === true,
+            placeholder: f.placeholder ? String(f.placeholder) : undefined,
+            options: Array.isArray(f.options) ? f.options.map(String).filter(Boolean) : undefined,
+          }))
+      : undefined,
     createdAt: toDate(data.createdAt),
   };
 }
