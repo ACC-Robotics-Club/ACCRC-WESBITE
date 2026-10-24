@@ -77,9 +77,22 @@ export default function RootLayout({
         {/* Skip laying out offscreen sections from the first paint, unless the
             page was opened on a #link — then lay everything out so the jump
             lands exactly (see SiteChrome). Runs before the body renders. */}
+        {/* Reloads and browser-restored tabs must land at the top of the page
+            (the hero), never mid-page at the last section or an old #hash —
+            that is what reads as "opened the wrong page" on phones. Sessions
+            restored by the browser and reloading a tab are not deliberate
+            deep-links, so they are reset to the top before first paint. */}
         <script
           dangerouslySetInnerHTML={{
-            __html: "if(!location.hash)document.documentElement.classList.remove('cv-measure')",
+            __html:
+              "var nav=performance.getEntriesByType&&performance.getEntriesByType('navigation')[0];\n" +
+              "var restored=nav&&(nav.type==='reload'||nav.type==='back_forward');\n" +
+              "if(restored){\n" +
+              "try{history.scrollRestoration='manual'}catch(e){}\n" +
+              "if(location.hash)history.replaceState(null,'',location.pathname+location.search);\n" +
+              "scrollTo(0,0)\n" +
+              "}\n" +
+              "if(!location.hash)document.documentElement.classList.remove('cv-measure')",
           }}
         />
       </head>

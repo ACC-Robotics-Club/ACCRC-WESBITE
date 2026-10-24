@@ -81,6 +81,23 @@ function useRecordSectionHeights() {
 }
 
 export function SiteChrome({ children }: { children: ReactNode }) {
+  /* Landing: a reload or a browser-restored session must land at the hero, not
+     mid-page at the last section (or the empty posts area) — that reads as
+     "opened the wrong page" on phones. Deliberate deep-links still work: they
+     are fresh navigations, and the inline script in layout.tsx strips the
+     restored #hash before first paint for reloads/back-forward restores. */
+  useEffect(() => {
+    const nav = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming | undefined;
+    if (!nav || (nav.type !== 'reload' && nav.type !== 'back_forward')) return;
+    try {
+      history.scrollRestoration = 'manual';
+    } catch {
+      // very old browsers: ignore
+    }
+    history.replaceState(null, '', window.location.pathname + window.location.search);
+    window.scrollTo(0, 0);
+  }, []);
+
   useEffect(() => pauseOffscreenLoops(), []);
   useEffect(() => startAutoReveal(), []);
   const pathname = usePathname();

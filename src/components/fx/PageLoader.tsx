@@ -18,7 +18,6 @@ const MARK = 'ACCRC';
 /* Kept short: on a phone every extra moment behind the overlay reads as lag. */
 const DURATION_MS = 1300;
 const EXIT_MS = 700;
-const SEEN_KEY = 'accrc-loader-seen';
 
 /** Deterministic blueprint geometry — no randomness, so SSR and client match. */
 const NODES = [
@@ -49,25 +48,9 @@ export function PageLoader() {
   const [phase, setPhase] = useState<'loading' | 'exiting' | 'done'>('loading');
 
   useEffect(() => {
-    /* Play once per browser session — a reload or client-side navigation should
-       not slam a full-screen overlay back up over the content. */
-    let seen = false;
-    try {
-      seen = window.sessionStorage.getItem(SEEN_KEY) === '1';
-    } catch {
-      // Storage can be unavailable (private mode); fall back to always playing.
-    }
-    if (seen) {
-      setPhase('done');
-      return;
-    }
-
-    try {
-      window.sessionStorage.setItem(SEEN_KEY, '1');
-    } catch {
-      // ignore
-    }
-
+    /* Plays on every full page load. The overlay is mounted once per app shell,
+       so in-app route changes never replay it — only real loads (first visit,
+       reload, or a new tab) do. */
     const leaveTimer = window.setTimeout(() => setPhase('exiting'), DURATION_MS);
     /* Hard failsafe: the exit animation is 0.8s, so unmount with headroom even
        if the animation never fires (background tab, reduced-motion edge cases). */
