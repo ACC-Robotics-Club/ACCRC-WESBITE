@@ -18,7 +18,12 @@ import { motion, useReducedMotion } from 'framer-motion';
 const MARK = 'ACCRC';
 const DURATION_MS = 1900;
 const EXIT_MS = 850;
-const SEEN_KEY = 'accrc-loader-seen';
+
+/* Module state lives for one full page load: a reload plays the loader again,
+   but returning to the public site from /admin (a client-side remount) doesn't.
+   It is set only once the sequence finishes, so React Strict Mode's double
+   effect run in dev can't mark it played before anyone has seen it. */
+let playedThisLoad = false;
 
 /** Deterministic blueprint geometry — no randomness, so SSR and client match. */
 const NODES = [
@@ -46,29 +51,18 @@ export function PageLoader() {
   const [phase, setPhase] = useState<'loading' | 'exiting' | 'done'>('loading');
 
   useEffect(() => {
-    /* Play once per browser session — a reload or client-side navigation should
-       not slam a full-screen overlay back up over the content. */
-    let seen = false;
-    try {
-      seen = window.sessionStorage.getItem(SEEN_KEY) === '1';
-    } catch {
-      // Storage can be unavailable (private mode); fall back to always playing.
-    }
-    if (seen) {
+    if (playedThisLoad) {
       setPhase('done');
       return;
-    }
-
-    try {
-      window.sessionStorage.setItem(SEEN_KEY, '1');
-    } catch {
-      // ignore
     }
 
     const leaveTimer = window.setTimeout(() => setPhase('exiting'), DURATION_MS);
     /* Hard failsafe: the exit animation is 0.8s, so unmount with headroom even
        if the animation never fires (background tab, reduced-motion edge cases). */
-    const removeTimer = window.setTimeout(() => setPhase('done'), DURATION_MS + EXIT_MS + 400);
+    const removeTimer = window.setTimeout(() => {
+      playedThisLoad = true;
+      setPhase('done');
+    }, DURATION_MS + EXIT_MS + 400);
 
     return () => {
       window.clearTimeout(leaveTimer);
