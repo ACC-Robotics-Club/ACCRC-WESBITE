@@ -11,6 +11,7 @@ const navLinks = [
   { href: "/events/", label: "EVENTS" },
   { href: "/#achievements", label: "ACHIEVEMENTS" },
   { href: "/panels/", label: "PANELS" },
+  { href: "/builder/", label: "BUILDER" },
   { href: "/news/", label: "UPDATES" },
 ];
 
@@ -74,7 +75,7 @@ export function Navbar() {
         </a>
 
         {/* Desktop Nav */}
-        <div className="hidden lg:flex items-center gap-6 xl:gap-8">
+        <div className="hidden lg:flex items-center gap-4 xl:gap-8">
           {links.map((link) => (
             <a
               key={link.href}
@@ -90,14 +91,14 @@ export function Navbar() {
         <div className="hidden lg:flex items-center gap-2.5">
           <a
             href="/admin/"
-            className="inline-flex items-center gap-1.5 rounded-lg border border-border-strong bg-secondary px-4 py-2 font-mono text-mono-sm font-bold uppercase tracking-wider text-text-primary transition-all duration-200 hover:bg-tertiary active:scale-95"
+            className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-lg border border-border-strong bg-secondary px-4 py-2 font-mono text-mono-sm font-bold uppercase tracking-wider text-text-primary transition-all duration-200 hover:bg-tertiary active:scale-95"
           >
             Portal <ArrowUpRight size={14} aria-hidden />
           </a>
           <Magnetic strength={0.25}>
             <a
               href="/membership/"
-              className="inline-flex items-center rounded-lg bg-accent px-5 py-2 font-mono text-mono-sm font-bold uppercase tracking-wider text-white shadow-[0_8px_24px_-8px_rgba(200,67,44,0.45)] transition-all duration-200 hover:bg-accent-hover active:scale-95"
+              className="inline-flex items-center whitespace-nowrap rounded-lg bg-accent px-5 py-2 font-mono text-mono-sm font-bold uppercase tracking-wider text-white shadow-[0_8px_24px_-8px_rgba(200,67,44,0.45)] transition-all duration-200 hover:bg-accent-hover active:scale-95"
             >
               Join us
             </a>
