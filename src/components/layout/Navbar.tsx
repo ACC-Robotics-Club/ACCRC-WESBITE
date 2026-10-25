@@ -15,6 +15,7 @@ const navLinks = [
   { href: "/#achievements", label: "ACHIEVEMENTS" },
   { href: "/panels/", label: "PANELS" },
   { href: "/social/", label: "POSTS" },
+  { href: "/builder/", label: "BUILDER" },
   { href: "/news/", label: "UPDATES" },
 ];
 

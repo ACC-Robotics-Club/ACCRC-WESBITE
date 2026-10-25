@@ -80,6 +80,7 @@ export function Footer() {
                 { href: "/#achievements", label: "Achievements" },
                 { href: "/panels/", label: "Panels" },
                 { href: "/social/", label: "Posts" },
+                { href: "/builder/", label: "Builder" },
                 { href: "/membership/", label: "Membership" },
                 { href: "/news/", label: "News" },
                 { href: "/about/", label: "About" },
