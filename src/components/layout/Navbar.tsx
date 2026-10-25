@@ -7,11 +7,12 @@ import { subscribeToPortalConfig, type PortalConfig } from "@/lib/firestore";
 import { Magnetic } from "@/components/fx/Magnetic";
 
 const navLinks = [
-  { href: "/events/", label: "Events" },
-  { href: "/#achievements", label: "Achievements" },
-  { href: "/news/", label: "News" },
-  { href: "/about/", label: "About" },
-  { href: "/membership/", label: "Membership" },
+  { href: "/#mission", label: "MISSION" },
+  { href: "/events/", label: "EVENTS" },
+  { href: "/#achievements", label: "ACHIEVEMENTS" },
+  { href: "/panels/", label: "PANELS" },
+  { href: "/builder/", label: "BUILDER" },
+  { href: "/news/", label: "UPDATES" },
 ];
 
 export function Navbar() {
@@ -40,15 +41,15 @@ export function Navbar() {
     portalConfig?.execOpen || portalConfig?.prefectOpen || portalConfig?.subExecOpen
   );
   const links = leadershipApplicationsOpen
-    ? [...navLinks, { href: "/portal/", label: "Leadership" }]
+    ? [...navLinks, { href: "/portal/", label: "LEADERSHIP" }]
     : navLinks;
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 px-4 pt-4 sm:px-6 sm:pt-5">
       <nav
-        className={`container-content flex items-center justify-between gap-4 rounded-full border px-4 py-2.5 transition-all duration-300 sm:px-5 ${
+        className={`container-content flex items-center justify-between gap-4 rounded-xl border px-4 py-2.5 transition-all duration-300 sm:px-5 ${
           scrolled
-            ? "border-border bg-primary/85 shadow-[0_12px_36px_-18px_rgba(13,27,24,0.4)] backdrop-blur-xl"
+            ? "border-border bg-primary/95 shadow-[0_12px_36px_-18px_rgba(28,25,23,0.18)] lg:backdrop-blur-xl"
             : "border-transparent bg-transparent"
         }`}
         aria-label="Main navigation"
@@ -58,25 +59,28 @@ export function Navbar() {
           <img
             src="/accrc-logo.png"
             alt="ACCRC Logo"
-            className="h-10 w-10 rounded-full object-cover border-2 border-border-strong transition-transform duration-300 group-hover:rotate-12"
+            className="h-10 w-10 rounded-full object-cover border border-border-strong transition-transform duration-300 group-hover:rotate-12"
           />
-          <div className="flex flex-col leading-none">
-            <span className="font-display text-lg font-extrabold tracking-display">
+          <div className="flex flex-col leading-tight">
+            <span className="font-display text-base font-black tracking-tight text-ink">
               ACCRC
             </span>
-            <span className="font-mono text-mono-sm text-text-tertiary tracking-widest uppercase hidden sm:block">
+            <span className="font-mono text-[9px] font-bold text-text-secondary tracking-wider uppercase leading-none">
+              Adamjee Cantonment College
+            </span>
+            <span className="font-mono text-[9px] font-bold text-text-secondary tracking-wider uppercase leading-none">
               Robotics Club
             </span>
           </div>
         </a>
 
         {/* Desktop Nav */}
-        <div className="hidden lg:flex items-center gap-1">
+        <div className="hidden lg:flex items-center gap-4 xl:gap-8">
           {links.map((link) => (
             <a
               key={link.href}
               href={link.href}
-              className="px-3.5 py-2 text-body-sm font-bold text-text-secondary hover:text-text-primary transition-colors duration-200 relative group rounded-full hover:bg-tertiary"
+              className="whitespace-nowrap text-xs font-mono font-bold tracking-widest text-ink hover:text-accent transition-colors duration-200 uppercase"
             >
               {link.label}
             </a>
@@ -87,14 +91,14 @@ export function Navbar() {
         <div className="hidden lg:flex items-center gap-2.5">
           <a
             href="/admin/"
-            className="inline-flex items-center gap-1.5 rounded-full border border-border-strong bg-secondary px-5 py-2.5 font-mono text-mono-sm font-bold uppercase tracking-wider text-text-primary transition-all duration-200 hover:bg-tertiary active:scale-95"
+            className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-lg border border-border-strong bg-secondary px-4 py-2 font-mono text-mono-sm font-bold uppercase tracking-wider text-text-primary transition-all duration-200 hover:bg-tertiary active:scale-95"
           >
             Portal <ArrowUpRight size={14} aria-hidden />
           </a>
           <Magnetic strength={0.25}>
             <a
               href="/membership/"
-              className="inline-flex items-center rounded-full bg-accent px-6 py-2.5 font-mono text-mono-sm font-bold uppercase tracking-wider text-white shadow-[0_8px_24px_-8px_rgba(14,138,128,0.7)] transition-all duration-200 hover:bg-accent-hover active:scale-95"
+              className="inline-flex items-center whitespace-nowrap rounded-lg bg-accent px-5 py-2 font-mono text-mono-sm font-bold uppercase tracking-wider text-white shadow-[0_8px_24px_-8px_rgba(200,67,44,0.45)] transition-all duration-200 hover:bg-accent-hover active:scale-95"
             >
               Join us
             </a>
@@ -103,12 +107,12 @@ export function Navbar() {
 
         {/* Mobile Menu Toggle */}
         <button
-          className="lg:hidden flex h-11 w-11 items-center justify-center rounded-full border border-border-strong bg-secondary text-text-primary"
+          className="lg:hidden flex h-10 w-10 items-center justify-center rounded-lg border border-border-strong bg-secondary text-text-primary"
           onClick={() => setIsOpen(!isOpen)}
           aria-label={isOpen ? "Close menu" : "Open menu"}
           aria-expanded={isOpen}
         >
-          {isOpen ? <X size={22} /> : <Menu size={22} />}
+          {isOpen ? <X size={20} /> : <Menu size={20} />}
         </button>
       </nav>
 
@@ -120,7 +124,7 @@ export function Navbar() {
             animate={{ y: 0 }}
             exit={{ y: -26 }}
             transition={{ duration: 0.25, ease: "easeOut" }}
-            className="lg:hidden fixed inset-x-4 top-24 z-40 rounded-3xl border border-border bg-secondary p-6 shadow-[0_30px_80px_-30px_rgba(13,27,24,0.5)]"
+            className="lg:hidden fixed inset-x-4 top-24 z-40 rounded-3xl border border-border bg-secondary p-6 shadow-[0_30px_80px_-30px_rgba(28,25,23,0.35)]"
           >
             <div className="flex flex-col">
               {[

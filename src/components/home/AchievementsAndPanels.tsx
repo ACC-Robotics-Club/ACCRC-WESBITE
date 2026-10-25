@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { Award, GraduationCap, IdCard, Medal, ShieldCheck, Trophy, UsersRound } from 'lucide-react';
+import { ArrowRight, Award, GraduationCap, IdCard, Medal, ShieldCheck, Trophy, UsersRound } from 'lucide-react';
 import { subscribeToAchievements, type FirestoreAchievement } from '@/lib/firestore';
 import { SplitReveal } from '@/components/fx/SplitReveal';
 import { Parallax } from '@/components/fx/Parallax';
@@ -481,10 +481,15 @@ const panels: Record<PanelKey, PanelData> = {
 
 const allAchievements = Object.values(panels).flatMap((panel) => panel.achievements);
 
+/* Newest committee first, founders last. (Object.entries would list the
+   year keys oldest-first, since integer-like keys sort ascending.) */
 const leadershipPanels = (Object.entries(panels) as Array<[PanelKey, PanelData]>)
-  .filter(([, panel]) => panel.executive_panel.length > 0 || panel.moderators?.length || panel.prefects?.length);
+  .filter(([, panel]) => panel.executive_panel.length > 0 || panel.moderators?.length || panel.prefects?.length)
+  .sort(([a], [b]) => (a === 'founder' ? 1 : b === 'founder' ? -1 : Number(b) - Number(a)));
 
-export function AchievementsAndPanels() {
+/* Home page: the achievements ledger. The leadership panels live on their own
+   page (/panels/) and are linked from here and from the navbar. */
+export function Achievements() {
   const [adminAchievements, setAdminAchievements] = useState<FirestoreAchievement[]>([]);
 
   useEffect(() => {
@@ -527,21 +532,26 @@ export function AchievementsAndPanels() {
       <div className={styles.wrap}>
         <div className={styles.intro}>
           <div>
-            <p className={styles.eyebrow}>Recognition / Leadership</p>
+            <p className={styles.eyebrow}>Recognition / Results</p>
             <SplitReveal
               delay={0.1}
               className="font-display"
               lineClassName="text-white"
               lines={[
-                <>Achievements &amp;</>,
-                <><span className={styles.introSpan}>Executive Panels.</span></>,
+                <>Hall of</>,
+                <><span className={styles.introSpan}>Achievements.</span></>,
               ]}
             />
-            <h2 id="achievements-title" className="sr-only">Achievements &amp; Executive Panels.</h2>
+            <h2 id="achievements-title" className="sr-only">Hall of Achievements.</h2>
           </div>
-          <p className={styles.introCopy}>
-            A growing record of the people, projects, and results that represent ACCRC.
-          </p>
+          <div>
+            <p className={styles.introCopy}>
+              A growing record of the projects and results that represent ACCRC.
+            </p>
+            <a href="/panels/" className={styles.panelsLink}>
+              Meet the executive panels <ArrowRight size={16} aria-hidden="true" />
+            </a>
+          </div>
         </div>
 
         <div className={styles.panel}>
@@ -556,8 +566,44 @@ export function AchievementsAndPanels() {
           {achievements.length === 0
             ? <EmptyState label="achievement records" />
             : <AchievementArchive years={achievementYears} filter={levelFilter} onFilter={setLevelFilter} />}
+        </div>
+      </div>
+    </section>
+  );
+}
 
-          <div className={styles.leadershipArchive} aria-label="Leadership archive">
+/* The /panels/ page: every committee, newest first. */
+export function LeadershipPanels() {
+  return (
+    <section className={`${styles.section} ${styles.pageSection}`} aria-labelledby="panels-title">
+      <div className={styles.backdrop} aria-hidden>
+        <Parallax speed={16} className={styles.orbA}><span /></Parallax>
+        <Parallax speed={28} className={styles.orbB}><span /></Parallax>
+        <p className={styles.wordmark}>Leadership</p>
+      </div>
+
+      <div className={styles.wrap}>
+        <div className={styles.intro}>
+          <div>
+            <p className={styles.eyebrow}>Leadership / Archive</p>
+            <SplitReveal
+              delay={0.1}
+              className="font-display"
+              lineClassName="text-white"
+              lines={[
+                <>Executive</>,
+                <><span className={styles.introSpan}>Panels.</span></>,
+              ]}
+            />
+            <h1 id="panels-title" className="sr-only">Executive Panels</h1>
+          </div>
+          <p className={styles.introCopy}>
+            The people who have led ACCRC, from the founding team to the current committee.
+          </p>
+        </div>
+
+        <div className={styles.panel}>
+          <div className={`${styles.leadershipArchive} ${styles.leadershipArchiveFirst}`} aria-label="Leadership archive">
             {leadershipPanels.map(([key, panel], panelIndex) => (
               /* These panels run from ~570px to ~2800px tall. A top-anchored
                  range would finish the slide within the first screen and leave

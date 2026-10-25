@@ -3,16 +3,17 @@
 import { useState } from 'react';
 import { Input, Textarea } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
-import { submitRegistration } from '@/lib/firestore';
-import { CheckCircle } from 'lucide-react';
+import { registerMember, type RegistrationResult } from '@/lib/registerMember';
+import { RegistrationSuccess } from '@/components/membership/RegistrationSuccess';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 
 export function MembershipForm() {
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
-    name: '', email: '', whatsapp: '', classSection: '', collegeId: '', motivation: ''
+    name: '', email: '', whatsapp: '', classSection: '', collegeId: '', motivation: '', website: ''
   });
+  const [result, setResult] = useState<RegistrationResult | null>(null);
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [errorMsg, setErrorMsg] = useState('');
 
@@ -31,7 +32,7 @@ export function MembershipForm() {
     
     setStatus('loading');
     try {
-      await submitRegistration({ type: 'membership', ...formData });
+      setResult(await registerMember(formData));
       setStatus('success');
     } catch (err: any) {
       setStatus('error');
@@ -39,33 +40,19 @@ export function MembershipForm() {
     }
   };
 
-  if (status === 'success') {
+  if (status === 'success' && result) {
     return (
-      <motion.div 
-        initial={{ y: 32 }}
-        animate={{ y: 0 }}
-        className="flex flex-col items-center justify-center rounded-3xl border-2 border-border-strong bg-secondary p-12 text-center"
-      >
-        <motion.div
-          initial={{ scale: 0 }}
-          animate={{ scale: 1 }}
-          transition={{ type: 'spring', stiffness: 200, damping: 15 }}
-        >
-          <CheckCircle className="w-16 h-16 text-accent mb-6" />
-        </motion.div>
-        <h3 className="mb-3 font-display text-display-xs font-extrabold text-ink">Application Submitted</h3>
-        <p className="text-text-secondary mb-8 max-w-md">
-          Thank you for applying to ACCRC. We will review your application and contact you soon via email.
-        </p>
-        <Link href="/">
+      <div className="flex flex-col gap-6">
+        <RegistrationSuccess result={result} email={formData.email.trim().toLowerCase()} />
+        <Link href="/" className="self-start">
           <Button>Return Home</Button>
         </Link>
-      </motion.div>
+      </div>
     );
   }
 
   return (
-    <div className="w-full max-w-2xl mx-auto rounded-3xl border-2 border-border-strong bg-secondary p-6 md:p-10 shadow-[0_40px_90px_-60px_rgba(13,27,24,0.6)]">
+    <div className="w-full max-w-2xl mx-auto rounded-3xl border-2 border-border-strong bg-secondary p-6 md:p-10 shadow-[0_40px_90px_-60px_rgba(28,25,23,0.35)]">
       {/* Progress Bar */}
       <div className="flex items-center justify-between mb-10 relative">
         <div className="absolute left-0 top-1/2 -translate-y-1/2 w-full h-0.5 bg-border z-0" />
@@ -73,7 +60,7 @@ export function MembershipForm() {
           <div key={num} className="relative z-10 flex flex-col items-center gap-2">
             <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-mono transition-all duration-300
               ${step > num ? 'bg-accent text-white border-accent' : 
-                step === num ? 'bg-accent text-white border-accent shadow-[0_0_0_6px_rgba(14,138,128,0.15)]' : 
+                step === num ? 'bg-accent text-white border-accent shadow-[0_0_0_6px_rgba(200,67,44,0.18)]' : 
                 'bg-secondary text-text-tertiary border-2 border-border'} border`}
             >
               {num}
@@ -86,6 +73,8 @@ export function MembershipForm() {
       </div>
 
       <form onSubmit={handleSubmit} className="mt-12">
+        {/* Honeypot for bots; hidden from people and assistive tech. */}
+        <input type="text" name="website" tabIndex={-1} autoComplete="off" aria-hidden className="hidden" value={formData.website} onChange={e => setFormData({...formData, website: e.target.value})} />
         <AnimatePresence mode="wait">
           {step === 1 && (
             <motion.div key="step1" initial={{ x: 48 }} animate={{ x: 0 }} exit={{ x: -48 }} className="space-y-4">
@@ -127,7 +116,7 @@ export function MembershipForm() {
             <Button type="button" onClick={handleNext} disabled={status === 'loading'}>Next Step</Button>
           ) : (
             <Button type="submit" loading={status === 'loading'} className="min-w-[140px]">
-              {status === 'loading' ? 'Submitting...' : 'Submit Application'}
+              {status === 'loading' ? 'Registering...' : 'Register'}
             </Button>
           )}
         </div>

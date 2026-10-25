@@ -2,6 +2,7 @@
 
 import { useRef, type ReactNode } from 'react';
 import { motion, useScroll, useTransform, useReducedMotion } from 'framer-motion';
+import { isLowPowerDevice } from '@/lib/perf';
 
 /**
  * Framer's scroll-range tuple, derived from `useScroll` itself so it always
@@ -44,7 +45,7 @@ export function ScrollSlide({
   offset?: ScrollOffset;
 }) {
   const ref = useRef<HTMLDivElement>(null);
-  const reduce = useReducedMotion();
+  const reduce = useReducedMotion() || (typeof window !== 'undefined' && isLowPowerDevice());
   const { scrollYProgress } = useScroll({ target: ref, offset });
 
   const value = useTransform(scrollYProgress, [0, 1], [from, to], { clamp: true });

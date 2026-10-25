@@ -57,8 +57,8 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${nunito.variable} ${spaceMono.variable}`}>
       <head>
-        <meta name="theme-color" content="#ece8e0" media="(prefers-color-scheme: light)" />
-        <meta name="theme-color" content="#0d1b18" media="(prefers-color-scheme: dark)" />
+        <meta name="theme-color" content="#F7F5EE" media="(prefers-color-scheme: light)" />
+        <meta name="theme-color" content="#1C1917" media="(prefers-color-scheme: dark)" />
         <meta name="color-scheme" content="light dark" />
       </head>
       <body className="antialiased">

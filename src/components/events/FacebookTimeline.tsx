@@ -93,7 +93,7 @@ export function FacebookTimeline({ compact = false }: { compact?: boolean }) {
   return (
     <aside
       ref={panelRef}
-      className="relative w-full overflow-hidden rounded-3xl border-2 border-ink bg-ink text-[#e8fffb] shadow-[0_40px_100px_-50px_rgba(13,27,24,0.9)]"
+      className="relative w-full overflow-hidden rounded-3xl border-2 border-ink bg-ink text-[#F7F5EE] shadow-[0_40px_100px_-50px_rgba(28,25,23,0.5)]"
     >
       <div className="dot-grid-light absolute inset-0 opacity-20" aria-hidden />
       <div
@@ -118,7 +118,7 @@ export function FacebookTimeline({ compact = false }: { compact?: boolean }) {
           <h2 className="font-display text-display-xs font-extrabold tracking-tight">
             Official page feed
           </h2>
-          <p className="mt-2 text-body-sm text-[#e8fffb]/65">
+          <p className="mt-2 text-body-sm text-[#F7F5EE]/65">
             Follow our official page for announcements, event updates, and
             last-minute changes.
           </p>

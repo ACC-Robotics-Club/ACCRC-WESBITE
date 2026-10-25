@@ -11,17 +11,19 @@ import {
   Sparkles,
 } from 'lucide-react';
 import {
-  submitRegistration,
   subscribeToEvents,
   subscribeToPortalConfig,
   type FirestoreEvent,
   type PortalConfig,
 } from '@/lib/firestore';
 import { club } from '@/lib/club';
+import { registerMember, type RegistrationResult } from '@/lib/registerMember';
+import { RegistrationSuccess } from '@/components/membership/RegistrationSuccess';
 import { readFacebookFeed, type FacebookEvent, type FacebookPost } from '@/lib/facebook-events';
 import { Hero } from '@/components/home/Hero';
 import { StatusStrip } from '@/components/home/StatusStrip';
-import { AchievementsAndPanels } from '@/components/home/AchievementsAndPanels';
+import { Achievements } from '@/components/home/AchievementsAndPanels';
+import { LaunchFilm } from '@/components/home/LaunchFilm';
 import { FacebookTimeline } from '@/components/events/FacebookTimeline';
 import { Marquee } from '@/components/fx/Marquee';
 import { Reveal } from '@/components/fx/Reveal';
@@ -46,7 +48,7 @@ type FeedEvent = {
 };
 
 export default function HomePage() {
-  const [submitted, setSubmitted] = useState(false);
+  const [registration, setRegistration] = useState<{ result: RegistrationResult; email: string } | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState('');
   const [events, setEvents] = useState<FirestoreEvent[]>([]);
@@ -157,20 +159,21 @@ export default function HomePage() {
     setFormError('');
 
     try {
-      await submitRegistration({
-        type: 'membership',
+      const email = String(formData.get('email') ?? '').trim().toLowerCase();
+      const result = await registerMember({
         name: String(formData.get('name') ?? ''),
         email: String(formData.get('email') ?? ''),
         whatsapp: String(formData.get('whatsapp') ?? ''),
         classSection: String(formData.get('classSection') ?? ''),
         collegeId: String(formData.get('collegeId') ?? ''),
         motivation: String(formData.get('motivation') ?? ''),
+        website: String(formData.get('website') ?? ''),
       });
       form.reset();
-      setSubmitted(true);
+      setRegistration({ result, email });
     } catch (error) {
-      console.error('Failed to submit membership application', error);
-      setFormError('We could not submit your application. Please try again.');
+      console.error('Failed to register member', error);
+      setFormError(error instanceof Error ? error.message : 'We could not complete your registration. Please try again.');
     } finally {
       setSubmitting(false);
     }
@@ -182,7 +185,7 @@ export default function HomePage() {
 
       {/* Everything below the hero is one opaque "sheet" that slides up over the
           pinned hero as you scroll (depth-curtain scroll, see Hero.tsx). */}
-      <div className="relative z-10 overflow-hidden rounded-t-[2rem] bg-primary shadow-[0_-28px_70px_-28px_rgba(13,27,24,0.35)] sm:rounded-t-[3rem]">
+      <div className="relative z-10 overflow-hidden rounded-t-[2rem] bg-primary shadow-[0_-28px_70px_-28px_rgba(28,25,23,0.2)] sm:rounded-t-[3rem]">
       <StatusStrip />
 
       {/* ═══ MARQUEE ═══ */}
@@ -197,11 +200,14 @@ export default function HomePage() {
         </Marquee>
       </div>
 
+      {/* ═══ LAUNCH FILM ═══ */}
+      <LaunchFilm />
+
       {/* ═══ MISSION — wipe + parallax depth ═══ */}
       <section className="relative section-padding overflow-hidden" id="mission">
         {/* Oversized index numeral drifting behind the copy */}
         <Parallax speed={22} className="pointer-events-none absolute -left-6 top-6 select-none" aria-hidden>
-          <p className="font-display text-[16rem] font-black leading-none tracking-display text-transparent [-webkit-text-stroke:1.5px_rgba(13,27,24,0.1)]">
+          <p className="font-display text-[16rem] font-black leading-none tracking-display text-transparent [-webkit-text-stroke:1.5px_rgba(28,25,23,0.08)]">
             01
           </p>
         </Parallax>
@@ -224,8 +230,8 @@ export default function HomePage() {
                 lines={[
                   <>
                     <FanTag
-                      layers={['#0d1b18', '#2be0d2', '#0e8a80']}
-                      bgColor="#0e8a80"
+                      layers={['#1C1917', '#FF7A59', '#C8432C']}
+                      bgColor="#C8432C"
                       textColor="white"
                       size="lg"
                       delay={0.2}
@@ -280,9 +286,9 @@ export default function HomePage() {
                 lines={[
                   <>
                     <FanTag
-                      layers={['#0e8a80', '#2be0d2', '#0d1b18']}
-                      bgColor="#0d1b18"
-                      textColor="#2be0d2"
+                      layers={['#C8432C', '#FF7A59', '#1C1917']}
+                      bgColor="#1C1917"
+                      textColor="#FF7A59"
                       size="lg"
                       delay={0.1}
                     >
@@ -494,7 +500,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      <AchievementsAndPanels />
+      <Achievements />
 
       {/* ═══ RECRUITMENT ANNOUNCEMENT ═══ */}
       <section className="section-padding" id="news">
@@ -511,9 +517,9 @@ export default function HomePage() {
               lines={[
                 <>
                   <FanTag
-                    layers={['#2be0d2', '#0e8a80', '#0d1b18']}
-                    bgColor="#0d1b18"
-                    textColor="#2be0d2"
+                    layers={['#FF7A59', '#C8432C', '#1C1917']}
+                    bgColor="#1C1917"
+                    textColor="#FF7A59"
                     size="lg"
                     delay={0.15}
                   >
@@ -536,7 +542,7 @@ export default function HomePage() {
               viewport={{ once: true, amount: 0.2, margin: '0px 0px -10% 0px' }}
               transition={{ duration: 0.85, ease: [0.22, 1, 0.36, 1] }}
             >
-              <TiltCard className="overflow-hidden rounded-3xl border-2 border-border-strong bg-ink text-[#e8fffb] shadow-[0_30px_80px_-40px_rgba(13,27,24,0.8)]">
+              <TiltCard className="overflow-hidden rounded-3xl border-2 border-border-strong bg-ink text-[#F7F5EE] shadow-[0_30px_80px_-40px_rgba(28,25,23,0.5)]">
                 <div className="relative flex min-h-[240px] flex-col items-start justify-between gap-8 p-10 sm:flex-row sm:items-center sm:p-14">
                   <div className="dot-grid-light absolute inset-0 opacity-20" aria-hidden />
                   <h3 className="relative font-display text-display-md font-black tracking-display">
@@ -573,8 +579,8 @@ export default function HomePage() {
                 <>YOUR NEXT</>,
                 <>
                   <FanTag
-                    layers={['#0d1b18', '#0e8a80', '#2be0d2']}
-                    bgColor="#0e8a80"
+                    layers={['#1C1917', '#FF7A59', '#C8432C']}
+                    bgColor="#C8432C"
                     textColor="white"
                     size="lg"
                     delay={0.1}
@@ -616,21 +622,13 @@ export default function HomePage() {
           <ScrollSlide axis="y" from={120} to={-16}>
           <div className="lg:border-l-2 lg:border-border lg:pl-16">
             <Reveal>
-              <p className="mono-label text-text-tertiary">Membership application / always open</p>
+              <p className="mono-label text-text-tertiary">New member registration / always open</p>
             </Reveal>
 
-            {submitted ? (
-              <Reveal>
-                <div className="mt-6 flex min-h-[350px] flex-col justify-center gap-3 rounded-3xl border-2 border-border-strong bg-tertiary/50 p-10">
-                  <span className="grid h-14 w-14 place-items-center rounded-2xl bg-accent text-white" aria-hidden>
-                    <Send size={26} />
-                  </span>
-                  <h3 className="mt-2 font-display text-display-xs font-extrabold text-ink">Application received.</h3>
-                  <p className="text-body-sm text-text-secondary">
-                    We&apos;ll review your submission and reach out soon. Welcome to the build.
-                  </p>
-                </div>
-              </Reveal>
+            {registration ? (
+              <div className="mt-6">
+                <RegistrationSuccess result={registration.result} email={registration.email} />
+              </div>
             ) : (
               /* Form fields cascade upward one after another. Each field animates
                  itself rather than relying on parent variant propagation. */
@@ -638,6 +636,8 @@ export default function HomePage() {
                 className="mt-6 flex flex-col gap-6"
                 onSubmit={handleSubmit}
               >
+                  {/* Honeypot for bots; hidden from people and assistive tech. */}
+                  <input type="text" name="website" tabIndex={-1} autoComplete="off" aria-hidden className="hidden" />
                   <div className="grid gap-x-6 gap-y-6 sm:grid-cols-2">
                     {[
                       { label: 'FULL NAME', name: 'name', type: 'text', placeholder: 'Your name', autoComplete: 'name' },
@@ -656,7 +656,7 @@ export default function HomePage() {
                       >
                         <span className="mono-label text-text-tertiary">{field.label}</span>
                         <input
-                          className="rounded-xl border-2 border-border bg-primary px-4 py-3.5 text-body-md text-ink transition-all duration-200 placeholder:text-text-tertiary/70 focus:border-accent focus:outline-none focus:shadow-[0_0_0_4px_rgba(14,138,128,0.12)]"
+                          className="rounded-xl border-2 border-border bg-primary px-4 py-3.5 text-body-md text-ink transition-all duration-200 placeholder:text-text-tertiary/70 focus:border-accent focus:outline-none focus:shadow-[0_0_0_4px_rgba(200,67,44,0.15)]"
                           name={field.name}
                           required
                           type={field.type}
@@ -675,7 +675,7 @@ export default function HomePage() {
                   >
                     <span className="mono-label text-text-tertiary">WHY DO YOU WANT TO JOIN?</span>
                     <textarea
-                      className="rounded-xl border-2 border-border bg-primary px-4 py-3.5 text-body-md text-ink transition-all duration-200 placeholder:text-text-tertiary/70 focus:border-accent focus:outline-none focus:shadow-[0_0_0_4px_rgba(14,138,128,0.12)]"
+                      className="rounded-xl border-2 border-border bg-primary px-4 py-3.5 text-body-md text-ink transition-all duration-200 placeholder:text-text-tertiary/70 focus:border-accent focus:outline-none focus:shadow-[0_0_0_4px_rgba(200,67,44,0.15)]"
                       name="motivation"
                       required
                       rows={4}
@@ -688,13 +688,13 @@ export default function HomePage() {
                     </p>
                   )}
                   <button
-                    className="inline-flex w-fit items-center gap-2.5 rounded-full bg-accent px-8 py-4 font-mono text-mono-sm font-bold uppercase tracking-wider text-white shadow-[0_14px_36px_-12px_rgba(14,138,128,0.8)] transition-all duration-200 hover:bg-accent-hover active:scale-95 disabled:cursor-wait disabled:opacity-65"
+                    className="inline-flex w-fit items-center gap-2.5 rounded-lg bg-accent px-8 py-4 font-mono text-mono-sm font-bold uppercase tracking-wider text-white shadow-[0_14px_36px_-12px_rgba(200,67,44,0.45)] transition-all duration-200 hover:bg-accent-hover active:scale-95 disabled:cursor-wait disabled:opacity-65"
                     type="submit"
                     disabled={submitting}
                     aria-busy={submitting}
                   >
                     {submitting ? <Loader2 size={16} className="animate-spin" aria-hidden /> : <Send size={16} aria-hidden />}
-                    {submitting ? 'Sending...' : 'Send application'}
+                    {submitting ? 'Registering...' : 'Register & get club ID'}
                   </button>
               </motion.form>
             )}
