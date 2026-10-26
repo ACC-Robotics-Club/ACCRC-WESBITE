@@ -1,6 +1,8 @@
 export const metadata = {
-  title: 'Admin Dashboard - ACCRC',
-  description: 'ACCRC Management Portal',
+  title: 'Admin Portal — Adamjee Cantonment College Robotics Club',
+  description: 'Adamjee Cantonment College Robotics Club Administration & Fest Management Portal',
+  // Keep the admin area out of search results.
+  robots: { index: false, follow: false },
 };
 
 export default function AdminLayout({

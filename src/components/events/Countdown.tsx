@@ -52,10 +52,10 @@ export function Countdown({ targetDate, onComplete }: CountdownProps) {
         { label: 'SEC', value: seconds }
       ].map(unit => (
         <div key={unit.label} className="flex flex-col items-center">
-          <span className="font-mono text-mono-md md:text-mono-lg text-text-primary">
+          <span className="font-mono text-[0.875rem] md:text-[1rem] text-[#141210]">
             {String(unit.value).padStart(2, '0')}
           </span>
-          <span className="mono-label text-text-tertiary text-xs mt-1">{unit.label}</span>
+          <span className="mono-label text-[#6b6258] text-xs mt-1">{unit.label}</span>
         </div>
       ))}
     </div>

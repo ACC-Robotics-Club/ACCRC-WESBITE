@@ -6,6 +6,11 @@ const nextConfig = {
     unoptimized: true,
   },
   trailingSlash: true,
+  turbopack: {
+    // Keep module resolution inside this checkout instead of selecting an
+    // unrelated lockfile from a parent directory.
+    root: process.cwd(),
+  },
 };
 
 export default nextConfig;

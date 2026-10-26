@@ -1,0 +1,14 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Assigned only with the Firebase Admin SDK from a trusted environment.
+    function isAdmin() {
+      return request.auth != null && request.auth.token.admin == true;
+    }
+
+    // Team submissions and all other uploads may contain private data.
+    match /{allPaths=**} {
+      allow read, write: if isAdmin();
+    }
+  }
+}

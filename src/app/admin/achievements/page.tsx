@@ -123,34 +123,34 @@ export default function AdminAchievements() {
 
   return (
     <AdminGuard>
-      <main className="container-content min-h-screen pb-16 pt-24 text-text-primary">
-        <Link href="/admin/" className="inline-flex items-center font-mono text-sm text-text-secondary hover:text-accent">
+      <main className="container-content min-h-screen pb-16 pt-24 text-[#141210]">
+        <Link href="/admin/" className="inline-flex items-center font-mono text-sm text-[#6b6258] hover:text-[#c94030]">
           <ChevronLeft className="mr-1 h-4 w-4" aria-hidden /> Back to Dashboard
         </Link>
 
-        <header className="mb-8 mt-6 flex flex-col gap-5 border-b border-border pb-6 sm:flex-row sm:items-end sm:justify-between">
+        <header className="mb-8 mt-6 flex flex-col gap-5 border-b border-[#cfc9bc] pb-6 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <p className="font-mono text-xs uppercase tracking-widest text-accent">Public website content</p>
+            <p className="font-mono text-xs uppercase tracking-widest text-[#c94030]">Public website content</p>
             <h1 className="mt-2 text-3xl font-bold tracking-tight">Manage Achievements</h1>
-            <p className="mt-2 max-w-2xl text-text-secondary">Entries publish immediately in the matching year on the homepage.</p>
+            <p className="mt-2 max-w-2xl text-[#3a3530]">Entries publish immediately in the matching year on the homepage.</p>
           </div>
           <Button onClick={() => { setFormOpen(true); setError(null); }}>
             <Plus className="mr-2 h-4 w-4" aria-hidden /> Add achievement
           </Button>
         </header>
 
-        {error && <p className="mb-6 border border-danger/30 bg-danger/10 p-4 font-mono text-sm text-danger" role="alert">{error}</p>}
+        {error && <p className="mb-6 border border-[#c72c2c]/30 bg-[#c72c2c]/10 p-4 font-mono text-sm text-[#c72c2c]" role="alert">{error}</p>}
 
         {formOpen && (
-          <section className="mb-8 border border-border bg-secondary p-5 sm:p-6" aria-label={editingId ? 'Edit achievement' : 'Add achievement'}>
-            <h2 className="border-b border-border pb-3 text-xl font-bold">{editingId ? 'Edit achievement' : 'Add achievement'}</h2>
+          <section className="mb-8 border border-[#cfc9bc] bg-[#ede7da] p-5 sm:p-6" aria-label={editingId ? 'Edit achievement' : 'Add achievement'}>
+            <h2 className="border-b border-[#cfc9bc] pb-3 text-xl font-bold">{editingId ? 'Edit achievement' : 'Add achievement'}</h2>
             <form className="mt-5 space-y-4" onSubmit={handleSubmit}>
               <div className="grid gap-4 md:grid-cols-2">
                 <Input label="Award or result" name="title" value={formData.title} onChange={(event) => setFormData((current) => ({ ...current, title: event.target.value }))} required />
                 <Input label="Recipient or team" name="recipients" value={formData.recipients} onChange={(event) => setFormData((current) => ({ ...current, recipients: event.target.value }))} required />
                 <div className="flex flex-col gap-1.5">
                   <label className="mono-label" htmlFor="achievement-level">Recognition level</label>
-                  <select id="achievement-level" className="rounded border border-border bg-secondary px-5 py-4 text-lg text-text-primary focus:border-accent focus:outline-none" value={formData.level} onChange={(event) => setFormData((current) => ({ ...current, level: event.target.value as AchievementForm['level'] }))}>
+                  <select id="achievement-level" className="rounded border border-[#cfc9bc] bg-[#ede7da] px-5 py-4 text-lg text-[#141210] focus:border-[#c94030] focus:outline-none" value={formData.level} onChange={(event) => setFormData((current) => ({ ...current, level: event.target.value as AchievementForm['level'] }))}>
                     <option value="National">National</option>
                     <option value="Global">Global</option>
                   </select>
@@ -167,25 +167,25 @@ export default function AdminAchievements() {
         )}
 
         {loading ? (
-          <div className="flex justify-center py-16"><Loader2 className="h-8 w-8 animate-spin text-accent" /></div>
+          <div className="flex justify-center py-16"><Loader2 className="h-8 w-8 animate-spin text-[#c94030]" /></div>
         ) : achievements.length === 0 ? (
-          <div className="border border-dashed border-border bg-secondary px-6 py-14 text-center">
-            <Trophy className="mx-auto h-8 w-8 text-accent" aria-hidden />
+          <div className="border border-dashed border-[#cfc9bc] bg-[#ede7da] px-6 py-14 text-center">
+            <Trophy className="mx-auto h-8 w-8 text-[#c94030]" aria-hidden />
             <h2 className="mt-4 text-xl font-bold">No live achievements yet</h2>
-            <p className="mt-2 text-text-secondary">Use “Add achievement” to publish the first one.</p>
+            <p className="mt-2 text-[#6b6258]">Use “Add achievement” to publish the first one.</p>
           </div>
         ) : (
           <div className="space-y-3" aria-label="Published achievements">
             {achievements.map((achievement) => (
-              <article className="flex flex-col gap-4 border border-border bg-secondary p-5 sm:flex-row sm:items-center sm:justify-between" key={achievement.id}>
+              <article className="flex flex-col gap-4 border border-[#cfc9bc] bg-[#ede7da] p-5 sm:flex-row sm:items-center sm:justify-between" key={achievement.id}>
                 <div>
                   <div className="flex flex-wrap items-center gap-2 font-mono text-xs uppercase tracking-wider">
-                    <span className="border border-accent/50 px-2 py-1 text-accent">{achievement.level}</span>
-                    <span className="text-text-secondary">{achievement.year}</span>
+                    <span className="border border-[#c94030]/50 px-2 py-1 text-[#c94030]">{achievement.level}</span>
+                    <span className="text-[#6b6258]">{achievement.year}</span>
                   </div>
                   <h2 className="mt-3 text-lg font-bold">{achievement.title}</h2>
-                  <p className="mt-1 font-medium text-text-primary">{achievement.recipients}</p>
-                  <p className="mt-1 text-sm text-text-secondary">{achievement.competition}</p>
+                  <p className="mt-1 font-medium text-[#141210]">{achievement.recipients}</p>
+                  <p className="mt-1 text-sm text-[#5a524a]">{achievement.competition}</p>
                 </div>
                 <div className="flex shrink-0 gap-2">
                   <Button variant="secondary" size="sm" onClick={() => startEdit(achievement)} aria-label={`Edit ${achievement.title}`}><Edit2 className="h-4 w-4" aria-hidden /></Button>

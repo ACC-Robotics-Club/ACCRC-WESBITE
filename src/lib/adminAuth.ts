@@ -1,16 +1,9 @@
-import { signOutUser } from './authHelpers';
-
-// Admin email (configure this)
-const ADMIN_EMAIL = process.env.NEXT_PUBLIC_ADMIN_EMAIL || '';
-const ADMIN_PASSWORD = process.env.NEXT_PUBLIC_ADMIN_PASSWORD || '';
-
-export async function adminLogin(email: string, password: string) {
-  if (email === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
-    return { success: true, message: 'Login successful' };
-  }
-  return { success: false, message: 'Invalid credentials' };
-}
-
-export async function adminLogout() {
-  await signOutUser();
-}
+/**
+ * adminAuth.ts — legacy shim (kept for import compatibility only).
+ *
+ * All admin authentication is now handled exclusively through Firebase Auth
+ * via `signInWithEmailAndPassword` in `/admin/login/page.tsx` and the
+ * `AdminGuard` component. The previous hardcoded-credential logic has been
+ * removed. Do not add new logic here.
+ */
+export {};

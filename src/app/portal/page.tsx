@@ -81,15 +81,9 @@ export default function PortalPage() {
     <main className="pt-24 section-padding container-content min-h-screen">
       <SectionReveal>
         <div className="max-w-3xl mx-auto mb-12 text-center">
-          <div className="mono-label mb-4 flex items-center justify-center gap-3 text-accent">
-            <span className="inline-block h-px w-10 bg-accent" aria-hidden />
-            LEADERSHIP APPLICATIONS
-            <span className="inline-block h-px w-10 bg-accent" aria-hidden />
-          </div>
-          <h1 className="mb-4 font-display text-display-md font-black tracking-display text-ink">
-            Help shape ACCRC
-          </h1>
-          <p className="text-body-lg text-text-secondary">
+          <div className="mono-label text-[#c94030] mb-2">LEADERSHIP APPLICATIONS</div>
+          <h1 className="text-[clamp(2.25rem,4.5vw,3.75rem)] font-bold text-[#141210] mb-4">Help shape ACCRC</h1>
+          <p className="text-[1.0625rem] text-[#3a3530]">
             Leadership applications are shown only while their application window is open. Membership applications remain available year-round.
           </p>
         </div>
@@ -98,28 +92,29 @@ export default function PortalPage() {
       <SectionReveal>
         <div className="max-w-2xl mx-auto">
           {loading ? (
-            <Card className="p-12 text-center text-text-secondary animate-pulse">Loading application windows...</Card>
+            <Card className="p-12 text-center text-[#3a3530] animate-pulse">Loading application windows...</Card>
           ) : availableApplications.length === 0 ? (
             <Card className="p-10 sm:p-14 text-center">
-              <Lock className="w-12 h-12 text-text-tertiary mx-auto mb-4" />
-              <h2 className="text-display-xs font-bold text-text-primary mb-2">Leadership applications are closed</h2>
-              <p className="text-body-sm text-text-secondary max-w-md mx-auto">
+              <Lock className="w-12 h-12 text-[#6b6258] mx-auto mb-4" />
+              <h2 className="text-[clamp(1.25rem,2vw,1.55rem)] font-bold text-[#141210] mb-2">Leadership applications are closed</h2>
+              <p className="text-[0.9375rem] text-[#3a3530] max-w-md mx-auto">
                 Please check back when an Executive, Prefect, or Sub-Executive application window opens.
               </p>
             </Card>
           ) : (
             <>
-              <div className="flex flex-wrap border-b border-border mb-8" role="tablist" aria-label="Leadership application type">
+              <div className="flex flex-wrap border-b border-[#cfc9bc] mb-8" role="tablist" aria-label="Leadership application type">
                 {availableApplications.map((type) => (
                   <button
                     key={type}
                     type="button"
                     role="tab"
                     aria-selected={activeApplication === type}
-                    onClick={() => { setActiveApplication(type); setSuccess(false); }}                      className={`flex-1 min-w-40 py-4 px-3 text-center mono-label transition-colors ${
+                    onClick={() => { setActiveApplication(type); setSuccess(false); }}
+                    className={`flex-1 min-w-40 py-4 px-3 text-center font-bold text-[0.9375rem] transition-colors ${
                       activeApplication === type
-                        ? 'border-b-2 border-accent text-text-primary'
-                        : 'text-text-tertiary hover:text-text-secondary'
+                        ? 'border-b-2 border-[#c94030] text-[#141210]'
+                        : 'text-[#6b6258] hover:text-[#3a3530]'
                     }`}
                   >
                     {APPLICATIONS[type].label}
@@ -130,21 +125,21 @@ export default function PortalPage() {
               <Card className="p-6 sm:p-8">
                 {success ? (
                   <motion.div
-                    initial={{ y: 32 }}
-                    animate={{ y: 0 }}
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
                     className="text-center py-12"
                   >
                     <CheckCircle className="w-16 h-16 text-success mx-auto mb-4" />
-                    <h2 className="text-display-xs font-bold text-text-primary mb-2">Application submitted</h2>
-                    <p className="text-body-sm text-text-secondary">Thank you. The ACCRC team will review your application.</p>
-                    <button type="button" onClick={() => setSuccess(false)} className="mt-6 text-accent hover:underline text-body-sm">
+                    <h2 className="text-[clamp(1.25rem,2vw,1.55rem)] font-bold text-[#141210] mb-2">Application submitted</h2>
+                    <p className="text-[0.9375rem] text-[#3a3530]">Thank you. The ACCRC team will review your application.</p>
+                    <button type="button" onClick={() => setSuccess(false)} className="mt-6 text-[#c94030] hover:underline text-[0.9375rem]">
                       Submit another application
                     </button>
                   </motion.div>
                 ) : (
                   <>
-                    <h2 className="text-display-xs font-bold text-text-primary mb-2">{application.label}</h2>
-                    <p className="text-body-sm text-text-secondary mb-8">{application.description}</p>
+                    <h2 className="text-[clamp(1.25rem,2vw,1.55rem)] font-bold text-[#141210] mb-2">{application.label}</h2>
+                    <p className="text-[0.9375rem] text-[#3a3530] mb-8">{application.description}</p>
                     <ApplicationForm type={activeApplication} roles={roles} onSuccess={() => setSuccess(true)} />
                   </>
                 )}

@@ -29,9 +29,11 @@ The access token is used only by `functions/api/facebook-events.ts`; it is never
 
 ## Member registration (club ID + Gmail confirmation)
 
-The Join forms (home page and `/membership/`) post to `functions/api/register.ts`. That Pages Function issues the next club ID (`ACCRC-26-0001`, `ACCRC-26-0002`, …) inside a Firestore transaction, saves the registration under that ID, and emails the member a confirmation with their ID **from the club's Gmail account**. Registering again with the same email re-sends the existing ID instead of issuing a new one.
+The Join forms (home page and `/membership/`) post to `functions/api/register.ts`. That function issues the next club ID (`ACCRC-26-0001`, `ACCRC-26-0002`, …) inside a Firestore transaction, saves the registration under that ID, and emails the member a confirmation with their ID **from the club's Gmail account**. Registering again with the same email re-sends the existing ID instead of issuing a new one.
 
-Add these Cloudflare Pages environment variables (Production and Preview; mark the last two **encrypted**):
+**It runs on Cloudflare Pages only.** On Vercel (accrcbd.vercel.app) `/api/register` does not exist, so the forms fall back to saving the registration straight to Firestore, without a club ID or email — exactly how sign-up worked before. Nothing breaks either way.
+
+To turn it on, host the site on Cloudflare Pages and add these environment variables (Production and Preview; mark the last two **encrypted**):
 
 ```text
 GMAIL_USER=yourclub@gmail.com
@@ -43,11 +45,13 @@ FIREBASE_SERVICE_ACCOUNT={"type":"service_account","project_id":"...", ...}
 2. **Firebase service account:** Firebase console → Project settings → Service accounts → *Generate new private key*. Paste the whole JSON file as the value.
 3. Optional: `GMAIL_FROM_NAME` sets the sender name (default "ACC Robotics Club").
 
-The function runs only on Cloudflare, so `next dev` shows a "could not complete your registration" error on Join. Test on a Preview deployment. Club IDs appear in **Admin → Portal → Membership**.
+Club IDs appear in **Admin → Applications → Membership** and in its CSV export.
 
 ## Firebase security rule update
 
-Deploy the updated `firestore.rules` to Firebase before launch. Membership registrations are now written only by the registration function (the public can no longer create them directly), and the rules reject Executive, Prefect, and Sub-Executive submissions when their respective portal toggle is off.
+Deploy the repository's Firestore and Storage rules with `firebase deploy --only firestore:rules,storage --project <firebase-project-id>`. Only Firebase accounts with the `admin: true` custom claim can manage content or read submitted personal data. Public visitors can read public club content and submit narrowly validated forms, while Executive, Prefect, and Sub-Executive submissions are rejected when their respective portal toggle is off.
+
+Read [SECURITY.md](SECURITY.md) before production deployment. It covers administrator custom claims, App Check, credential rotation, rate limiting, and the Cloudflare/Vercel hosting differences.
 
 ## Deploy to Cloudflare Pages
 

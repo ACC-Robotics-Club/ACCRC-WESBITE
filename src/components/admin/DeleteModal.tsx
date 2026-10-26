@@ -44,9 +44,9 @@ export function DeleteModal({ isOpen, title, description, isDeleting, onConfirm,
       />
 
       {/* Modal */}
-      <div className="relative z-10 w-full max-w-md border border-border bg-[#0b2225] p-6 shadow-2xl sm:p-8">
+      <div className="relative z-10 w-full max-w-md border border-[#cfc9bc] bg-[#f6f0e7] p-6 shadow-2xl sm:p-8">
         <button
-          className="absolute right-4 top-4 text-text-tertiary transition-colors hover:text-text-primary disabled:cursor-not-allowed"
+          className="absolute right-4 top-4 text-[#6b6258] transition-colors hover:text-[#141210] disabled:cursor-not-allowed"
           onClick={onCancel}
           disabled={isDeleting}
           aria-label="Close dialog"
@@ -55,14 +55,14 @@ export function DeleteModal({ isOpen, title, description, isDeleting, onConfirm,
         </button>
 
         <div className="flex items-start gap-4">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center border border-danger/40 bg-danger/10">
-            <AlertTriangle className="h-5 w-5 text-danger" aria-hidden />
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center border border-[#c72c2c]/40 bg-[#c72c2c]/10">
+            <AlertTriangle className="h-5 w-5 text-[#c72c2c]" aria-hidden />
           </div>
           <div>
-            <h2 id="delete-modal-title" className="text-lg font-bold text-text-primary">
+            <h2 id="delete-modal-title" className="text-lg font-bold text-[#141210]">
               {title}
             </h2>
-            <p className="mt-2 text-sm leading-relaxed text-text-secondary">{description}</p>
+            <p className="mt-2 text-sm leading-relaxed text-[#3a3530]">{description}</p>
           </div>
         </div>
 

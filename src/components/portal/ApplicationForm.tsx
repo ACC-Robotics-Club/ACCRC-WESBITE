@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Input, Textarea, Select } from '@/components/ui/Input';
-import { submitApplication } from '@/lib/firestore';
+import { submitApplication } from '@/lib/publicData';
 
 interface ApplicationFormProps {
   type: 'sub-executive' | 'executive' | 'prefect';
@@ -31,8 +31,6 @@ export function ApplicationForm({ type, roles, onSuccess }: ApplicationFormProps
       roleApplyingFor: formData.get('role') as string,
       pastExperience: formData.get('experience') as string,
       visionStatement: formData.get('vision') as string,
-      status: 'pending',
-      submittedAt: new Date(),
     };
 
     try {
@@ -49,13 +47,13 @@ export function ApplicationForm({ type, roles, onSuccess }: ApplicationFormProps
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       {error && (
-        <div className="p-4 border border-danger text-danger bg-danger/10 rounded-md text-body-sm">
+        <div className="p-4 border border-[#c72c2c] text-[#c72c2c] bg-[#c72c2c]/10 rounded-md text-[0.9375rem]">
           {error}
         </div>
       )}
 
       <div>
-        <label htmlFor="name" className="block text-body-sm text-text-secondary mb-2">Full Name</label>
+        <label htmlFor="name" className="block text-[0.9375rem] text-[#3a3530] mb-2">Full Name</label>
         <Input
           type="text"
           id="name"
@@ -67,7 +65,7 @@ export function ApplicationForm({ type, roles, onSuccess }: ApplicationFormProps
       </div>
 
       <div>
-        <label htmlFor="email" className="block text-body-sm text-text-secondary mb-2">Email Address</label>
+        <label htmlFor="email" className="block text-[0.9375rem] text-[#3a3530] mb-2">Email Address</label>
         <Input 
           type="email" 
           id="email" 
@@ -79,7 +77,7 @@ export function ApplicationForm({ type, roles, onSuccess }: ApplicationFormProps
       </div>
 
       <div>
-        <label htmlFor="whatsapp" className="block text-body-sm text-text-secondary mb-2">WhatsApp Number</label>
+        <label htmlFor="whatsapp" className="block text-[0.9375rem] text-[#3a3530] mb-2">WhatsApp Number</label>
         <Input
           type="tel"
           id="whatsapp"
@@ -92,7 +90,7 @@ export function ApplicationForm({ type, roles, onSuccess }: ApplicationFormProps
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
         <div>
-          <label htmlFor="idNumber" className="block text-body-sm text-text-secondary mb-2">ID Number</label>
+          <label htmlFor="idNumber" className="block text-[0.9375rem] text-[#3a3530] mb-2">ID Number</label>
           <Input 
             type="text" 
             id="idNumber" 
@@ -102,7 +100,7 @@ export function ApplicationForm({ type, roles, onSuccess }: ApplicationFormProps
           />
         </div>
         <div>
-          <label htmlFor="section" className="block text-body-sm text-text-secondary mb-2">Section</label>
+          <label htmlFor="section" className="block text-[0.9375rem] text-[#3a3530] mb-2">Section</label>
           <Input 
             type="text" 
             id="section" 
@@ -114,7 +112,7 @@ export function ApplicationForm({ type, roles, onSuccess }: ApplicationFormProps
       </div>
 
       <div>
-        <label htmlFor="role" className="block text-body-sm text-text-secondary mb-2">Role Applying For</label>
+        <label htmlFor="role" className="block text-[0.9375rem] text-[#3a3530] mb-2">Role Applying For</label>
         <Select 
           id="role" 
           name="role" 
@@ -125,7 +123,7 @@ export function ApplicationForm({ type, roles, onSuccess }: ApplicationFormProps
       </div>
 
       <div>
-        <label htmlFor="experience" className="block text-body-sm text-text-secondary mb-2">Past Experience</label>
+        <label htmlFor="experience" className="block text-[0.9375rem] text-[#3a3530] mb-2">Past Experience</label>
         <Textarea 
           id="experience" 
           name="experience" 
@@ -136,7 +134,7 @@ export function ApplicationForm({ type, roles, onSuccess }: ApplicationFormProps
       </div>
 
       <div>
-        <label htmlFor="vision" className="block text-body-sm text-text-secondary mb-2">Vision Statement</label>
+        <label htmlFor="vision" className="block text-[0.9375rem] text-[#3a3530] mb-2">Vision Statement</label>
         <Textarea 
           id="vision" 
           name="vision" 

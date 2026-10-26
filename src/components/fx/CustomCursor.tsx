@@ -17,7 +17,7 @@ export function CustomCursor() {
     const ring = ringRef.current;
     if (!dot || !ring) return;
 
-    if (window.matchMedia('(hover: none), (prefers-reduced-motion: reduce)').matches) {
+    if (window.matchMedia('(hover: none), (pointer: coarse), (prefers-reduced-motion: reduce)').matches) {
       return;
     }
 
@@ -28,7 +28,8 @@ export function CustomCursor() {
     const onMove = (e: MouseEvent) => {
       pointer.x = e.clientX;
       pointer.y = e.clientY;
-      dot.style.transform = `translate(${e.clientX}px, ${e.clientY}px)`;
+      dot.style.transform = `translate3d(${e.clientX}px, ${e.clientY}px, 0)`;
+      if (!raf) raf = requestAnimationFrame(tick);
     };
 
     const onOver = (e: MouseEvent) => {
@@ -42,18 +43,21 @@ export function CustomCursor() {
     const onDown = () => ring.classList.add('is-press');
     const onUp = () => ring.classList.remove('is-press');
 
+    /* The trailing ring only animates while it is catching up; once it has
+       settled the loop stops until the pointer moves again. */
     const tick = () => {
-      ringPos.x += (pointer.x - ringPos.x) * 0.16;
-      ringPos.y += (pointer.y - ringPos.y) * 0.16;
-      ring.style.transform = `translate(${ringPos.x}px, ${ringPos.y}px)`;
-      raf = requestAnimationFrame(tick);
+      const dx = pointer.x - ringPos.x;
+      const dy = pointer.y - ringPos.y;
+      ringPos.x += dx * 0.16;
+      ringPos.y += dy * 0.16;
+      ring.style.transform = `translate3d(${ringPos.x}px, ${ringPos.y}px, 0)`;
+      raf = Math.abs(dx) + Math.abs(dy) > 0.2 ? requestAnimationFrame(tick) : 0;
     };
 
     window.addEventListener('mousemove', onMove, { passive: true });
     window.addEventListener('mouseover', onOver, { passive: true });
     window.addEventListener('mousedown', onDown, { passive: true });
     window.addEventListener('mouseup', onUp, { passive: true });
-    raf = requestAnimationFrame(tick);
 
     return () => {
       window.removeEventListener('mousemove', onMove);

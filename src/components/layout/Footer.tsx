@@ -1,20 +1,26 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { MapPin, ArrowUpRight } from "lucide-react";
+import { MapPin, Mail, ArrowUpRight } from "lucide-react";
 import { FaFacebook, FaInstagram } from "react-icons/fa";
-import { subscribeToPortalConfig, type PortalConfig } from "@/lib/firestore";
+import {
+  subscribeToPortalConfig,
+  type PortalConfig,
+} from "@/lib/publicData";
+import { useFestConfig } from "@/components/fest/FestFlagsProvider";
 import { club } from "@/lib/club";
 import { Marquee } from "@/components/fx/Marquee";
 
 export function Footer() {
-  const [currentYear, setCurrentYear] = useState<number | null>(null);
   const [portalConfig, setPortalConfig] = useState<PortalConfig | null>(null);
-
-  useEffect(() => subscribeToPortalConfig(setPortalConfig), []);
+  /* Shared festival state from the provider in SiteChrome. */
+  const { config: festConfig } = useFestConfig();
 
   useEffect(() => {
-    setCurrentYear(new Date().getFullYear());
+    const unsubscribePortal = subscribeToPortalConfig(setPortalConfig);
+    return () => {
+      unsubscribePortal();
+    };
   }, []);
 
   const leadershipApplicationsOpen = Boolean(
@@ -22,7 +28,7 @@ export function Footer() {
   );
 
   return (
-    <footer className="site-footer bg-ink text-[#F7F5EE]">
+    <footer className="site-footer cv-auto bg-ink text-[#F7F5EE]">
       {/* Tagline marquee */}
       <div className="border-b border-white/10 py-6">
         <Marquee speed={26}>
@@ -38,12 +44,15 @@ export function Footer() {
       </div>
 
       <div className="container-content py-16">
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-12 md:gap-8">
+        <div className="motion-stagger grid grid-cols-1 md:grid-cols-12 gap-12 md:gap-8">
           {/* Brand Column */}
           <div className="md:col-span-5">
             <div className="flex items-center gap-3 mb-5">
               <img
-                src="/accrc-logo.png"
+                src="/accrc-logo-sm.webp"
+                width={48}
+                height={48}
+                decoding="async"
                 alt="ACCRC Logo"
                 className="h-12 w-12 rounded-full object-cover border border-glow/60"
               />
@@ -65,21 +74,22 @@ export function Footer() {
           {/* Quick Links */}
           <div className="md:col-span-3">
             <h4 className="mono-label mb-4 text-glow">Navigation</h4>
-            <ul className="flex flex-col gap-2.5">
+            <ul className="flex flex-col md:gap-2.5">
               {[
                 { href: "/events/", label: "Events" },
                 { href: "/#achievements", label: "Achievements" },
                 { href: "/panels/", label: "Panels" },
+                { href: "/social/", label: "Posts" },
                 { href: "/membership/", label: "Membership" },
                 { href: "/news/", label: "News" },
                 { href: "/about/", label: "About" },
-                { href: "/admin/", label: "Portals" },
+                ...(festConfig?.isLaunched === true ? [{ href: "/fest/", label: "Fest" }] : []),
                 ...(leadershipApplicationsOpen ? [{ href: "/portal/", label: "Leadership" }] : []),
               ].map((link) => (
                 <li key={link.href}>
                   <a
                     href={link.href}
-                    className="group inline-flex items-center gap-1.5 text-body-sm text-white/65 hover:text-glow transition-colors duration-200"
+                    className="group inline-flex min-h-11 items-center gap-1.5 text-body-sm text-white/65 hover:text-glow transition-colors duration-200 md:min-h-0"
                   >
                     {link.label}
                     <ArrowUpRight
@@ -101,12 +111,21 @@ export function Footer() {
                 <MapPin size={16} className="mt-0.5 text-glow/70 shrink-0" />
                 <span>{club.location}</span>
               </li>
+              <li className="flex items-center gap-2.5 text-body-sm text-white/65">
+                <Mail size={16} className="text-glow/70 shrink-0" aria-hidden />
+                <a
+                  href={`mailto:${club.officialEmail}`}
+                  className="inline-flex min-h-11 items-center break-all hover:text-glow transition-colors md:min-h-0"
+                >
+                  {club.officialEmail}
+                </a>
+              </li>
               <li className="text-body-sm text-white/65">
                 <a
                   href={club.socials.instagram}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="hover:text-glow transition-colors"
+                  className="inline-flex min-h-11 items-center hover:text-glow transition-colors md:min-h-0"
                 >
                   Message {club.name} on Instagram
                 </a>
@@ -125,7 +144,7 @@ export function Footer() {
                   aria-label={social.label}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="p-2.5 text-white/60 border border-white/15 rounded-full transition-all duration-200 hover:text-glow hover:border-glow/50 hover:-translate-y-0.5"
+                  className="grid h-11 w-11 place-items-center text-white/60 border border-white/15 rounded-full transition-all duration-200 hover:text-glow hover:border-glow/50 hover:-translate-y-0.5"
                 >
                   <social.icon size={18} />
                 </a>
@@ -144,7 +163,7 @@ export function Footer() {
         {/* Bottom bar */}
         <div className="border-t border-white/10 mt-8 pt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="font-mono text-mono-sm text-white/40">
-            © {currentYear ? `${currentYear} ` : ''}{club.shortName} — {club.name}
+            © 2019 {club.shortName} — {club.name}
           </p>
           <p className="font-mono text-mono-sm text-white/40">
             Dhaka, Bangladesh · Built by the club

@@ -23,9 +23,9 @@ export function EventStatus({ registrationOpensAt, registrationClosesAt }: Event
   return (
     <div className="flex flex-col items-start gap-3">
       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border
-        ${status === 'upcoming' ? 'bg-secondary text-accent border-accent/30' : 
+        ${status === 'upcoming' ? 'bg-[#ede7da] text-[#c94030] border-[#c94030]/30' : 
           status === 'open' ? 'bg-success/10 text-success border-success/30' : 
-          'bg-secondary text-text-tertiary border-border'}
+          'bg-[#ede7da] text-[#6b6258] border-[#cfc9bc]'}
       `}>
         {label}
       </span>
@@ -34,7 +34,7 @@ export function EventStatus({ registrationOpensAt, registrationClosesAt }: Event
       )}
       {status === 'open' && registrationClosesAt && (
         <div>
-          <span className="font-mono text-[10px] tracking-widest text-text-tertiary mb-1 block">CLOSES IN</span>
+          <span className="font-mono text-[10px] tracking-widest text-[#6b6258] mb-1 block">CLOSES IN</span>
           <Countdown targetDate={registrationClosesAt} />
         </div>
       )}

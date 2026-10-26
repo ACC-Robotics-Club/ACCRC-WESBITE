@@ -3,10 +3,10 @@
 import { useEffect, useState } from 'react';
 import { ArrowRight } from 'lucide-react';
 import { Badge } from '@/components/ui/Badge';
-import { subscribeToEvents } from '@/lib/firestore';
+import { subscribeToEvents } from '@/lib/publicData';
 import { getEventStatus, formatCountdown } from '@/lib/utils';
 import { club } from '@/lib/club';
-import type { FirestoreEvent } from '@/lib/firestore';
+import type { FirestoreEvent } from '@/lib/publicData';
 
 export function StatusStrip() {
   const [nextEvent, setNextEvent] = useState<FirestoreEvent | null>(null);
@@ -97,7 +97,7 @@ export function StatusStrip() {
             target="_blank"
             rel="noopener noreferrer"
             aria-label="Visit ACCRC on Facebook"
-            className="group inline-flex items-center gap-1.5 whitespace-nowrap mono-label text-text-primary transition-colors hover:text-accent"
+            className="group -my-3 inline-flex items-center gap-1.5 whitespace-nowrap py-3 mono-label text-text-primary transition-colors hover:text-accent"
           >
             Facebook
             <ArrowRight size={14} className="transition-transform duration-200 group-hover:translate-x-1" aria-hidden />
@@ -107,7 +107,7 @@ export function StatusStrip() {
             target="_blank"
             rel="noopener noreferrer"
             aria-label="Visit ACCRC on Instagram"
-            className="group inline-flex items-center gap-1.5 whitespace-nowrap mono-label text-text-primary transition-colors hover:text-accent"
+            className="group -my-3 inline-flex items-center gap-1.5 whitespace-nowrap py-3 mono-label text-text-primary transition-colors hover:text-accent"
           >
             Instagram
             <ArrowRight size={14} className="transition-transform duration-200 group-hover:translate-x-1" aria-hidden />

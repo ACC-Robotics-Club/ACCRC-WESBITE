@@ -32,9 +32,16 @@
   --color-warning: #D97706;
   --color-danger: #DC2626;
 
+  /* Official-site names, aliased so pages written against them (fest, admin,
+     banners) render in the same palette. */
+  --color-background: #F7F5EE;
+  --color-surface: #EFECE2;
+  --color-surface-alt: #E5E0D5;
+
   /* ── Type ── */
-  --font-display: var(--font-nunito), ui-sans-serif, system-ui, sans-serif;
-  --font-sans: var(--font-nunito), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-nunito), var(--font-hind-siliguri), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-nunito), var(--font-hind-siliguri), ui-sans-serif, system-ui, sans-serif;
+  --font-bangla: var(--font-hind-siliguri), 'Noto Sans Bengali', sans-serif;
   --font-mono: var(--font-spacemono), "Courier New", monospace;
 
   --tracking-display: -0.045em;
@@ -61,7 +68,7 @@
   --text-body-sm--line-height: 1.55;
   --text-body-xs: 0.8125rem;
   --text-body-xs--line-height: 1.5;
-  --text-mono-sm: 0.72rem;
+  --text-mono-sm: 0.75rem;
   --text-mono-sm--line-height: 1.4;
 
   /* ── Motion ── */
@@ -70,6 +77,7 @@
   --animate-pulse-dot: pulse-dot 1.6s ease-in-out infinite;
   --animate-spin-slow: spin 14s linear infinite;
   --animate-blink: blink 3.2s ease-in-out infinite;
+  --animate-bob: bob 2.2s ease-in-out infinite;
 
   @keyframes marquee {
     to { transform: translateX(-50%); }
@@ -85,51 +93,76 @@
   @keyframes blink {
     50% { opacity: 0.15; }
   }
+  @keyframes bob {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(8px); }
+  }
+  @keyframes glow-pulse {
+    0%, 100% { transform: scale(1); opacity: 0.55; }
+    50% { transform: scale(1.2); opacity: 0.85; }
+  }
 }
 
 /* ─── Base ─── */
-* {
-  box-sizing: border-box;
-}
+/* Element defaults live in the base layer. Unlayered rules beat every
+   Tailwind utility regardless of specificity, so `a { color: inherit }` was
+   silently overriding `text-white` on links and `font: inherit` was wiping
+   `font-mono` off buttons. Inside @layer base, utilities win as intended. */
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
 
-html {
-  scroll-behavior: smooth;
-  min-width: 320px;
-}
+  html {
+    scroll-behavior: smooth;
+    min-width: 320px;
+    /* Anchor jumps land below the fixed navbar pill instead of under it. */
+    scroll-padding-top: 6rem;
+  }
 
-body {
-  margin: 0;
-  min-width: 320px;
-  overflow-x: hidden;
-  background: var(--color-primary);
-  color: var(--color-text-primary);
-  font-family: var(--font-sans);
-  -webkit-text-size-adjust: 100%;
-  text-size-adjust: 100%;
-  font-synthesis: none;
-}
+  body {
+    margin: 0;
+    min-width: 320px;
+    /* `clip` (not `hidden`) so the body never becomes a scroll container —
+       that keeps position: sticky working on every browser. */
+    overflow-x: hidden;
+    overflow-x: clip;
+    background: var(--color-primary);
+    color: var(--color-text-primary);
+    font-family: var(--font-sans);
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+    font-synthesis: none;
+    -webkit-tap-highlight-color: transparent;
+  }
 
-img {
-  height: auto;
-  max-width: 100%;
-}
+  img {
+    height: auto;
+    max-width: 100%;
+  }
 
-h1, h2, h3, h4, h5, h6, p, a, button, label {
-  overflow-wrap: anywhere;
-}
+  h1, h2, h3, h4, h5, h6, p, a, button, label {
+    overflow-wrap: break-word;
+  }
 
-a {
-  color: inherit;
-  text-decoration: none;
-}
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
 
-button, input, select, textarea {
-  font: inherit;
-}
+  button, input, select, textarea {
+    font: inherit;
+  }
 
-button, a, input, select, textarea {
-  outline-offset: 4px;
-  outline-color: var(--color-accent);
+  button, a, input, select, textarea {
+    outline-offset: 4px;
+    outline-color: var(--color-accent);
+  }
+
+  /* Removes the 300ms double-tap delay on controls. */
+  a, button, input, select, textarea, label, summary {
+    touch-action: manipulation;
+  }
 }
 
 /* ─── Custom utilities ─── */
@@ -242,7 +275,7 @@ button, a, input, select, textarea {
   height: 30px;
   margin: -15px 0 0 -15px;
 }
-@media (hover: none), (prefers-reduced-motion: reduce) {
+@media (hover: none), (pointer: coarse), (prefers-reduced-motion: reduce) {
   .cursor-dot, .cursor-ring { display: none; }
 }
 
@@ -258,6 +291,344 @@ button, a, input, select, textarea {
   transform-origin: 0 50%;
 }
 
+/* ─── Scroll effects (driven by fx/scrollEngine.ts) ───
+   Each effect receives a single `--p` progress value (0 → 1); the transform is
+   derived from it here. Scrubbed on desktop, a one-shot transition on touch. */
+:root {
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* 2D translate on purpose: a resting translate3d promotes every element to its
+   own GPU layer (~150 here), and re-layerizing them each frame the 3D hand
+   draws was the largest main-thread cost on phones. Elements get a layer only
+   while actually transitioning. */
+.fx-slide > .fx-slide__inner {
+  transform: translate(0, calc(var(--from, 0px) + (var(--to, 0px) - var(--from, 0px)) * var(--p, 0)));
+}
+.fx-slide[data-axis='x'] > .fx-slide__inner {
+  transform: translate(calc(var(--from, 0px) + (var(--to, 0px) - var(--from, 0px)) * var(--p, 0)), 0);
+}
+.fx-slide.is-reveal > .fx-slide__inner {
+  transition: transform 1.1s var(--ease-out-expo) var(--delay, 0s);
+}
+
+.fx-reveal {
+  transform: translate(calc(var(--rx, 0px) * (1 - var(--p, 0))), calc(var(--ry, 0px) * (1 - var(--p, 0))));
+}
+.fx-reveal.is-reveal {
+  transition: transform 0.95s var(--ease-out-expo) var(--delay, 0s);
+}
+
+.fx-parallax > .fx-parallax__inner {
+  transform: translate(0, calc(var(--speed, 0%) * (1 - 2 * var(--p, 0.5))));
+}
+
+.fx-fill > .fx-fill__ink {
+  clip-path: inset(0 calc(100% - 100% * var(--p, 0)) 0 0);
+}
+.fx-fill.is-reveal > .fx-fill__ink {
+  transition: clip-path 1.6s var(--ease-out-soft) 0.1s;
+}
+
+/* Soft rise for cards and panels (fx/RiseIn.tsx). Hidden only once the engine
+   has tagged it `is-reveal`, so content is visible without JavaScript. */
+.fx-rise.is-reveal {
+  opacity: var(--p, 0);
+  transform: translate(0, calc(var(--ry, 36px) * (1 - var(--p, 0))))
+    scale(calc(0.975 + 0.025 * var(--p, 0)));
+  /* Hover colour transitions are listed too, since this rule overrides the
+     card's own transition list. */
+  transition:
+    transform 0.9s var(--ease-out-expo) var(--delay, 0s),
+    opacity 0.55s ease-out var(--delay, 0s),
+    border-color 0.22s ease,
+    background-color 0.22s ease;
+}
+/* Optional inner layer that settles from a slight zoom (portraits). */
+.fx-rise.is-reveal [data-rise-zoom] {
+  transform: scale(calc(1.14 - 0.14 * var(--p, 0)));
+  transition: transform 1.4s var(--ease-out-expo) var(--delay, 0s);
+}
+
+/* Pinned effects (reduced motion, parallax on touch) snap, never animate. */
+.fx-reveal.is-static,
+.fx-slide.is-static.is-reveal > .fx-slide__inner {
+  transition: none;
+}
+
+/* ─── Scroll-timeline effects (compositor-driven) ───
+   Where supported, the hero depth effect and the progress bar are CSS
+   animations tied to the page scroll, so the GPU runs them with zero
+   JavaScript per frame. Hero.tsx / ScrollProgress.tsx fall back to JS
+   elsewhere. Ranges match the JS version: one viewport of scroll. */
+@supports (animation-timeline: scroll()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .hero-depth-content,
+    .hero-depth-hand,
+    .hero-depth-bg,
+    .hero-depth-cue {
+      animation-timing-function: linear;
+      animation-fill-mode: both;
+      animation-timeline: scroll(root block);
+      animation-range: 0 100vh;
+    }
+    .hero-depth-content { animation-name: hero-depth-content; }
+    .hero-depth-hand { animation-name: hero-depth-hand; }
+    .hero-depth-bg { animation-name: hero-depth-bg; }
+    .hero-depth-cue { animation-name: hero-depth-cue; }
+
+    .scroll-progress {
+      animation: scroll-progress-grow linear both;
+      animation-timeline: scroll(root block);
+    }
+  }
+}
+@keyframes hero-depth-content {
+  0% { transform: none; opacity: 1; }
+  90% { opacity: 0.15; }
+  100% { transform: translate3d(0, -80px, 0) scale(0.88); opacity: 0.15; }
+}
+@keyframes hero-depth-hand {
+  0% { transform: none; opacity: 1; }
+  85% { opacity: 0.3; }
+  100% { transform: translate3d(0, 110px, 0) scale(1.14); opacity: 0.3; }
+}
+@keyframes hero-depth-bg {
+  from { transform: none; }
+  to { transform: translate3d(0, 60px, 0); }
+}
+@keyframes hero-depth-cue {
+  0% { opacity: 1; }
+  20%, 100% { opacity: 0; }
+}
+@keyframes scroll-progress-grow {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+
+/* ─── Paused loops ───
+   Looping animations stop while off screen (fx/pauseOffscreenLoops.ts), and
+   everything in the hero stops once the page has slid over it: running
+   animations are re-styled every rendered frame even when unseen. The hero's
+   scroll-linked effects are switched off there too; it is hidden by then. */
+.loop-paused,
+.loop-paused * {
+  animation-play-state: paused !important;
+}
+.hero-depth-root[data-covered] * {
+  animation-play-state: paused !important;
+}
+.hero-depth-root[data-covered] .hero-depth-content,
+.hero-depth-root[data-covered] .hero-depth-hand,
+.hero-depth-root[data-covered] .hero-depth-bg,
+.hero-depth-root[data-covered] .hero-depth-cue {
+  animation: none !important;
+}
+
+/* ─── Skip offscreen sections ───
+   Every frame the 3D hand draws (and every scroll frame) Chrome re-runs its
+   paint/layer pipeline over the whole page; on a budget phone that, not the
+   hand itself, was most of the main-thread time. `content-visibility: auto`
+   lets it skip sections that are off screen.
+
+   The page loads with `cv-measure` on <html>, so the first layout is complete
+   (an initial #hash jump lands exactly) and each section's real height is
+   recorded. SiteChrome then removes the class; from there `auto` keeps those
+   recorded heights, so anchor links and the scrollbar stay accurate. */
+.cv-auto {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 900px;
+}
+html.cv-measure .cv-auto {
+  content-visibility: visible;
+}
+
+/* ─── Entrance & UI motion (CSS only) ───
+   Everything that used to run through a JavaScript animation library is plain
+   CSS: keyframes for things on screen at load, transitions switched on by the
+   scroll engine for the rest. It runs on the compositor and needs no
+   animation code in the page bundle. */
+
+/* Hero copy: staggered rise from first paint (no JavaScript involved). */
+.hero-intro__item {
+  animation: hero-rise 0.8s var(--ease-out-expo) both;
+  animation-delay: calc(0.2s + var(--i, 0) * 0.12s);
+}
+@keyframes hero-rise {
+  from { transform: translateY(34px); opacity: 0; }
+  to { transform: none; opacity: 1; }
+}
+
+/* Decorative blobs pop in. Uses the standalone `scale` property so it
+   combines with their `transform` float animation instead of replacing it. */
+.hero-pop {
+  animation:
+    hero-pop var(--pop-duration, 1.2s) var(--ease-out-soft) var(--pop-delay, 0.5s) both,
+    var(--animate-float-slow);
+}
+.hero-pop:not(.animate-float-slow) {
+  animation: hero-pop var(--pop-duration, 1.2s) var(--ease-out-soft) var(--pop-delay, 0.5s) both;
+}
+@keyframes hero-pop {
+  from { scale: 0; }
+  to { scale: 1; }
+}
+.hero-slide-in {
+  animation: hero-slide-in 1s var(--ease-out-soft) 1.2s both;
+}
+@keyframes hero-slide-in {
+  from { translate: -100px 0; }
+  to { translate: 0 0; }
+}
+
+/* 3D hand fades down into place once mounted. */
+.hero-hand-in {
+  opacity: 0;
+  translate: 0 -40px;
+  transition: opacity 1.2s var(--ease-out-soft), translate 1.2s var(--ease-out-soft);
+}
+.hero-hand-in.is-in {
+  opacity: 1;
+  translate: 0 0;
+}
+
+/* Depth-curtain fallback for browsers without scroll timelines: Hero.tsx sets
+   one --curtain variable (0 → 1) per scroll frame; transforms derive here. */
+.hero-js-depth .hero-depth-content {
+  transform: translateY(calc(-80px * var(--curtain, 0))) scale(calc(1 - 0.12 * var(--curtain, 0)));
+  opacity: calc(1 - 0.85 * min(1, var(--curtain, 0) / 0.9));
+}
+.hero-js-depth .hero-depth-hand {
+  transform: translateY(calc(110px * var(--curtain, 0))) scale(calc(1 + 0.14 * var(--curtain, 0)));
+  opacity: calc(1 - 0.7 * min(1, var(--curtain, 0) / 0.85));
+}
+.hero-js-depth .hero-depth-bg {
+  transform: translateY(calc(60px * var(--curtain, 0)));
+}
+.hero-js-depth .hero-depth-cue {
+  opacity: calc(1 - min(1, var(--curtain, 0) / 0.2));
+}
+
+/* Split-line headings. Intro headings animate from first paint; the rest are
+   switched on by the scroll engine (`is-reveal` + --p). */
+.fx-split--intro .fx-split__line {
+  animation: split-rise 0.85s var(--ease-out-soft) both;
+  animation-delay: calc(var(--split-delay, 0s) + var(--i, 0) * var(--split-stagger, 0.12s));
+}
+@keyframes split-rise {
+  from { transform: translateY(110%) rotate(2.5deg); }
+  to { transform: none; }
+}
+.fx-split.is-reveal .fx-split__line {
+  transform: translateY(calc(110% * (1 - var(--p, 0)))) rotate(calc(2.5deg * (1 - var(--p, 0))));
+  transition: transform 0.85s var(--ease-out-soft)
+    calc(var(--split-delay, 0s) + var(--i, 0) * var(--split-stagger, 0.12s));
+}
+
+/* Fan tags: colour layers sweep in one after another. */
+.fx-fan.is-reveal .fx-fan__layer {
+  transform: translateX(calc(-100% * (1 - var(--p, 0))));
+  transition: transform 0.6s var(--ease-out-soft) var(--layer-delay, 0s);
+}
+
+/* Magnetic buttons settle back with a springy ease. */
+.fx-magnetic {
+  transition: transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Mobile menu: always mounted, toggled by data-open. */
+.mobile-menu-backdrop {
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.25s ease, visibility 0s linear 0.25s;
+}
+.mobile-menu-backdrop[data-open='true'] {
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 0.25s ease;
+}
+.mobile-menu {
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-12px) scale(0.98);
+  transform-origin: top right;
+  transition: opacity 0.2s ease, transform 0.28s var(--ease-out-expo), visibility 0s linear 0.28s;
+}
+.mobile-menu[data-open='true'] {
+  opacity: 1;
+  visibility: visible;
+  transform: none;
+  transition: opacity 0.28s var(--ease-out-expo), transform 0.28s var(--ease-out-expo);
+}
+.mobile-menu__item {
+  opacity: 0;
+  transform: translateX(-24px);
+}
+.mobile-menu[data-open='true'] .mobile-menu__item {
+  opacity: 1;
+  transform: none;
+  transition: opacity 0.35s var(--ease-out-expo), transform 0.35s var(--ease-out-expo), color 0.2s ease;
+  transition-delay: calc(0.05s + var(--i, 0) * 0.03s);
+}
+
+/* Page loader (first visit only). */
+.loader {
+  transition: transform var(--exit, 700ms) cubic-bezier(0.76, 0, 0.24, 1);
+}
+.loader[data-phase='exiting'] {
+  transform: translateY(-101%);
+}
+.loader-fade {
+  animation: loader-fade 0.45s ease both;
+  animation-delay: var(--d, 0s);
+}
+@keyframes loader-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.loader-scan {
+  animation: loader-scan 1.1s ease-in-out both;
+}
+@keyframes loader-scan {
+  from { transform: translateY(-160px); }
+  to { transform: translateY(100vh); }
+}
+.loader-link {
+  stroke-dasharray: 1;
+  animation: loader-draw 0.45s ease-in-out both;
+  animation-delay: var(--d, 0s);
+}
+@keyframes loader-draw {
+  from { stroke-dashoffset: 1; opacity: 0; }
+  to { stroke-dashoffset: 0; opacity: 0.55; }
+}
+.loader-node {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: loader-node 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  animation-delay: var(--d, 0s);
+}
+@keyframes loader-node {
+  from { transform: scale(0); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+.loader-letter {
+  animation: loader-letter 0.5s var(--ease-out-soft) both;
+  animation-delay: var(--d, 0s);
+}
+@keyframes loader-letter {
+  from { transform: translateY(24px); opacity: 0; }
+  to { transform: none; opacity: 1; }
+}
+.loader-rail {
+  animation: loader-rail var(--rail, 1300ms) cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+@keyframes loader-rail {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+
 /* ─── Split-line heading reveal ─── */
 .split-line-mask {
   display: block;
@@ -268,8 +639,15 @@ button, a, input, select, textarea {
 
 /* ─── Tilt cards ─── */
 .tilt-card {
-  transform-style: preserve-3d;
   transition: box-shadow 0.3s ease;
+}
+/* The tilt only reacts to a mouse; on touch screens the 3D rendering context
+   and the glare layer would cost compositing for nothing. */
+@media (hover: hover) and (pointer: fine) {
+  .tilt-card { transform-style: preserve-3d; }
+}
+@media (hover: none), (pointer: coarse) {
+  .tilt-card > .tilt-shine { display: none; }
 }
 .tilt-card > .tilt-shine {
   position: absolute;
@@ -286,13 +664,25 @@ button, a, input, select, textarea {
 }
 .tilt-card:hover > .tilt-shine { opacity: 1; }
 
+/* ─── Launch film ───
+   The grow-into-view scale runs only where scroll effects scrub (desktop).
+   On phones the frame stays still: transforming a video layer while it
+   starts decoding made it stutter there. */
+.is-scrub .film-frame {
+  transform: scale(var(--film-scale, 1));
+  will-change: transform;
+}
+
 /* ─── Marquee ─── */
 .marquee-track {
   display: flex;
   width: max-content;
   animation: var(--animate-marquee);
+  will-change: transform;
 }
-.marquee-track:hover { animation-play-state: paused; }
+@media (hover: hover) {
+  .marquee-track:hover { animation-play-state: paused; }
+}
 
 /* ─── WebGL hero fallback ─── */
 .hero-3d-fallback {
@@ -302,6 +692,13 @@ button, a, input, select, textarea {
     radial-gradient(58% 52% at 26% 30%, rgba(200, 67, 44, 0.08), transparent 68%),
     radial-gradient(45% 45% at 22% 78%, rgba(255, 122, 89, 0.06), transparent 70%),
     radial-gradient(32% 32% at 78% 16%, rgba(200, 67, 44, 0.04), transparent 62%);
+}
+
+/* Soft pulsing orb behind the hand. A radial gradient instead of a CSS blur
+   filter, and keyframes instead of a JS loop, so it costs nothing per frame. */
+.hero-glow-orb {
+  background: radial-gradient(circle, rgba(200, 67, 44, 0.18) 0%, rgba(200, 67, 44, 0.07) 40%, transparent 65%);
+  animation: glow-pulse 4s ease-in-out infinite;
 }
 
 /* ─── Scan-line overlay (subtle CRT effect) ─── */
@@ -339,7 +736,291 @@ button, a, input, select, textarea {
   .marquee-track,
   .animate-float-slow,
   .animate-pulse-dot,
-  .animate-blink {
+  .animate-blink,
+  .animate-bob,
+  .hero-glow-orb {
     animation: none !important;
   }
+  .fx-slide > .fx-slide__inner,
+  .fx-reveal,
+  .fx-parallax > .fx-parallax__inner {
+    transform: none !important;
+    transition: none !important;
+  }
+  .fx-fill > .fx-fill__ink {
+    clip-path: none !important;
+  }
+  .hero-intro__item,
+  .hero-pop,
+  .hero-slide-in,
+  .fx-split--intro .fx-split__line,
+  .loader-fade, .loader-scan, .loader-link, .loader-node, .loader-letter, .loader-rail {
+    animation: none !important;
+  }
+  .fx-split .fx-split__line,
+  .fx-fan .fx-fan__layer {
+    transform: none !important;
+    transition: none !important;
+  }
+  .hero-hand-in { transition: none; }
+}
+
+
+/* ─── Official-site components (fest, event banner) ───
+   Carried over from the official stylesheet; fonts mapped to this theme. */
+.overflow-wrap-anywhere {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.event-banner {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 60;
+  display: flex;
+  align-items: stretch;
+  background: var(--color-ink);
+  border-bottom: 1px solid rgba(200, 67, 44, 0.5);
+  min-height: 44px;
+  animation: bannerSlideDown 320ms var(--ease-out-soft) both;
+}
+@keyframes bannerSlideDown {
+  from { transform: translateY(-100%); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+.event-banner-inner {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 1.5rem;
+  color: var(--color-primary);
+  text-decoration: none;
+  min-width: 0;
+  transition: background 160ms ease;
+}
+.event-banner-inner:hover,
+.event-banner-inner:focus-visible {
+  background: rgba(200, 67, 44, 0.12);
+  outline: none;
+}
+.event-banner-inner > svg {
+  color: var(--color-accent);
+  flex: 0 0 auto;
+}
+.event-banner-text {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.3rem 0.65rem;
+  min-width: 0;
+}
+.event-banner-label {
+  color: var(--color-glow);
+  font: 700 0.72rem/1 var(--font-mono);
+  letter-spacing: 0.12em;
+  flex: 0 0 auto;
+}
+.event-banner-name {
+  color: var(--color-primary);
+  font-size: 0.875rem;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.event-banner-date {
+  color: #a8a29e;
+  font: 400 0.75rem/1 var(--font-mono);
+  flex: 0 0 auto;
+}
+.event-banner-cta {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--color-glow);
+  font: 700 0.72rem/1 var(--font-mono);
+  letter-spacing: 0.1em;
+  margin-left: auto;
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+.event-banner-close {
+  background: transparent;
+  border: none;
+  color: #a8a29e;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  padding: 0 1rem;
+  transition: color 160ms ease;
+  flex: 0 0 auto;
+}
+.event-banner-close:hover,
+.event-banner-close:focus-visible {
+  color: var(--color-primary);
+  outline: none;
+}
+@media (max-width: 600px) {
+  .event-banner-cta { display: none; }
+  .event-banner-date { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .event-banner { animation: none; }
+}
+
+/* Juicer social feed (components/events/SocialFeed.tsx): match the site's
+   cards instead of Juicer's default look. */
+@layer components {
+  .social-feed .juicer-feed { margin: 0; padding: 0; background: transparent; font-family: inherit; }
+  .social-feed .juicer-feed .feed-item {
+    border: 2px solid var(--color-border-strong);
+    border-radius: 1.25rem;
+    overflow: hidden;
+    background: var(--color-secondary);
+  }
+  .social-feed .juicer-feed h1.referral { font-size: 0.7rem; opacity: 0.6; }
+}
+
+/* Registration confirmation entrance (components/membership/RegistrationSuccess). */
+@keyframes success-rise {
+  from { transform: translateY(32px); opacity: 0; }
+  to { transform: none; opacity: 1; }
+}
+.success-rise { animation: success-rise 420ms cubic-bezier(0.22, 1, 0.36, 1) both; }
+@media (prefers-reduced-motion: reduce) {
+  .success-rise { animation: none; }
+}
+
+/* ═══ Motion system (site-wide) ═══════════════════════════════════════════
+   Everything here animates transform and opacity only, so the browser runs it
+   on the compositor: no JavaScript per frame, nothing for phones to lag on.
+   Browsers without a feature simply show the content, unanimated. */
+
+/* ─── Page transitions ───
+   Navigation between pages is a full page load, so the browser's own
+   cross-document View Transitions animate it: the old page fades back and
+   away, the new one rises in. The header keeps its own name, so it stays put
+   instead of animating with the page. */
+@media (prefers-reduced-motion: no-preference) {
+  @view-transition {
+    navigation: auto;
+  }
+}
+.site-header {
+  view-transition-name: site-header;
+}
+::view-transition-old(root) {
+  animation: vt-out 260ms cubic-bezier(0.4, 0, 1, 1) both;
+}
+::view-transition-new(root) {
+  animation: vt-in 520ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+::view-transition-group(site-header) {
+  animation-duration: 0s;
+}
+@keyframes vt-out {
+  to { opacity: 0; transform: translateY(-14px) scale(0.985); }
+}
+@keyframes vt-in {
+  from { opacity: 0; transform: translateY(26px); }
+}
+
+/* ─── Entrance reveals ───
+   `motion-rise` blocks, the children of `motion-stagger` and Instagram posts in
+   a `motion-feed` rise in once as they enter (fx/autoReveal.ts, using the
+   .fx-rise transition). `motion-zoom` settles an image from a gentle zoom
+   on load. */
+@media (prefers-reduced-motion: no-preference) {
+  .motion-zoom img {
+    animation: motion-zoom 1.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+}
+@keyframes motion-zoom {
+  from { transform: scale(1.1); }
+  to { transform: none; }
+}
+
+/* ─── Intro for short pages (error pages, details) ───
+   A one-time staggered rise on load, for pages whose content is all on the
+   first screen. */
+@media (prefers-reduced-motion: no-preference) {
+  .motion-intro > * {
+    animation: motion-intro 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+    animation-delay: calc(var(--intro-i, 0) * 70ms + 80ms);
+  }
+  .motion-intro > :nth-child(1) { --intro-i: 0; }
+  .motion-intro > :nth-child(2) { --intro-i: 1; }
+  .motion-intro > :nth-child(3) { --intro-i: 2; }
+  .motion-intro > :nth-child(4) { --intro-i: 3; }
+  .motion-intro > :nth-child(5) { --intro-i: 4; }
+  .motion-intro > :nth-child(6) { --intro-i: 5; }
+  .motion-intro > :nth-child(n + 7) { --intro-i: 6; }
+}
+@keyframes motion-intro {
+  from { opacity: 0; transform: translateY(28px); }
+  to { opacity: 1; transform: none; }
+}
+
+/* ─── Micro-interactions (mouse only) ─── */
+@media (hover: hover) and (pointer: fine) {
+  /* Nav links: an underline sweeps in from the left. */
+  .nav-sweep {
+    position: relative;
+  }
+  .nav-sweep::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -6px;
+    height: 2px;
+    background: var(--color-accent);
+    transform: scaleX(0);
+    transform-origin: right;
+    transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .nav-sweep:hover::after {
+    transform: scaleX(1);
+    transform-origin: left;
+  }
+
+  /* Primary buttons: a light sheen sweeps across on hover. */
+  .btn-sheen {
+    position: relative;
+    overflow: hidden;
+    isolation: isolate;
+  }
+  .btn-sheen::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: linear-gradient(105deg, transparent 30%, rgba(255, 255, 255, 0.28) 50%, transparent 70%);
+    transform: translateX(-120%);
+    transition: transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+    pointer-events: none;
+  }
+  .btn-sheen:hover::before {
+    transform: translateX(120%);
+  }
+}
+
+/* Lenis smooth scrolling (fx/smoothScroll.ts, desktop only). */
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+.lenis.lenis-stopped {
+  overflow: hidden;
 }

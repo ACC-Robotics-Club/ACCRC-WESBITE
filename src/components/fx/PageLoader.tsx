@@ -1,7 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { motion, useReducedMotion } from 'framer-motion';
+import { useEffect, useState, type CSSProperties } from 'react';
 
 /**
  * Page-entry loader — a "blueprint assembling" sequence.
@@ -16,14 +15,10 @@ import { motion, useReducedMotion } from 'framer-motion';
  */
 
 const MARK = 'ACCRC';
-const DURATION_MS = 1900;
-const EXIT_MS = 850;
-
-/* Module state lives for one full page load: a reload plays the loader again,
-   but returning to the public site from /admin (a client-side remount) doesn't.
-   It is set only once the sequence finishes, so React Strict Mode's double
-   effect run in dev can't mark it played before anyone has seen it. */
-let playedThisLoad = false;
+/* Kept short: on a phone every extra moment behind the overlay reads as lag.
+   Under a second in and out, so the intro is a flourish, not a wait. */
+const DURATION_MS = 650;
+const EXIT_MS = 450;
 
 /** Deterministic blueprint geometry — no randomness, so SSR and client match. */
 const NODES = [
@@ -43,7 +38,10 @@ const LINKS = [
 ];
 
 export function PageLoader() {
-  const reduceMotion = useReducedMotion();
+  const [reduceMotion, setReduceMotion] = useState(false);
+  useEffect(() => {
+    setReduceMotion(window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  }, []);
 
   /* One state machine instead of several cascading effects: 'loading' →
      'exiting' → 'done'. Kept deliberately flat so there is no way for the
@@ -51,18 +49,13 @@ export function PageLoader() {
   const [phase, setPhase] = useState<'loading' | 'exiting' | 'done'>('loading');
 
   useEffect(() => {
-    if (playedThisLoad) {
-      setPhase('done');
-      return;
-    }
-
+    /* Plays on every full page load. The overlay is mounted once per app shell,
+       so in-app route changes never replay it — only real loads (first visit,
+       reload, or a new tab) do. */
     const leaveTimer = window.setTimeout(() => setPhase('exiting'), DURATION_MS);
-    /* Hard failsafe: the exit animation is 0.8s, so unmount with headroom even
+    /* Hard failsafe: exit is 0.45s, so unmount with headroom even
        if the animation never fires (background tab, reduced-motion edge cases). */
-    const removeTimer = window.setTimeout(() => {
-      playedThisLoad = true;
-      setPhase('done');
-    }, DURATION_MS + EXIT_MS + 400);
+    const removeTimer = window.setTimeout(() => setPhase('done'), DURATION_MS + EXIT_MS + 400);
 
     return () => {
       window.clearTimeout(leaveTimer);
@@ -70,16 +63,9 @@ export function PageLoader() {
     };
   }, []);
 
-  // Lock the page only while the overlay is actually on screen.
-  useEffect(() => {
-    if (phase === 'done' || reduceMotion) return;
-    const previous = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    return () => {
-      document.body.style.overflow = previous;
-    };
-  }, [phase, reduceMotion]);
-
+  /* The overlay sits above the page but never locks it: the page is already
+     rendered underneath, so visitors can start scrolling and reading — the
+     intro is a flourish, not a gate. */
   if (phase === 'done') return null;
 
   if (reduceMotion) {
@@ -92,17 +78,20 @@ export function PageLoader() {
     );
   }
 
+  /* Every piece animates with CSS keyframes (.loader-* in globals.css), so the
+     intro runs on the compositor while the page boots underneath it. */
+  const d = (seconds: number) => ({ '--d': `${seconds}s` }) as CSSProperties;
+
   return (
-    <motion.div
-      className="fixed inset-0 z-[100] overflow-hidden bg-primary"
+    <div
+      className="loader pointer-events-none fixed inset-0 z-[100] overflow-hidden bg-primary"
+      data-phase={phase}
+      style={{ '--exit': `${EXIT_MS}ms` } as CSSProperties}
       aria-hidden
-      initial={{ y: 0 }}
-      animate={phase === 'exiting' ? { y: '-101%' } : { y: '0%' }}
-      transition={phase === 'exiting' ? { duration: 0.8, ease: [0.76, 0, 0.24, 1] } : { duration: 0.2 }}
     >
       {/* Blueprint grid that draws itself in */}
-      <motion.div
-        className="absolute inset-0"
+      <div
+        className="loader-fade absolute inset-0"
         style={{
           backgroundImage:
             'linear-gradient(rgba(28,25,23,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(28,25,23,0.05) 1px, transparent 1px)',
@@ -110,18 +99,10 @@ export function PageLoader() {
           maskImage: 'radial-gradient(70% 70% at 50% 50%, #000 20%, transparent 100%)',
           WebkitMaskImage: 'radial-gradient(70% 70% at 50% 50%, #000 20%, transparent 100%)',
         }}
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.5 }}
       />
 
       {/* Scanning highlight */}
-      <motion.div
-        className="absolute inset-x-0 h-32 bg-gradient-to-b from-transparent via-glow/20 to-transparent"
-        initial={{ y: -160 }}
-        animate={{ y: '100vh' }}
-        transition={{ duration: 1.5, ease: 'easeInOut' }}
-      />
+      <div className="loader-scan absolute inset-x-0 h-32 bg-gradient-to-b from-transparent via-glow/20 to-transparent" />
 
       <div className="relative grid h-full place-items-center">
         <div className="relative w-[min(78vw,420px)]">
@@ -132,8 +113,11 @@ export function PageLoader() {
             aria-hidden
           >
             {LINKS.map(([a, b], i) => (
-              <motion.line
+              <line
                 key={`link-${i}`}
+                className="loader-link"
+                style={d(0.15 + i * 0.05)}
+                pathLength={1}
                 x1={NODES[a].x}
                 y1={NODES[a].y}
                 x2={NODES[b].x}
@@ -141,22 +125,17 @@ export function PageLoader() {
                 stroke="var(--color-accent)"
                 strokeWidth="0.4"
                 strokeLinecap="round"
-                initial={{ pathLength: 0, opacity: 0 }}
-                animate={{ pathLength: 1, opacity: 0.55 }}
-                transition={{ duration: 0.5, delay: 0.25 + i * 0.07, ease: 'easeInOut' }}
               />
             ))}
             {NODES.map((n, i) => (
-              <motion.circle
+              <circle
                 key={`node-${i}`}
+                className="loader-node"
+                style={d(0.1 + i * 0.04)}
                 cx={n.x}
                 cy={n.y}
                 r="1.4"
                 fill="var(--color-accent)"
-                initial={{ scale: 0, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                transition={{ duration: 0.3, delay: 0.2 + i * 0.05, ease: 'backOut' }}
-                style={{ transformOrigin: `${n.x}px ${n.y}px` }}
               />
             ))}
           </svg>
@@ -164,39 +143,25 @@ export function PageLoader() {
           {/* Wordmark, letters assembling in */}
           <div className="relative flex items-center justify-center gap-[0.06em]">
             {MARK.split('').map((char, i) => (
-              <motion.span
+              <span
                 key={`${char}-${i}`}
-                className="font-display text-5xl font-black leading-none text-ink md:text-6xl"
-                initial={{ y: 24, opacity: 0, filter: 'blur(6px)' }}
-                animate={{ y: 0, opacity: 1, filter: 'blur(0px)' }}
-                transition={{ duration: 0.5, delay: 0.45 + i * 0.07, ease: [0.22, 1, 0.36, 1] }}
+                className="loader-letter font-display text-5xl font-black leading-none text-ink md:text-6xl"
+                style={d(0.25 + i * 0.06)}
               >
                 {char}
-              </motion.span>
+              </span>
             ))}
           </div>
 
-          {/* Status readout */}
-          <motion.p
-            className="mono-label relative mt-7 text-center text-text-tertiary"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.4, delay: 0.95 }}
-          >
-            Initialising systems
-          </motion.p>
-
           {/* Progress rail */}
-          <div className="relative mt-4 h-px w-full overflow-hidden bg-border">
-            <motion.div
-              className="absolute inset-y-0 left-0 bg-accent"
-              initial={{ width: '0%' }}
-              animate={{ width: '100%' }}
-              transition={{ duration: DURATION_MS / 1000, ease: [0.4, 0, 0.2, 1] }}
+          <div className="relative mt-8 h-px w-full overflow-hidden bg-border">
+            <div
+              className="loader-rail absolute inset-0 origin-left bg-accent"
+              style={{ '--rail': `${DURATION_MS}ms` } as CSSProperties}
             />
           </div>
         </div>
       </div>
-    </motion.div>
+    </div>
   );
 }

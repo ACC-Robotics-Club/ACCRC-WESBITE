@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { motion } from 'framer-motion';
+
 import { Check, Copy, MailCheck, MailWarning } from 'lucide-react';
 import type { RegistrationResult } from '@/lib/registerMember';
 
@@ -19,12 +19,28 @@ export function RegistrationSuccess({ result, email }: { result: RegistrationRes
     }
   };
 
+  if (result.status === 'received') {
+    return (
+      <div
+        className="success-rise flex flex-col gap-3 rounded-3xl border-2 border-border-strong bg-tertiary/50 p-8 sm:p-10"
+        role="status"
+      >
+        <span className="grid h-14 w-14 place-items-center rounded-2xl bg-accent text-white" aria-hidden>
+          <Check size={26} />
+        </span>
+        <h3 className="mt-2 font-display text-display-xs font-extrabold text-ink">Application received.</h3>
+        <p className="text-body-sm text-text-secondary">
+          Thanks for joining ACCRC. We&apos;ll review your registration and reach out at{' '}
+          <strong className="text-ink">{email}</strong>.
+        </p>
+      </div>
+    );
+  }
+
   if (result.status === 'existing') {
     return (
-      <motion.div
-        initial={{ y: 32 }}
-        animate={{ y: 0 }}
-        className="flex flex-col gap-3 rounded-3xl border-2 border-border-strong bg-tertiary/50 p-8 sm:p-10"
+      <div
+        className="success-rise flex flex-col gap-3 rounded-3xl border-2 border-border-strong bg-tertiary/50 p-8 sm:p-10"
         role="status"
       >
         <span className="grid h-14 w-14 place-items-center rounded-2xl bg-accent text-white" aria-hidden>
@@ -36,15 +52,13 @@ export function RegistrationSuccess({ result, email }: { result: RegistrationRes
             ? <>We&apos;ve re-sent your club ID to <strong className="text-ink">{email}</strong>. Check your inbox (and the spam folder).</>
             : 'This email is already registered, but we could not re-send your club ID right now. Please contact the club on Facebook.'}
         </p>
-      </motion.div>
+      </div>
     );
   }
 
   return (
-    <motion.div
-      initial={{ y: 32 }}
-      animate={{ y: 0 }}
-      className="flex flex-col gap-4 rounded-3xl border-2 border-border-strong bg-tertiary/50 p-8 sm:p-10"
+    <div
+      className="success-rise flex flex-col gap-4 rounded-3xl border-2 border-border-strong bg-tertiary/50 p-8 sm:p-10"
       role="status"
     >
       <p className="mono-label text-accent">Registration confirmed</p>
@@ -76,6 +90,6 @@ export function RegistrationSuccess({ result, email }: { result: RegistrationRes
           </>
         )}
       </p>
-    </motion.div>
+    </div>
   );
 }

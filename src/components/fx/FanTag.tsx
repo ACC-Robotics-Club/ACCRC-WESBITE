@@ -1,12 +1,16 @@
 'use client';
 
-import { motion } from 'framer-motion';
-import type { ReactNode } from 'react';
+import { useEffect, useRef, type CSSProperties, type ReactNode } from 'react';
+import { track } from './scrollEngine';
 
 /**
  * Layered "fan" tag — a pill badge that reveals through multiple colored layers
  * in sequence, inspired by Mind Robotics' heading tags. Each layer slides in
  * with a cascading delay, creating a rich, textured reveal.
+ *
+ * CSS transitions triggered by the shared scroll engine; the layers sit in
+ * place until the engine registers the tag, so it is never hidden without
+ * JavaScript.
  */
 export function FanTag({
   children,
@@ -25,6 +29,13 @@ export function FanTag({
   delay?: number;
   size?: 'sm' | 'md' | 'lg';
 }) {
+  const ref = useRef<HTMLSpanElement>(null);
+
+  useEffect(() => {
+    if (!ref.current) return;
+    return track(ref.current, { offset: ['start 1', 'start 0'], reveal: true });
+  }, []);
+
   const sizeClasses = {
     sm: 'h-8 px-4 text-sm',
     md: 'h-10 px-5 text-base',
@@ -33,65 +44,35 @@ export function FanTag({
     lg: 'h-[2.3em] px-[0.85em] text-[0.5em] leading-none',
   };
 
+  const layerStyle = (color: string, i: number) =>
+    ({ backgroundColor: color, '--layer-delay': `${delay + i * 0.08}s` }) as CSSProperties;
+
   return (
-    <motion.span
-      className={`relative inline-flex items-center overflow-hidden rounded-full font-display font-black ${sizeClasses[size]} ${className}`}
-      initial="hidden"
-      whileInView="visible"
-      viewport={{ once: true, amount: 0.5, margin: '0px 0px -5% 0px' }}
+    <span
+      ref={ref}
+      className={`fx-fan relative inline-flex items-center overflow-hidden rounded-full font-display font-black ${sizeClasses[size]} ${className}`}
     >
       {/* Base (grey) background */}
-      <span
-        className="absolute inset-0 rounded-full"
-        style={{ backgroundColor: 'var(--color-tertiary)' }}
-        aria-hidden="true"
-      />
+      <span className="absolute inset-0 rounded-full" style={{ backgroundColor: 'var(--color-tertiary)' }} aria-hidden="true" />
 
       {/* Cascading colour layers */}
       {layers.map((color, i) => (
-        <motion.span
-          key={i}
-          className="absolute inset-0 rounded-full"
-          style={{ backgroundColor: color }}
-          aria-hidden="true"
-          variants={{
-            hidden: { x: '-100%' },
-            visible: {
-              x: '0%',
-              transition: {
-                duration: 0.6,
-                delay: delay + i * 0.08,
-                ease: [0.22, 1, 0.36, 1],
-              },
-            },
-          }}
-        />
+        <span key={i} className="fx-fan__layer absolute inset-0 rounded-full" style={layerStyle(color, i)} aria-hidden="true" />
       ))}
 
       {/* Final layer with text */}
-      <motion.span
-        className="absolute inset-0 flex items-center justify-center rounded-full"
-        style={{ backgroundColor: bgColor, color: textColor }}
+      <span
+        className="fx-fan__layer absolute inset-0 flex items-center justify-center rounded-full"
+        style={{ ...layerStyle(bgColor, layers.length), color: textColor }}
         aria-hidden="true"
-        variants={{
-          hidden: { x: '-100%' },
-          visible: {
-            x: '0%',
-            transition: {
-              duration: 0.6,
-              delay: delay + layers.length * 0.08,
-              ease: [0.22, 1, 0.36, 1],
-            },
-          },
-        }}
       >
         <span className="whitespace-nowrap tracking-tight">{children}</span>
-      </motion.span>
+      </span>
 
-      {/* Visible but invisible text for layout sizing */}
+      {/* Invisible copy for layout sizing */}
       <span className="relative whitespace-nowrap tracking-tight opacity-0" aria-hidden="true">
         {children}
       </span>
-    </motion.span>
+    </span>
   );
 }

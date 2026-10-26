@@ -61,11 +61,29 @@ export async function readFacebookFeed(): Promise<{
   events: FacebookEvent[];
   posts: FacebookPost[];
 }> {
+  /* The endpoint is a Cloudflare Pages Function; on hosts without it (Vercel)
+     it 404s. Remember that for the session so it is requested at most once. */
+  const MISSING_KEY = "accrc-fb-feed-missing";
+  let knownMissing = false;
+  try {
+    knownMissing = sessionStorage.getItem(MISSING_KEY) === "1";
+  } catch {
+    // Storage unavailable (private mode); just make the request.
+  }
+  if (knownMissing) throw new Error("Facebook events are unavailable");
+
   const response = await fetch("/api/facebook-events", {
     headers: { Accept: "application/json" },
   });
 
   if (!response.ok) {
+    if (response.status === 404) {
+      try {
+        sessionStorage.setItem(MISSING_KEY, "1");
+      } catch {
+        // Storage unavailable; the request simply repeats next visit.
+      }
+    }
     throw new Error("Facebook events are unavailable");
   }
 

@@ -19,8 +19,8 @@ export function getEventStatus(
 
   if (!registrationOpensAt || !registrationClosesAt) {
     return {
-      status: "closed",
-      label: "DETAILS COMING SOON",
+      status: "open",
+      label: "REGISTRATION OPEN",
     };
   }
 

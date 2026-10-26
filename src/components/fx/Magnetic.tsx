@@ -1,8 +1,12 @@
 'use client';
 
 import { useRef, type ReactNode } from 'react';
-import { motion, useMotionValue, useSpring } from 'framer-motion';
 
+/**
+ * Pulls its child gently toward the mouse. Mouse only — touch screens get a
+ * plain wrapper. A CSS transition supplies the springy settle, so there is no
+ * animation loop running in JavaScript.
+ */
 export function Magnetic({
   children,
   strength = 0.35,
@@ -13,33 +17,28 @@ export function Magnetic({
   className?: string;
 }) {
   const ref = useRef<HTMLDivElement>(null);
-  const x = useMotionValue(0);
-  const y = useMotionValue(0);
-  const springX = useSpring(x, { stiffness: 180, damping: 14, mass: 0.3 });
-  const springY = useSpring(y, { stiffness: 180, damping: 14, mass: 0.3 });
 
   const handleMove = (e: React.MouseEvent) => {
     const el = ref.current;
-    if (!el || window.matchMedia('(hover: none)').matches) return;
+    if (!el || !window.matchMedia('(hover: hover) and (pointer: fine)').matches) return;
     const rect = el.getBoundingClientRect();
-    x.set((e.clientX - rect.left - rect.width / 2) * strength);
-    y.set((e.clientY - rect.top - rect.height / 2) * strength);
+    const x = (e.clientX - rect.left - rect.width / 2) * strength;
+    const y = (e.clientY - rect.top - rect.height / 2) * strength;
+    el.style.transform = `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px)`;
   };
 
   const reset = () => {
-    x.set(0);
-    y.set(0);
+    if (ref.current) ref.current.style.transform = '';
   };
 
   return (
-    <motion.div
+    <div
       ref={ref}
-      className={`inline-block ${className}`}
-      style={{ x: springX, y: springY }}
+      className={`fx-magnetic inline-block ${className}`}
       onMouseMove={handleMove}
       onMouseLeave={reset}
     >
       {children}
-    </motion.div>
+    </div>
   );
 }

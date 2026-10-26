@@ -42,6 +42,9 @@ function json(body: unknown, init?: ResponseInit) {
     ...init,
     headers: {
       "Cache-Control": "public, max-age=300, s-maxage=900",
+      "Content-Type": "application/json; charset=utf-8",
+      "Referrer-Policy": "no-referrer",
+      "X-Content-Type-Options": "nosniff",
       ...(init?.headers ?? {}),
     },
   });
@@ -63,8 +66,10 @@ export const onRequestGet = async ({ env }: PagesContext): Promise<Response> => 
     return json({ events: [], posts: [], configured: false });
   }
 
-  const version = env.FACEBOOK_GRAPH_API_VERSION || "v24.0";
-  const base = `https://graph.facebook.com/${version}/${env.FACEBOOK_PAGE_ID}`;
+  const configuredVersion = env.FACEBOOK_GRAPH_API_VERSION || "v24.0";
+  const version = /^v\d+\.\d+$/.test(configuredVersion) ? configuredVersion : "v24.0";
+  const pageId = encodeURIComponent(env.FACEBOOK_PAGE_ID);
+  const base = `https://graph.facebook.com/${version}/${pageId}`;
   const token = env.FACEBOOK_PAGE_ACCESS_TOKEN;
 
   const read = async <T>(path: string, fields: string, limit: number) => {
