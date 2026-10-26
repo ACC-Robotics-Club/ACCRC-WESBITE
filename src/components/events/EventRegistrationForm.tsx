@@ -8,6 +8,22 @@ import { DEFAULT_EVENT_FORM_FIELDS, type FormField } from '@/lib/firestore';
 import { CheckCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
 
+/** Per-column limits from validEventRegistration in firestore.rules. */
+const COLUMN_LIMITS = {
+  name: 100,
+  email: 254,
+  phone: 32,
+  classSection: 80,
+  rollNumber: 80,
+  areaOfInterest: 2000,
+  motivation: 20000,
+};
+
+/** Same check firestore.rules applies to the email column. */
+const EMAIL_PATTERN = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
+
+const clip = (value: string, maximum: number) => value.trim().slice(0, maximum).trim();
+
 /**
  * The event's registration form, rendered from the questions the admin chose
  * in the events portal (`event.formFields`). Missing/empty list keeps the
@@ -62,18 +78,23 @@ export function EventRegistrationForm({
       const emailField = fields.find((f) => f.type === 'email');
       const phoneField = fields.find((f) => f.type === 'tel');
 
+      const email = (findValue('std-email', 'email') || (emailField ? (answers[emailField.id] || '') : '')).trim();
+
       await submitRegistration({
         type: 'event',
         eventId,
         /* Keep the shared columns populated when the admin kept standard
-           questions, so the events portal's table works out of the box. */
-        name: name || 'Event registration',
-        email: (findValue('std-email', 'email') || (emailField ? (answers[emailField.id] || '') : '')).trim() || '',
-        phone: (findValue('std-phone', 'phone', 'mobile') || (phoneField ? (answers[phoneField.id] || '') : '')).trim() || '',
-        classSection: findValue('std-class', 'class', 'section') || '',
-        rollNumber: findValue('std-roll', 'roll') || '',
-        areaOfInterest: findValue('std-interest', 'interest', 'area') || '',
-        motivation: findValue('std-motivation', 'motivation', 'why') || '',
+           questions, so the events portal's table works out of the box.
+           Label matching can pick up any answer, so each column is clipped
+           to its limit in firestore.rules; the full answer is always kept
+           in `answers` below. */
+        name: clip(name, COLUMN_LIMITS.name) || 'Event registration',
+        email: EMAIL_PATTERN.test(email) && email.length <= COLUMN_LIMITS.email ? email : '',
+        phone: clip(findValue('std-phone', 'phone', 'mobile') || (phoneField ? (answers[phoneField.id] || '') : ''), COLUMN_LIMITS.phone),
+        classSection: clip(findValue('std-class', 'class', 'section'), COLUMN_LIMITS.classSection),
+        rollNumber: clip(findValue('std-roll', 'roll'), COLUMN_LIMITS.rollNumber),
+        areaOfInterest: clip(findValue('std-interest', 'interest', 'area'), COLUMN_LIMITS.areaOfInterest),
+        motivation: clip(findValue('std-motivation', 'motivation', 'why'), COLUMN_LIMITS.motivation),
         /* Every answer, including the ones above plus custom questions. */
         answers: fields.map((f) => ({ id: f.id, label: f.label, value: answers[f.id] || '' })),
       } as Parameters<typeof submitRegistration>[0]);

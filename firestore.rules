@@ -54,7 +54,7 @@ service cloud.firestore {
         data.type == 'membership' &&
         isShortText(data.name, 100) && isEmail(data.email) &&
         isShortText(data.whatsapp, 32) && isShortText(data.classSection, 80) &&
-        isShortText(data.collegeId, 80) && isShortText(data.motivation, 2000) &&
+        isShortText(data.collegeId, 80) && isShortText(data.motivation, 20000) &&
         data.createdAt is timestamp;
     }
 
@@ -75,8 +75,8 @@ service cloud.firestore {
         (!data.keys().hasAny(['phone']) || isOptionalText(data.phone, 32)) &&
         (!data.keys().hasAny(['classSection']) || isOptionalText(data.classSection, 80)) &&
         (!data.keys().hasAny(['rollNumber']) || isOptionalText(data.rollNumber, 80)) &&
-        (!data.keys().hasAny(['areaOfInterest']) || isOptionalText(data.areaOfInterest, 200)) &&
-        (!data.keys().hasAny(['motivation']) || isOptionalText(data.motivation, 2000)) &&
+        (!data.keys().hasAny(['areaOfInterest']) || isOptionalText(data.areaOfInterest, 2000)) &&
+        (!data.keys().hasAny(['motivation']) || isOptionalText(data.motivation, 20000)) &&
         (!data.keys().hasAny(['answers']) || (data.answers is list && data.answers.size() <= 200)) &&
         data.createdAt is timestamp;
     }
@@ -118,8 +118,8 @@ service cloud.firestore {
         data.type in ['executive', 'prefect', 'sub-executive'] &&
         isShortText(data.name, 100) && isEmail(data.email) &&
         isShortText(data.whatsapp, 32) && isShortText(data.idNumber, 80) &&
-        isShortText(data.section, 80) && isShortText(data.pastExperience, 3000) &&
-        isShortText(data.visionStatement, 3000) && isShortText(data.roleApplyingFor, 100) &&
+        isShortText(data.section, 80) && isShortText(data.pastExperience, 20000) &&
+        isShortText(data.visionStatement, 20000) && isShortText(data.roleApplyingFor, 100) &&
         data.createdAt is timestamp;
     }
 

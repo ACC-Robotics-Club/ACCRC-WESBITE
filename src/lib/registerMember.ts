@@ -21,8 +21,8 @@ export type RegistrationResult =
  * Registers a new member through the /api/register function, which issues
  * the club ID and emails the confirmation from the club's Gmail.
  *
- * That function runs on Cloudflare Pages. Where it isn't deployed (on Vercel
- * the path is a plain 404), the registration is saved straight to Firestore
+ * The function runs on both Cloudflare Pages and Vercel. Where it isn't
+ * deployed or configured, the registration is saved straight to Firestore
  * as before, without a club ID, so signing up never breaks.
  */
 export async function registerMember(details: MemberDetails): Promise<RegistrationResult> {
@@ -41,8 +41,14 @@ export async function registerMember(details: MemberDetails): Promise<Registrati
   }
 
   const isJson = response?.headers.get('content-type')?.includes('application/json') ?? false;
-  if (!response || !isJson) {
-    // No registration service on this host (or unreachable): save directly.
+  const body = isJson
+    ? ((await response!.json().catch(() => null)) as
+        | (RegistrationResult & { error?: string; code?: string })
+        | null)
+    : null;
+  if (!response || !isJson || body?.code === 'not-configured') {
+    /* No registration service on this host, it is unreachable, or its Gmail
+       and Firebase secrets aren't set yet: save directly. */
     const { name, email, whatsapp, classSection, collegeId, motivation } = details;
     await submitRegistration({
       type: 'membership',
@@ -56,9 +62,6 @@ export async function registerMember(details: MemberDetails): Promise<Registrati
     return { status: 'received' };
   }
 
-  const body = (await response.json().catch(() => null)) as
-    | (RegistrationResult & { error?: string })
-    | null;
   if (!response.ok || !body) {
     throw new Error(body?.error ?? 'We could not complete your registration. Please try again.');
   }
