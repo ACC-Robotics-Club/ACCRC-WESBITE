@@ -314,8 +314,25 @@ export function subscribeToEvent(id: string, callback: (event: FirestoreEvent | 
   });
 }
 
+/**
+ * Firestore rejects `undefined` anywhere in a document, including inside
+ * arrays (e.g. a question with no placeholder). Drop those keys; Timestamps
+ * and field sentinels are not plain objects, so they pass through untouched.
+ */
+function withoutUndefined<T>(value: T): T {
+  if (Array.isArray(value)) return value.map(withoutUndefined) as T;
+  if (value && typeof value === "object" && Object.getPrototypeOf(value) === Object.prototype) {
+    return Object.fromEntries(
+      Object.entries(value)
+        .filter(([, item]) => item !== undefined)
+        .map(([key, item]) => [key, withoutUndefined(item)]),
+    ) as T;
+  }
+  return value;
+}
+
 export async function createEvent(data: Omit<FirestoreEvent, "id" | "createdAt">): Promise<string> {
-  const { registrationOpensAt, registrationClosesAt, ...eventData } = data;
+  const { registrationOpensAt, registrationClosesAt, ...eventData } = withoutUndefined(data);
   const docRef = await addDoc(collection(db, "events"), {
     ...eventData,
     date: Timestamp.fromDate(data.date),
@@ -339,7 +356,7 @@ export async function updateEvent(id: string, data: Partial<Omit<FirestoreEvent,
       ? Timestamp.fromDate(data.registrationClosesAt)
       : deleteField();
   }
-  await updateDoc(doc(db, "events", id), updateData);
+  await updateDoc(doc(db, "events", id), withoutUndefined(updateData));
 }
 
 export async function deleteEvent(id: string): Promise<void> {
