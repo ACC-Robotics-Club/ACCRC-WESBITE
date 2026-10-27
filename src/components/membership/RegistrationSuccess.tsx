@@ -30,8 +30,17 @@ export function RegistrationSuccess({ result, email }: { result: RegistrationRes
         </span>
         <h3 className="mt-2 font-display text-display-xs font-extrabold text-ink">Application received.</h3>
         <p className="text-body-sm text-text-secondary">
-          Thanks for joining ACCRC. We&apos;ll review your registration and reach out at{' '}
-          <strong className="text-ink">{email}</strong>.
+          Thanks for joining ACCRC.{' '}
+          {result.emailSent ? (
+            <>
+              We&apos;ve emailed a confirmation to <strong className="text-ink">{email}</strong>.
+            </>
+          ) : (
+            <>
+              We&apos;ll reach out at <strong className="text-ink">{email}</strong>.
+            </>
+          )}{' '}
+          Your club ID arrives by email once your registration is accepted.
         </p>
       </div>
     );
