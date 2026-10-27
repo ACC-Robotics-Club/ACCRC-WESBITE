@@ -14,8 +14,8 @@ export interface MemberDetails {
 export type RegistrationResult =
   | { status: 'created'; clubId: string; emailSent: boolean }
   | { status: 'existing'; emailSent: boolean }
-  /** Saved without a club ID: the registration service isn't available here. */
-  | { status: 'received' };
+  /** Saved without a club ID (it comes when an admin accepts). */
+  | { status: 'received'; emailSent?: boolean };
 
 /**
  * Registers a new member through the /api/register function, which issues
@@ -59,7 +59,23 @@ export async function registerMember(details: MemberDetails): Promise<Registrati
       collegeId: collegeId.trim(),
       motivation: motivation.trim(),
     });
-    return { status: 'received' };
+    /* Confirm by email from the visitor's browser. Loaded only now, so the
+       registration form costs nothing extra until someone submits it. */
+    const emailSent = await import('./registrationEmail')
+      .then(({ sendRegistrationReceivedEmail }) =>
+        sendRegistrationReceivedEmail({
+          name: name.trim(),
+          email: email.trim().toLowerCase(),
+          classSection: classSection.trim(),
+          collegeId: collegeId.trim(),
+        }),
+      )
+      .then((result) => {
+        if (!result.sent) console.warn('Registration email not sent:', result.problem);
+        return result.sent;
+      })
+      .catch(() => false);
+    return { status: 'received', emailSent };
   }
 
   if (!response.ok || !body) {

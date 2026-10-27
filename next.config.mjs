@@ -1,23 +1,17 @@
-/* Vercel runs Next.js as a server, so the registration API route
-   (src/app/api/register/route.vercel.ts) can send mail there. Everywhere
-   else the site builds as a static export, and Cloudflare Pages deploys
-   /out with functions/ serving the API. */
-const onVercel = Boolean(process.env.VERCEL);
+/* The site is a static export on every host, Vercel included. A Vercel
+   server build (to run src/app/api/register/route.vercel.ts) failed to deploy
+   every time, which also kept every later fix off the live site. Emails go
+   from the browser through EmailJS instead (lib/clubEmail.ts); on Cloudflare
+   Pages, functions/api/register.ts still serves /api/register. The
+   `.vercel.ts` route is not a page extension here, so it is ignored. */
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  ...(onVercel
-    ? { pageExtensions: ['tsx', 'ts', 'jsx', 'js', 'vercel.ts'] }
-    : { output: 'export' }),
+  output: 'export',
   images: {
     unoptimized: true,
   },
   trailingSlash: true,
-  turbopack: {
-    // Keep module resolution inside this checkout instead of selecting an
-    // unrelated lockfile from a parent directory.
-    root: process.cwd(),
-  },
 };
 
 export default nextConfig;
