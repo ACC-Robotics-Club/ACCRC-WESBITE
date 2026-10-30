@@ -6,6 +6,7 @@ export interface MemberDetails {
   whatsapp: string;
   classSection: string;
   collegeId: string;
+  house: 'MJ' | 'MK' | 'MAR' | 'HR';
   motivation: string;
   /** Honeypot; must stay empty. */
   website?: string;

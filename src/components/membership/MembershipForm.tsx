@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react';
-import { Input, Textarea } from '@/components/ui/Input';
+import { Input, Select, Textarea } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { registerMember, type RegistrationResult } from '@/lib/registerMember';
 import { RegistrationSuccess } from '@/components/membership/RegistrationSuccess';
@@ -11,7 +11,7 @@ import Link from 'next/link';
 export function MembershipForm() {
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
-    name: '', email: '', whatsapp: '', classSection: '', collegeId: '', motivation: '', website: ''
+    name: '', email: '', whatsapp: '', classSection: '', collegeId: '', house: '', motivation: '', website: ''
   });
   const [result, setResult] = useState<RegistrationResult | null>(null);
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
@@ -20,7 +20,7 @@ export function MembershipForm() {
   const handleNext = () => {
     // Basic client validation
     if (step === 1 && (!formData.name || !formData.email || !formData.whatsapp)) return;
-    if (step === 2 && (!formData.classSection || !formData.collegeId)) return;
+    if (step === 2 && (!formData.classSection || !formData.collegeId || !formData.house)) return;
     setStep(s => Math.min(s + 1, 3));
   };
 
@@ -90,6 +90,14 @@ export function MembershipForm() {
                 <Input required placeholder="Class/Section" value={formData.classSection} onChange={e => setFormData({...formData, classSection: e.target.value})} />
                 <Input required placeholder="College ID" value={formData.collegeId} onChange={e => setFormData({...formData, collegeId: e.target.value})} />
               </div>
+              <Select
+                required
+                label="House"
+                value={formData.house}
+                onChange={e => setFormData({...formData, house: e.target.value})}
+                placeholder="Select your house"
+                options={['MJ', 'MK', 'MAR', 'HR'].map(house => ({ value: house, label: house }))}
+              />
             </motion.div>
           )}
 

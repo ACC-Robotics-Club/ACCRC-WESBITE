@@ -133,6 +133,7 @@ export default function HomePage() {
         whatsapp: String(formData.get('whatsapp') ?? ''),
         classSection: String(formData.get('classSection') ?? ''),
         collegeId: String(formData.get('collegeId') ?? ''),
+        house: String(formData.get('house') ?? '') as 'MJ' | 'MK' | 'MAR' | 'HR',
         motivation: String(formData.get('motivation') ?? ''),
       });
       form.reset();
@@ -500,6 +501,20 @@ export default function HomePage() {
                     ))}
                   </div>
                   <Reveal distance={28} delay={0.3}>
+                  <label className="flex flex-col gap-2">
+                    <span className="mono-label text-text-tertiary">HOUSE</span>
+                    <select
+                      className="rounded-xl border-2 border-border bg-primary px-4 py-3.5 text-body-md text-ink transition-all duration-200 focus:border-accent focus:outline-none focus:shadow-[0_0_0_4px_rgba(200,67,44,0.15)]"
+                      name="house"
+                      required
+                      defaultValue=""
+                    >
+                      <option value="" disabled>Select your house</option>
+                      {['MJ', 'MK', 'MAR', 'HR'].map((house) => <option key={house} value={house}>{house}</option>)}
+                    </select>
+                  </label>
+                  </Reveal>
+                  <Reveal distance={28} delay={0.36}>
                   <label className="flex flex-col gap-2">
                     <span className="mono-label text-text-tertiary">WHY DO YOU WANT TO JOIN?</span>
                     <textarea
