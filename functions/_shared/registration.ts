@@ -43,6 +43,7 @@ interface RegistrationInput {
   whatsapp: string;
   classSection: string;
   collegeId: string;
+  house: 'MJ' | 'MK' | 'MAR' | 'HR';
   motivation: string;
 }
 
@@ -52,6 +53,7 @@ const LIMITS: Record<keyof RegistrationInput, number> = {
   whatsapp: 24,
   classSection: 40,
   collegeId: 30,
+  house: 3,
   motivation: 20000,
 };
 
@@ -65,9 +67,10 @@ function parseInput(raw: Record<string, unknown>): RegistrationInput | string {
     const value = typeof raw[key] === 'string' ? (raw[key] as string).trim() : '';
     if (!value) return 'Please fill in every field.';
     if (value.length > LIMITS[key]) return `That ${key} is too long.`;
-    input[key] = value;
+    input[key] = value as RegistrationInput[typeof key];
   }
   input.email = input.email.toLowerCase();
+  if (!['MJ', 'MK', 'MAR', 'HR'].includes(input.house)) return 'Please select a valid house.';
   if (!/^[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+$/.test(input.email)) return 'Please enter a valid email address.';
   if (!/^[+\d][\d\s-]{6,}$/.test(input.whatsapp)) return 'Please enter a valid WhatsApp number.';
   return input;
@@ -91,6 +94,7 @@ function confirmationEmail(input: RegistrationInput, clubId: string) {
     `Name: ${input.name}`,
     `Section: ${input.classSection}`,
     `College ID: ${input.collegeId}`,
+    `House: ${input.house}`,
     '',
     'If you did not register, you can ignore this email.',
     '',
@@ -121,6 +125,7 @@ function confirmationEmail(input: RegistrationInput, clubId: string) {
 ${row('Name', input.name)}
 ${row('Section', input.classSection)}
 ${row('College ID', input.collegeId)}
+${row('House', input.house)}
 ${row('WhatsApp', input.whatsapp)}
 </table>
 </td></tr>
@@ -187,6 +192,9 @@ export async function handleRegistration(request: Request, env: Env, sendMail: S
         whatsapp: readString(existing, 'whatsapp') ?? input.whatsapp,
         classSection: readString(existing, 'classSection') ?? input.classSection,
         collegeId: readString(existing, 'collegeId') ?? input.collegeId,
+        house: readString(existing, 'house') === 'MJ' || readString(existing, 'house') === 'MK' || readString(existing, 'house') === 'MAR' || readString(existing, 'house') === 'HR'
+          ? readString(existing, 'house') as RegistrationInput['house']
+          : input.house,
         motivation: '',
       };
       const emailSent = await sendMail(mailer, { to: input.email, ...confirmationEmail(previous, clubId) })
@@ -226,6 +234,7 @@ export async function handleRegistration(request: Request, env: Env, sendMail: S
                 whatsapp: str(input.whatsapp),
                 classSection: str(input.classSection),
                 collegeId: str(input.collegeId),
+                house: str(input.house),
                 motivation: str(input.motivation),
                 createdAt: timestamp(now),
               },

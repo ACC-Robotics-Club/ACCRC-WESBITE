@@ -112,6 +112,7 @@ export interface Registration {
   email: string;
   whatsapp?: string;
   collegeId?: string;
+  house?: "MJ" | "MK" | "MAR" | "HR";
   classSection: string;
   motivation: string;
   phone?: string;
