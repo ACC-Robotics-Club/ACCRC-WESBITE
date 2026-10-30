@@ -466,6 +466,7 @@ export default function AdminPortal() {
                             <th className="px-4 py-3 border-b border-border">WhatsApp</th>
                             <th className="px-4 py-3 border-b border-border">Class / Section</th>
                             <th className="px-4 py-3 border-b border-border">College ID</th>
+                            <th className="px-4 py-3 border-b border-border">House</th>
                             <th className="px-4 py-3 border-b border-border">Reason for joining</th>
                             <th className="px-4 py-3 border-b border-border">Action</th>
                           </tr>
@@ -479,6 +480,7 @@ export default function AdminPortal() {
                               <td className="px-4 py-3 font-mono text-text-secondary text-xs">{mem.whatsapp || '—'}</td>
                               <td className="px-4 py-3 text-text-secondary">{mem.classSection}</td>
                               <td className="px-4 py-3 font-mono text-text-secondary">{mem.collegeId || mem.rollNumber || 'N/A'}</td>
+                              <td className="px-4 py-3 text-text-secondary">{mem.house || '—'}</td>
                               <td className="px-4 py-3 text-text-secondary max-w-sm whitespace-pre-wrap">{mem.motivation}</td>
                               <td className="px-4 py-3">
                                 <Button

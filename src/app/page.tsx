@@ -166,6 +166,7 @@ export default function HomePage() {
         whatsapp: String(formData.get('whatsapp') ?? ''),
         classSection: String(formData.get('classSection') ?? ''),
         collegeId: String(formData.get('collegeId') ?? ''),
+        house: String(formData.get('house') ?? '') as 'MJ' | 'MK' | 'MAR' | 'HR',
         motivation: String(formData.get('motivation') ?? ''),
         website: String(formData.get('website') ?? ''),
       });
@@ -666,6 +667,24 @@ export default function HomePage() {
                       </motion.label>
                     ))}
                   </div>
+                  <motion.label
+                    className="flex flex-col gap-2"
+                    initial={{ y: 28 }}
+                    whileInView={{ y: 0 }}
+                    viewport={{ once: true, amount: 0.25, margin: '0px 0px -10% 0px' }}
+                    transition={{ duration: 0.55, delay: 0.35, ease: [0.22, 1, 0.36, 1] }}
+                  >
+                    <span className="mono-label text-text-tertiary">HOUSE</span>
+                    <select
+                      className="rounded-xl border-2 border-border bg-primary px-4 py-3.5 text-body-md text-ink transition-all duration-200 focus:border-accent focus:outline-none focus:shadow-[0_0_0_4px_rgba(200,67,44,0.15)]"
+                      name="house"
+                      required
+                      defaultValue=""
+                    >
+                      <option value="" disabled>Select your house</option>
+                      {['MJ', 'MK', 'MAR', 'HR'].map((house) => <option key={house} value={house}>{house}</option>)}
+                    </select>
+                  </motion.label>
                   <motion.label
                     className="flex flex-col gap-2"
                     initial={{ y: 28 }}
